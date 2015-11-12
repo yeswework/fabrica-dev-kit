@@ -6,7 +6,7 @@
 
 2. Clone this repository
 
-3. Edit `site.yml` with basic site details (slug, domain, name)
+3. Edit `site.yml` with basic site details (slug, domain, name, etc)
 
 4. Run the `./yww.sh` shell script which will automatically:
 
@@ -14,7 +14,7 @@
 
   * activate the Vagrant virtual machine
 
-  * install WordPress and our selected plugins (ACF, Timber, Sucuri, Query Monitor) in the virtual machine
+  * install WordPress and our selected plugins (eg. ACF and Timber) in the virtual machine
 
   * add a line to the Hosts file for local access to the site while Vagrant is up
 
@@ -26,4 +26,4 @@
 
 ## What then? ##
 
-Instructions on available gulp tasks can be found in the [dev kit readme](https://bitbucket.org/yeswework/yww-wp-dev-kit])
+Instructions on available gulp tasks to run after installation can be found in the [dev kit readme](https://bitbucket.org/yeswework/yww-wp-dev-kit)
