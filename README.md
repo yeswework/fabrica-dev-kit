@@ -16,4 +16,4 @@
 
 ## What next? ##
 
-Instructions on available gulp tasks to run after installation can be found in the [dev kit readme](https://bitbucket.org/yeswework/yww-wp-dev-kit)
+Instructions on available gulp tasks to run after installation can be found in the [dev kit readme](https://bitbucket.org/yeswework/yww-wp-dev-kit).
