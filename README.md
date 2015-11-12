@@ -9,11 +9,15 @@
     * clone the [YWW WordPress development kit](https://bitbucket.org/yeswework/yww-wp-dev-kit) into a `dev` folder
     * activate the Vagrant virtual machine
     * install WordPress and our selected plugins (eg. ACF and Timber) in the virtual machine
-    * add a line to the Hosts file for local access to the site while Vagrant is up
+    * add a line to the hosts file for local access to the site while Vagrant is up
     * install all development and front-end dependencies via NPM and Bower
     * compile the site (with Gulp) for an initial run
     * activate the theme in WordPress
 
+NB. Terminal will probably prompt you for a password to modify the hosts file, but this should be the only user-input needed
+
 ## What next? ##
+
+The site will then be up and running and accessible locally on the domain you specified in `site.yml`, and development should be carried out in the `/dev/src` folder.
 
 Instructions on available gulp tasks to run after installation can be found in the [dev kit readme](https://bitbucket.org/yeswework/yww-wp-dev-kit).
