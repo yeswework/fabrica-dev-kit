@@ -11,7 +11,7 @@
     * install WordPress and our selected plugins (eg. ACF and Timber) in the virtual machine
     * add a line to the hosts file for local access to the site while Vagrant is up
     * install all development and front-end dependencies via NPM and Bower
-    * compile the site (with Gulp) for an initial run
+    * compile the site (with gulp) for an initial run
     * activate the theme in WordPress
 
 NB. You will probably be asked for a password to modify the hosts file, but this should be the only user input needed during the set up.
