@@ -1,0 +1,108 @@
+# encoding: utf-8
+# vim: ft=ruby expandtab shiftwidth=2 tabstop=2
+
+#
+# General Settings
+#
+wp_box: miya0001/vccw
+chef_cookbook_path: ./provision
+
+#
+# Virtual Machine Settings
+#
+memory: 512
+cpus: 1
+
+#
+# Network Settings
+#
+hostname: vccw.dev
+ip: 192.168.33.10
+sync_folder: 'www/wordpress'
+
+#
+# WordPress Settings
+#
+version: latest
+lang: en_US
+title: Welcome to the VCCW
+multisite: false
+rewrite_structure: /archives/%post_id%
+
+#
+# WordPress Path
+#
+document_root: '/var/www/wordpress'
+wp_siteurl: ''  # Path to the WP_SITEURL like "wp"
+wp_home: ''     # Path to the WP_HOME like "wp"
+
+#
+# WordPress User
+#
+admin_user: admin
+admin_pass: admin
+admin_email: vccw@example.com
+
+#
+# WordPress Database
+#
+db_prefix: wp_
+db_host: localhost
+
+#
+# WordPress Default Plugins
+# Plugin's slug or url to the plugin's slug.
+#
+plugins:
+  - dynamic-hostname
+  - wp-total-hacks
+  - tinymce-templates
+
+#
+# WordPress Default Theme
+# Theme's slug or url to the theme's .zip.
+#
+theme: ''
+
+#
+# WordPress Options
+#
+options:
+  blogdescription: Hello VCCW.
+
+#
+# The values of wp-config.php
+#
+force_ssl_admin: false
+wp_debug: true
+savequeries: false
+
+#
+# Theme unit testing
+#
+theme_unit_test: false
+theme_unit_test_uri: https://wpcom-themes.svn.automattic.com/demo/theme-unit-test-data.xml
+# theme_unit_test_uri: https://raw.githubusercontent.com/jawordpressorg/theme-test-data-ja/master/wordpress-theme-test-date-ja.xml
+
+#
+# DB will be reset when provision
+#
+reset_db_on_provision: true
+
+#
+# Are you hurrying a lot?
+#
+disable_vccw_cookbook: false
+
+
+#
+# User and Group
+#
+user: vagrant
+group: vagrant
+
+
+#
+# phpenv
+#
+php_version: default
