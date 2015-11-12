@@ -2,7 +2,7 @@
 
 ## Instructions ##
 
-1. Install [http://vccw.cc/](VCCW)
+1. Install [VCCW](http://vccw.cc/)
 
 2. Clone this repository
 
@@ -10,7 +10,7 @@
 
 4. Run the `./yww.sh` shell script which will automatically:
 
-  * clone the [https://bitbucket.org/yeswework/yww-wp-dev-kit](YWW WordPress development kit) into a `dev` folder
+  * clone the [YWW WordPress development kit](https://bitbucket.org/yeswework/yww-wp-dev-kit) into a `dev` folder
 
   * activate the Vagrant virtual machine
 
@@ -26,4 +26,4 @@
 
 ## What then? ##
 
-Instructions on available gulp tasks can be found in the [https://bitbucket.org/yeswework/yww-wp-dev-kit](dev kit readme)
+Instructions on available gulp tasks can be found in the [dev kit readme](https://bitbucket.org/yeswework/yww-wp-dev-kit])
