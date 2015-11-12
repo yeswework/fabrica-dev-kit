@@ -5,7 +5,7 @@
 1. Install [VCCW](http://vccw.cc/)
 2. Clone this repository
 3. Edit `site.yml` with basic site details (slug, domain, name, etc)
-4. Run the `./yww.sh` shell script which will automatically:
+4. Run the `./setup.sh` shell script which will automatically:
     * clone the [YWW WordPress development kit](https://bitbucket.org/yeswework/yww-wp-dev-kit) into a `dev` folder
     * activate the Vagrant virtual machine
     * install WordPress and our selected plugins (eg. ACF and Timber) in the virtual machine
