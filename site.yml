@@ -12,5 +12,7 @@ plugins:
   - sucuri-scanner
   - force-regenerate-thumbnails
   - query-monitor
+# - http://yeswework.com/_dev/plugins/register-structure.zip
+# - http://yeswework.com/_dev/plugins/yww-admin-tweaks.zip
 options:
   blogdescription:
