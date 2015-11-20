@@ -3,7 +3,7 @@
 ## Instructions ##
 
 1. Install [VCCW](http://vccw.cc/)
-2. Clone this repository into a project folder, eg: `git clone https://.../yww-vagrant-wp-machine.git yww-project.dev`
+2. Clone this repository into a project folder, eg. `git clone https://.../yww-vagrant-wp-machine.git yww-project.dev`
 3. Edit `site.yml` with basic site details (slug, domain, name, etc)
 4. Run the `./setup.sh` shell script which will automatically:
     * clone the [YWW WordPress development kit](https://bitbucket.org/yeswework/yww-wp-dev-kit) into a `dev` folder

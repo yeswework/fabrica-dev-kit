@@ -11,7 +11,7 @@ projectSlug = '';
 projectUrl = '';
 
 // retrieve project settings
-var projectSettings = YAML.load( 'site.yml' );
+var projectSettings = YAML.load( '../site.yml' );
 
 if( typeof projectSettings.slug != 'undefined' && projectSettings.slug != '' ) {
 	var projectSlug = projectSettings.slug;
