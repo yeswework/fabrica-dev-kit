@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Yes We Work Vagrant/WP machine Browser-sync tasks
+   Yes We Work Vagrant/WP machine Browsersync tasks
    ========================================================================== */
 
 var gulp = require( 'gulp' ),
@@ -27,6 +27,7 @@ console.log( 'watching WP theme: ' + projectSlug );
 // glob for files to watch
 var glob = 'wordpress/wp-content/themes/' + projectSlug + '/**/*.css';
 
+// tasks
 gulp.task('browser-sync', function() {
 	browserSync.init({
 		proxy: 'bookflash.es',
