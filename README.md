@@ -13,6 +13,7 @@
     * install all development and front-end dependencies via NPM and Bower
     * compile the site (with gulp) for an initial run
     * activate the theme in WordPress
+    * install Browsersync on the virtual machine and configure it ready for use
 
 NB. You will probably be asked for a password to modify the hosts file, but this should be the only user input needed during the set up.
 
