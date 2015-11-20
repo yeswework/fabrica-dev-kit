@@ -1,0 +1,12 @@
+{
+  "name": "yww-vagrant-wp-machine",
+  "version": "0.1.0",
+  "description": "",
+  "main": "gulpfile.js",
+  "devDependencies": {
+    "browser-sync": "~2.10.0",
+    "yamljs": "~0.2.4",
+    "gulp": "~3.9.0"
+  },
+  "author": "Andrew Staffell (andrew@yeswework.com)"
+}
