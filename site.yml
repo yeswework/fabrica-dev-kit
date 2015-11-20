@@ -10,6 +10,7 @@ admin_pass: shovelling
 admin_email: info@yeswework.com
 plugins:
   - advanced-custom-fields
+# - http://yeswework.com/_dev/plugins/advanced-custom-fields-pro.zip
   - timber-library
   - sucuri-scanner
   - force-regenerate-thumbnails
