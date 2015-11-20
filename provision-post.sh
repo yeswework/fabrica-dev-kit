@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
 # YWW / VCCW Vagrant development post-provision script
-# currently installs Browser-sync and gets it ready for use
+# currently installs Browsersync and gets it ready for use
 
-# switch into the Vagrant root dir
-cd /vagrant
+# switch into the Vagrant www folder
+cd /vagrant/www
 
-# install NPM dependencies, ie. Browser-sync and Gulp
+# install NPM dependencies, ie. Browsersync and Gulp
 sudo npm install
 
 # after which, you can run `gulp browser-sync` to start a watch

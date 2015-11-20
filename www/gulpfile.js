@@ -25,7 +25,7 @@ console.log( 'using proxy: ' + projectUrl );
 console.log( 'watching WP theme: ' + projectSlug );
 
 // glob for files to watch
-var glob = 'www/wordpress/wp-content/themes/' + projectSlug + '/**/*.css';
+var glob = 'wordpress/wp-content/themes/' + projectSlug + '/**/*.css';
 
 gulp.task('browser-sync', function() {
 	browserSync.init({
