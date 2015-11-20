@@ -24,4 +24,4 @@ The site will then be up and running and accessible locally on the domain you sp
 Use the following command to start Browsersync on the virtual machine (use port 3000 in the browser), which will watch for CSS + JS changes in your theme folder:
 `vagrant ssh -c "cd /vagrant/www/ && gulp browser-sync"`
 
-Instructions on development gulp tasks (to be run in the `dev` folder) [dev kit readme](https://bitbucket.org/yeswework/yww-wp-dev-kit).
+Instructions on development gulp tasks (to be run in the `dev` folder) can be found in the [dev kit readme](https://bitbucket.org/yeswework/yww-wp-dev-kit).
