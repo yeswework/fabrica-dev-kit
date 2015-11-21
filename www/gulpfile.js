@@ -26,9 +26,9 @@ console.log( 'watching WP theme: ' + projectSlug );
 
 // glob for files to watch
 var glob = {
-	styles: 'wordpress/wp-content/themes/' + projectSlug + '/**/*.css';
-	scripts: 'wordpress/wp-content/themes/' + projectSlug + '/**/*.js';
-	views: 'wordpress/wp-content/themes/' + projectSlug + '/**/*.twig';
+	styles: 'wordpress/wp-content/themes/' + projectSlug + '/**/*.css',
+	scripts: 'wordpress/wp-content/themes/' + projectSlug + '/**/*.js',
+	views: 'wordpress/wp-content/themes/' + projectSlug + '/**/*.twig'
 }
 
 // tasks
