@@ -25,18 +25,31 @@ console.log( 'using proxy: ' + projectUrl );
 console.log( 'watching WP theme: ' + projectSlug );
 
 // glob for files to watch
-var glob = 'wordpress/wp-content/themes/' + projectSlug + '/**/*.{css,js,twig}';
+var glob = {
+	styles: 'wordpress/wp-content/themes/' + projectSlug + '/**/*.css';
+	scripts: 'wordpress/wp-content/themes/' + projectSlug + '/**/*.js';
+	views: 'wordpress/wp-content/themes/' + projectSlug + '/**/*.twig';
+}
 
 // tasks
-gulp.task('browser-sync', function() {
-	browserSync.init({
+gulp.task( 'browser-sync', function() {
+	browserSync.init( {
 		proxy: 'bookflash.es',
 		open: false
 	});
-	gulp.watch( glob, [ 'stream' ] ); // TODO - switch to Gulp 4 task style
+	gulp.watch( glob.styles, [ 'styles' ] ); // TODO - switch to Gulp 4 with new task syntax
+	gulp.watch( glob.scripts, [ 'scripts' ] );
+	gulp.watch( glob.views, [ 'views' ] );
 });
-
-gulp.task( 'stream', function(){
-	return gulp.src( glob )
+gulp.task( 'styles', function() {
+	return gulp.src( glob.styles )
 		.pipe( browserSync.stream() );
-})
+});
+gulp.task( 'scripts', function() {
+	return gulp.src( glob.scripts )
+		.pipe( browserSync.stream() );
+});
+gulp.task( 'views', function() {
+	return gulp.src( glob.views )
+		.pipe( browserSync.stream() );
+});
