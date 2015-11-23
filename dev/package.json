@@ -1,0 +1,41 @@
+{
+  "name": "yww-wp-dev-kit",
+  "version": "0.3.0",
+  "description": "Yes We Work WordPress development kit",
+  "scripts": {
+    "postinstall": "bower install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://andrewstaffell@bitbucket.org/yeswework/yww-wp-dev-kit.git"
+  },
+  "author": "Andrew Staffell (andrew@yeswework.com)",
+  "devDependencies": {
+    "autoprefixer": "^6.1.0",
+    "bower": "^1.6.5",
+    "del": "^2.0.2",
+    "gulp": "gulpjs/gulp#4.0",
+    "gulp-concat": "^2.6.0",
+    "gulp-csslint": "^0.2.0",
+    "gulp-cssnano": "^2.0.0",
+    "gulp-filter": "^3.0.1",
+    "gulp-flatten": "^0.2.0",
+    "gulp-imagemin": "^2.4.0",
+    "gulp-jshint": "^1.12.0",
+    "gulp-postcss": "^6.0.1",
+    "gulp-rename": "^1.2.2",
+    "gulp-shell": "^0.5.1",
+    "gulp-sourcemaps": "^1.6.0",
+    "gulp-tap": "^0.1.3",
+    "gulp-uglify": "^1.4.2",
+    "lost": "^6.6.2",
+    "main-bower-files": "^2.9.0",
+    "postcss-fontpath": "^0.2.0",
+    "postcss-nested": "^1.0.0",
+    "postcss-nested-props": "^1.0.0",
+    "postcss-simple-vars": "^1.1.0",
+    "shelljs": "^0.5.3",
+    "vinyl-ftp": "^0.4.5",
+    "yamljs": "^0.2.4"
+  }
+}

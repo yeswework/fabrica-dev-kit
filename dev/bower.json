@@ -1,0 +1,23 @@
+{
+  "name": "yww-wp-dev-kit",
+  "authors": [
+    "Andrew Staffell <andrew@yeswework.com>"
+  ],
+  "description": "Yes We Work WordPress development kit",
+  "main": "",
+  "moduleType": [],
+  "license": "Copyright 2015 Yes We Work",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.4",
+    "normalize-css": "normalize.css#~3.0.3"
+  }
+}

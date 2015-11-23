@@ -1,2 +1,6 @@
-dev/
+dev/bower_components/
+dev/build/
+dev/node_modules/
+dev/src/
 node_modules/
+.DS_Store

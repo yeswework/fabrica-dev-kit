@@ -3,11 +3,8 @@
 # YWW / VCCW Vagrant development setup script
 # make sure site.yml is filled in correctly before running this
 
-# clone YWW WP dev kit
-git clone https://andrewstaffell@bitbucket.org/yeswework/yww-wp-dev-kit.git dev
-
-# immediately after, detach the clone from the repository by deleting downloaded git info
-rm -rf dev/.git
+# clone YWW WP skeleton theme
+git clone https://andrewstaffell@bitbucket.org/yeswework/yww-wp-theme-skeleton.git dev/src
 
 # change into new dev directory
 cd dev
