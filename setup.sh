@@ -32,7 +32,7 @@ cd ../www
 npm install
 
 # after which, the site will be ready to run and develop locally
-# during development, run the following processe simultaneously:
+# during development, run the following processes simultaneously:
 # gulp watch (in the dev folder)
 # vagrant ssh -c “cd /vagrant/www && gulp browser-sync”
 # see README.md for more
