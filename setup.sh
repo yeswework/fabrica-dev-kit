@@ -4,7 +4,7 @@
 # make sure site.yml is filled in correctly before running this
 
 # clone YWW WP skeleton theme
-git clone https://andrewstaffell@bitbucket.org/yeswework/yww-wp-theme-skeleton.git dev/src
+git clone https://andrewstaffell@bitbucket.org/yeswework/yww-wp-skeleton-theme.git dev/src
 
 # change to dev folder
 cd dev
