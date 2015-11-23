@@ -1,13 +1,18 @@
 #!/bin/bash
 
-# =========================================================================================
+# ===================================================================
 # YWW WP Vagrant dev kit setup script
-# =========================================================================================
-# IMPORTANT: make sure site.yml is completed with site-specific details before running this
-# =========================================================================================
+# ===================================================================
+# IMPORTANT: 
+# before running this script, copy project-example.yml to project.yml
+# and modify it with project-specific details
+# ===================================================================
+
+# exit on error
+set -e
 
 # clone YWW WP skeleton theme
-git clone git@bitbucket.org:yeswework/yww-wp-skeleton-theme.git dev/src
+git clone git@bitbucket.org:yeswework/yww-wp-theme-source.git dev/src
 
 # change to dev folder
 cd dev

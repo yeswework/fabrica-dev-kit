@@ -3,3 +3,4 @@ dev/build/
 dev/node_modules/
 dev/src/
 node_modules/
+project.yml
