@@ -20,6 +20,10 @@ cd dev
 # install build dependencies (Gulp + extensions)
 npm install
 
+# rename bower-starter.json to bower.json (which is in .gitignore)
+# so that if updates to the kit are pulled, it won't be overwritten
+mv bower-starter.json bower.json
+
 # run Bower install to install some front-end dependencies
 bower install
 
@@ -27,7 +31,7 @@ bower install
 vagrant up
 
 # run our gulp install task which will activate the theme in WordPress
-# we let Gulp do it because it needs to read the theme name from the site.yml file
+# we let Gulp do it because it needs to read slug from site.yml
 gulp install
 
 # go to web server folder

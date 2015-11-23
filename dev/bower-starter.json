@@ -1,12 +1,11 @@
 {
-  "name": "yww-wp-dev-kit",
+  "name": "yww-wp-vagrant-dev-kit",
   "authors": [
     "Andrew Staffell <andrew@yeswework.com>"
   ],
-  "description": "Yes We Work WordPress development kit",
+  "description": "Yes We Work WordPress + Vagrant development kit",
   "main": "",
   "moduleType": [],
-  "license": "Copyright 2015 Yes We Work",
   "homepage": "",
   "private": true,
   "ignore": [
