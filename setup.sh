@@ -1,19 +1,28 @@
 #!/bin/bash
 
-# YWW / VCCW Vagrant development setup script
+# YWW WP Vagrant dev kit setup script
 # make sure site.yml is filled in correctly before running this
 
 # clone YWW WP skeleton theme
 git clone https://andrewstaffell@bitbucket.org/yeswework/yww-wp-theme-skeleton.git dev/src
 
-# change into new dev directory
+# change to dev folder
 cd dev
 
-# run NPM install which will subsequently trigger bower install, gulp build, vagrant up
-# (as well as activating the new theme in WP and modifying hosts file for local use)
+# install build dependencies (Gulp + extensions)
 npm install
 
-# run our gulp post-install task to compile the theme for the first time and activate it
-gulp post-install --vagrant
+# run Bower install to install some front-end dependencies
+bower install
+
+# run our gulp install task which will compile the theme, start vagrant, then activate the theme in WordPress
+# we let Gulp do it because it needs to read the theme name from the site.yml folder
+gulp install
+
+# go to web server folder
+cd ../www
+
+# install server dependencies (Browsersync)
+npm install
 
 # after which, the site will be ready to run and develop locally

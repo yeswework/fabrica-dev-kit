@@ -221,8 +221,8 @@ gulp.task( 'build', gulp.series( 'clean', 'bower', gulp.parallel( 'style.css', '
 
 // Post-install: tells Vagrant itself to activate the built theme
 // called by npm postinstall
-gulp.task( 'post-install', gulp.series( 'build', vagrant ) );
-function vagrant( cb ) {
+gulp.task( 'install', gulp.series( 'build', install ) );
+function install( cb ) {
 	shell.exec( 'vagrant up && vagrant ssh -c "wp theme activate ' + projectSlug + '"' );
 	cb(); // indicate completion
 }
