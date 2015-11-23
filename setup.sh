@@ -7,7 +7,7 @@
 # =========================================================================================
 
 # clone YWW WP skeleton theme
-git clone git clone git@bitbucket.org:yeswework/yww-wp-skeleton-theme.git dev/src
+git clone git@bitbucket.org:yeswework/yww-wp-skeleton-theme.git dev/src
 
 # change to dev folder
 cd dev
