@@ -1,7 +1,7 @@
 {
-  "name": "yww-vagrant-wp-machine",
-  "version": "0.1.0",
-  "description": "",
+  "name": "yww-wp-vagrant-dev-kit-server",
+  "version": "0.4.0",
+  "description": "Yes We Work WordPress + Vagrant development kit (server tools)",
   "main": "gulpfile.js",
   "devDependencies": {
     "browser-sync": "~2.10.0",
