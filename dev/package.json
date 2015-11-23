@@ -1,13 +1,13 @@
 {
-  "name": "yww-wp-dev-kit",
-  "version": "0.3.0",
-  "description": "Yes We Work WordPress development kit",
+  "name": "yww-wp-vagrant-dev-kit",
+  "version": "0.4.0",
+  "description": "Yes We Work WordPress + Vagrant development kit",
   "scripts": {
     "postinstall": "bower install"
   },
   "repository": {
     "type": "git",
-    "url": "https://andrewstaffell@bitbucket.org/yeswework/yww-wp-dev-kit.git"
+    "url": "https://bitbucket.org/yeswework/yww-wp-vagrant-dev-kit"
   },
   "author": "Andrew Staffell (andrew@yeswework.com)",
   "devDependencies": {

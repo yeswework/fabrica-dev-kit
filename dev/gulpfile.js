@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Yes We Work WordPress development kit
+   Yes We Work WordPress + Vagrant development kit - build tasks
    ========================================================================== */
 
 var gulp = require( 'gulp' ),

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Yes We Work Vagrant/WP machine Browsersync tasks
+   Yes We Work WordPress + Vagrant development kit - Browsersync tasks
    ========================================================================== */
 
 var gulp = require( 'gulp' ),
@@ -38,18 +38,10 @@ gulp.task( 'browser-sync', function() {
 		open: false
 	});
 	gulp.watch( glob.styles, [ 'styles' ] ); // TODO - switch to Gulp 4 with new task syntax
-	gulp.watch( glob.scripts, [ 'scripts' ] );
-	gulp.watch( glob.views, [ 'views' ] );
+	gulp.watch( glob.scripts, browserSync.reload );
+	gulp.watch( glob.views, browserSync.reload );
 });
 gulp.task( 'styles', function() {
 	return gulp.src( glob.styles )
-		.pipe( browserSync.stream() );
-});
-gulp.task( 'scripts', function() {
-	return gulp.src( glob.scripts )
-		.pipe( browserSync.stream() );
-});
-gulp.task( 'views', function() {
-	return gulp.src( glob.views )
 		.pipe( browserSync.stream() );
 });
