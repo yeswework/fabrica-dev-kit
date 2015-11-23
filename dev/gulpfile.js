@@ -219,11 +219,10 @@ gulp.task( 'fonts', function() {
 // Build: sequences all the other tasks 
 gulp.task( 'build', gulp.series( 'clean', 'bower', gulp.parallel( 'style.css', 'includes', 'controllers', 'views', 'styles', 'scripts', 'images', 'fonts' ) ) );
 
-// Post-install: tells Vagrant itself to activate the built theme
-// called by npm postinstall
+// Install: tells Vagrant itself to activate the built theme
 gulp.task( 'install', gulp.series( 'build', install ) );
 function install( cb ) {
-	shell.exec( 'vagrant up && vagrant ssh -c "wp theme activate ' + projectSlug + '"' );
+	shell.exec( 'vagrant ssh -c "wp theme activate ' + projectSlug + '"' );
 	cb(); // indicate completion
 }
 

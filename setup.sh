@@ -15,6 +15,9 @@ npm install
 # run Bower install to install some front-end dependencies
 bower install
 
+# start vagrant
+vagrant up
+
 # run our gulp install task which will compile the theme, start vagrant, then activate the theme in WordPress
 # we let Gulp do it because it needs to read the theme name from the site.yml folder
 gulp install
