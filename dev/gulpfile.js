@@ -55,7 +55,7 @@ var base = {
 
 // Globs for each file type
 var glob = {
-	includes: base.src + 'includes/**/*.php',
+	includes: base.src + 'includes/*.php',
 	controllers: base.src + 'templates/controllers/**/*.php',
 	views: base.src + 'templates/**/*.twig',
 	styles: base.src + 'assets/css/**/*.{css,pcss}',
