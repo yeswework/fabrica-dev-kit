@@ -51,7 +51,7 @@ if( typeof projectSettings.title != 'undefined' && projectSettings.title != '' )
 var base = {
 	src: './dev/src/',
 	build: './dev/build/',
-	vagrant: './wordpress/wp-content/themes/' + projectSlug + '/'
+	theme: './wordpress/wp-content/themes/' + projectSlug + '/'
 };
 
 // Globs for each file type
@@ -93,7 +93,7 @@ var options = {
 // Erase build folder before each compile
 gulp.task( 'clean', function( cb ) {
 	del( base.build );
-	del( base.vagrant, { force: true } );
+	del( base.theme, { force: true } );
 	cb(); // indicate completion
 });
 
@@ -106,23 +106,23 @@ gulp.task( 'bower', function() {
 		.pipe( concat( 'lib.js' ) )
 		.pipe( sourcemaps.init() )
 		.pipe( gulp.dest( base.build + dest.scripts ) )
-		.pipe( gulp.dest( base.vagrant + dest.scripts ) )
+		.pipe( gulp.dest( base.theme + dest.scripts ) )
 		.pipe( uglify( options.uglify ) )
 		.pipe( rename( 'lib.min.js' ) )
 		.pipe( sourcemaps.write( '.' ) )
 		.pipe( gulp.dest( base.build + dest.scripts ) )
-		.pipe( gulp.dest( base.vagrant + dest.scripts ) )
+		.pipe( gulp.dest( base.theme + dest.scripts ) )
 		.pipe( jsFilter.restore )
 		.pipe( cssFilter )
 		.pipe( concat( 'lib.css' ) )
 		.pipe( sourcemaps.init() )
 		.pipe( gulp.dest( base.build + dest.styles ) )
-		.pipe( gulp.dest( base.vagrant + dest.styles ) )
+		.pipe( gulp.dest( base.theme + dest.styles ) )
 		.pipe( cssnano() )
 		.pipe( rename( 'lib.min.css' ) )
 		.pipe( sourcemaps.write( '.' ) )
 		.pipe( gulp.dest( base.build + dest.styles ) )
-		.pipe( gulp.dest( base.vagrant + dest.styles ) );
+		.pipe( gulp.dest( base.theme + dest.styles ) );
 });
 
 // style.css: auto-create our theme's style.css using project info we already have
@@ -132,24 +132,24 @@ gulp.task( 'style.css', function( cb ) {
 		+ 'Theme URI: http://' + projectUrl + '\r\n' 
 		+ 'Author: ' + projectAuthor + '\r\n' + '*/';
 	fs.writeFileSync( base.build + 'style.css', data );
-	fs.writeFileSync( base.vagrant + 'style.css', data );
+	fs.writeFileSync( base.theme + 'style.css', data );
 	cb(); // indicate completion
 });
 
 // Includes: copy internal PHP dependencies to an inc folder and auto-create functions.php with includes
 gulp.task( 'includes', function() {
 	fs.writeFileSync( base.build + 'functions.php', '<?php\r\n' ); // create a blank functions.php
-	fs.writeFileSync( base.vagrant + 'functions.php', '<?php\r\n' );
+	fs.writeFileSync( base.theme + 'functions.php', '<?php\r\n' );
 	var nonVendorFilter = gulpFilter( '*.php', { restore: true } ); // only require top-level files in functions.php
 	return gulp.src( glob.includes )
 		.pipe( nonVendorFilter )
 		.pipe( tap( function( file, t ) { // write an include for this file to our functions.php automatically
 			fs.appendFileSync( base.build + 'functions.php', "require_once( get_stylesheet_directory() . '/" + dest.includes + "/" + file.path.replace( file.base, '' ) + "' );\r\n" );
-			fs.appendFileSync( base.vagrant + 'functions.php', "require_once( get_stylesheet_directory() . '/" + dest.includes + "/" + file.path.replace( file.base, '' ) + "' );\r\n" );
+			fs.appendFileSync( base.theme + 'functions.php', "require_once( get_stylesheet_directory() . '/" + dest.includes + "/" + file.path.replace( file.base, '' ) + "' );\r\n" );
 		}))
 		.pipe( nonVendorFilter.restore )
 		.pipe( gulp.dest( base.build + dest.includes ) )
-		.pipe( gulp.dest( base.vagrant + dest.includes ) );
+		.pipe( gulp.dest( base.theme + dest.includes ) );
 });
 
 // Controllers: copy PHP files, flattening tree
@@ -157,7 +157,7 @@ gulp.task( 'controllers', function() {
 	return gulp.src( glob.controllers )
 		.pipe( flatten() )
 		.pipe( gulp.dest( base.build + dest.controllers ) )
-		.pipe( gulp.dest( base.vagrant + dest.controllers ) );
+		.pipe( gulp.dest( base.theme + dest.controllers ) );
 });
 
 // Views: copy Twig files, flattening tree
@@ -165,7 +165,7 @@ gulp.task( 'views', function() {
 	return gulp.src( glob.views )
 		.pipe( flatten() )
 		.pipe( gulp.dest( base.build + dest.views ) )
-		.pipe( gulp.dest( base.vagrant + dest.views ) );
+		.pipe( gulp.dest( base.theme + dest.views ) );
 });
 
 // Styles (CSS): lint, concatenate into one file, write source map, postcss, save full and minified versions, then copy
@@ -180,12 +180,12 @@ gulp.task( 'styles', function() {
 		.pipe( concat( 'main.css' ) )
 		.pipe( sourcemaps.init() )
 		.pipe( gulp.dest( base.build + dest.styles ) )
-		.pipe( gulp.dest( base.vagrant + dest.styles ) )
+		.pipe( gulp.dest( base.theme + dest.styles ) )
 		.pipe( cssnano() )
 		.pipe( rename( 'main.min.css' ) )
 		.pipe( sourcemaps.write( '.' ) )
 		.pipe( gulp.dest( base.build + dest.styles ) )
-		.pipe( gulp.dest( base.vagrant + dest.styles ) );
+		.pipe( gulp.dest( base.theme + dest.styles ) );
 });
 
 // Scripts (JS): lint, concatenate into one file, save full and minified versions, then copy
@@ -196,12 +196,12 @@ gulp.task( 'scripts', function() {
 		.pipe( concat( 'main.js' ) )
 		.pipe( sourcemaps.init() )
 		.pipe( gulp.dest( base.build + dest.scripts ) )
-		.pipe( gulp.dest( base.vagrant + dest.scripts ) )
+		.pipe( gulp.dest( base.theme + dest.scripts ) )
 		.pipe( uglify( options.uglify ) )
 		.pipe( rename( 'main.min.js' ) )
 		.pipe( sourcemaps.write( '.' ) )
 		.pipe( gulp.dest( base.build + dest.scripts ) )
-		.pipe( gulp.dest( base.vagrant + dest.scripts ) );
+		.pipe( gulp.dest( base.theme + dest.scripts ) );
 });
 
 // Images: optimise and copy, maintaining tree
@@ -209,20 +209,20 @@ gulp.task( 'images', function() {
 	return gulp.src( glob.images )
 		.pipe( imagemin( options.imagemin ) )
 		.pipe( gulp.dest( base.build + dest.images ) )
-		.pipe( gulp.dest( base.vagrant + dest.images ) );
+		.pipe( gulp.dest( base.theme + dest.images ) );
 });
 
 // Fonts: just copy, maintaining tree
 gulp.task( 'fonts', function() {
 	return gulp.src( glob.fonts )
 		.pipe( gulp.dest( base.build + dest.fonts ) )
-		.pipe( gulp.dest( base.vagrant + dest.fonts ) );
+		.pipe( gulp.dest( base.theme + dest.fonts ) );
 });
 
 // Build: sequences all the other tasks 
 gulp.task( 'build', gulp.series( 'clean', 'bower', gulp.parallel( 'style.css', 'includes', 'controllers', 'views', 'styles', 'scripts', 'images', 'fonts' ) ) );
 
-// Install: tells Vagrant itself to activate the built theme
+// Install: tell Vagrant to activate the built theme
 gulp.task( 'install', gulp.series( 'build', install ) );
 function install( cb ) {
 	shell.exec( 'vagrant ssh -c "wp theme activate ' + projectSlug + '"' );
@@ -232,15 +232,16 @@ function install( cb ) {
 // Watch: fire build, then watch for changes
 gulp.task( 'default', gulp.series( 'build', watch ) );
 function watch() {
+	gulp.watch( glob.styles, { usePolling: true }, gulp.series( 'styles' ) );
+	gulp.watch( glob.includes, { usePolling: true }, gulp.series( 'includes' ) );
+	gulp.watch( glob.controllers, { usePolling: true }, gulp.series( 'controllers' ) );
+	gulp.watch( glob.views, { usePolling: true }, gulp.series( 'views' ) );
+	gulp.watch( glob.scripts, { usePolling: true }, gulp.series( 'scripts' ) );
+	gulp.watch( glob.images, { usePolling: true }, gulp.series( 'images' ) );
+	gulp.watch( glob.fonts, { usePolling: true }, gulp.series( 'fonts' ) );
 	browserSync.init( {
 		proxy: projectUrl,
-		open: false
+		open: false,
+		files: [ base.theme + '**/!(*.map)' ] // watch compiled files
 	});
-	gulp.watch( glob.includes, gulp.series( 'includes', browserSync.reload ) );
-	gulp.watch( glob.controllers, gulp.series( 'controllers', browserSync.reload ) );
-	gulp.watch( glob.views, gulp.series( 'views', browserSync.reload ) );
-	gulp.watch( glob.styles, gulp.series( 'styles', function() { gulp.src( glob.styles ).pipe( browserSync.stream() ) } ) );
-	gulp.watch( glob.scripts, gulp.series( 'scripts', browserSync.reload ) );
-	gulp.watch( glob.images, gulp.series( 'images', browserSync.reload ) );
-	gulp.watch( glob.fonts, gulp.series( 'fonts', browserSync.reload ) );
 }
