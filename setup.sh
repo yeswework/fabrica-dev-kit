@@ -12,17 +12,22 @@
 set -e
 
 # change to dev folder
-cd dev
+cd www
 
-# rename template files + folders (this saves them being overwritten)
-# by future updates
-mv bower-starter.json bower.json
+# rename starter files + folders 
+# this trick preserves them if the dev kit is updated later
+mv package-starter.json package.json
+mv gulpfile-starter.js gulpfile.js
+mv dev/bower-starter.json dev/bower.json
+mv dev/src-starter dev/src
 
 # install build dependencies (Gulp + extensions)
 npm install
 
 # run Bower install to install some front-end dependencies
+cd dev
 bower install
+cd ..
 
 # start vagrant
 vagrant up
