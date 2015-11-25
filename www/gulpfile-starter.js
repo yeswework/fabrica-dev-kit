@@ -101,7 +101,7 @@ gulp.task( 'clean', function( cb ) {
 gulp.task( 'bower', function() {
 	var jsFilter = gulpFilter( '**/*.js', { restore: true } );
 	var cssFilter = gulpFilter( '**/*.css', { restore: true } );
-	return gulp.src( mainBowerFiles() )
+	return gulp.src( mainBowerFiles( { paths: base.src } ) )
 		.pipe( jsFilter )
 		.pipe( concat( 'lib.js' ) )
 		.pipe( sourcemaps.init() )
