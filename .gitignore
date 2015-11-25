@@ -1,6 +1,4 @@
 www/dev/src/
-www/gulpfile.js
 www/node_modules/
-www/package.json
 www/wordpress/
 site.yml
