@@ -2,9 +2,6 @@
   "name": "yww-wp-vagrant-dev-kit-build",
   "version": "0.4.0",
   "description": "Yes We Work WordPress + Vagrant development kit (build tools)",
-  "scripts": {
-    "postinstall": "bower install"
-  },
   "repository": {
     "type": "git",
     "url": "https://bitbucket.org/yeswework/yww-wp-vagrant-dev-kit"
