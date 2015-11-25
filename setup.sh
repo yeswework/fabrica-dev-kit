@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# ===================================================================
+# =============================================================================
 # YWW WP + Vagrant dev kit setup script
-# ===================================================================
+# =============================================================================
 # IMPORTANT: 
 # before running this script, copy project-example.yml to project.yml
 # and modify it with project-specific details
-# ===================================================================
+# =============================================================================
 
 # exit on error
 set -e
@@ -14,9 +14,8 @@ set -e
 # change to dev folder
 cd www
 
-# rename starter files + folders 
-# this trick preserves them if the dev kit is updated later
-mv dev-starter dev
+# rename starter source folder: this will preserve changes if/when kit updated
+mv dev/src-starter dev/src
 
 # install build dependencies (Gulp + extensions)
 npm install
@@ -33,8 +32,5 @@ vagrant up
 # we let Gulp do it because it needs to read slug from site.yml
 gulp install
 
-# after which, the site will be ready to run and develop locally
-# during development, run the following processes simultaneously:
-# gulp watch (in the dev folder)
-# vagrant ssh -c “cd /vagrant/www && gulp browser-sync”
-# see README.md for more
+# after which, the site will be ready to run and develop locally, just run:
+# vagrant ssh -c "cd /vagrant/www && gulp"
