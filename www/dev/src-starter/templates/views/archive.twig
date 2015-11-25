@@ -1,0 +1,13 @@
+{% extends "base.twig" %}
+
+{% block content %}
+	<main>
+		<h1>{{ title }}</h1>
+		{% for post in posts %}
+			<article>
+				<h1><a href="{{ post.permalink }}">{{ post.title }}</a></h1>
+				{{ post.content }}
+			</article>
+		{% endfor %}
+	</main>
+{% endblock content %}

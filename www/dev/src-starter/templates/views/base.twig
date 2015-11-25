@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html class="no-js" {{ site.language_attributes }}>
+<head>
+	<meta charset="{{ site.charset }}">
+	<meta http-equiv="x-ua-compatible" content="ie=edge">
+	<meta name="description" content="{{ site.description }}">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="author" content="Yes We Work - http://yeswework.com/">
+	{{ function('wp_head') }}
+</head>
+
+<body class="{{ body_class }}">
+
+	{% block header %}
+		<header class="site-header">
+			<a class="site-logo" href="{{ site.url }}">{{ site.name }}</a>
+			<nav class="main-menu">
+				<h1 class="hidden">Main menu</h1>
+				<ul class="main-menu__list">
+					{% for item in menus.main.get_items %}
+						<li class="main-menu__item{{ item.classes | join(' ') }}"><a class="main-menu__link" href="{{ item.get_link }}">{{ item.title }}</a></li>
+					{% endfor %}
+				</ul>
+			</nav>
+		</header>
+	{% endblock %}
+
+	{% block content %}
+
+	{% endblock %}
+
+	{% block footer %}
+		<footer>
+			{{ function('wp_footer') }}
+		</footer>
+	{% endblock %}
+
+</body>
+</html>

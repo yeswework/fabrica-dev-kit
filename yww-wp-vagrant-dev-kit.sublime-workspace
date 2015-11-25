@@ -1,0 +1,520 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"blue",
+				"light-blue"
+			],
+			[
+				"dark",
+				"darker-blue"
+			],
+			[
+				"mobil",
+				"mobile-spacing"
+			],
+			[
+				"darker",
+				"darker-blue"
+			],
+			[
+				"google",
+				"googleAnalyticsId"
+			],
+			[
+				"main",
+				"mainBowerFiles"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "www/gulpfile-starter.js",
+			"settings":
+			{
+				"buffer_size": 9199,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "www/package-starter.json",
+			"settings":
+			{
+				"buffer_size": 1188,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 367.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 449.0
+	},
+	"console":
+	{
+		"height": 225.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '2915d1851351e5ee549c20394736b442' + '8bc59f460fa1548d1514676163dafc88'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-vagrant-dev-kit",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-vagrant-dev-kit/www"
+	],
+	"file_history":
+	[
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/bookflashpromo.com/www/Movefile",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-vagrant-dev-kit/www/dev/gulpfile-starter.js",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/bookflash.es/dev/src/includes/structure.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/bookflash.es/dev/src/assets/css/main.pcss",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/bookflash.es/dev/src/includes/main.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/bookflash.es/dev/src/templates/views/base.twig",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/bookflash.es/dev/src/templates/views/home.twig",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/bookflash.es/dev/src/templates/controllers/home.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/bookflash.es/dev/src/includes/wp-features.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-vagrant-dev-kit/dev/_bower.json",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/bookflash.es/dev/bower.json",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-vagrant-dev-kit/setup.sh",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-vagrant-dev-kit/Vagrantfile",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/hollywood.dev/dev/src/assets/css/main.pcss",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/bookflash.es/dev/src/includes/assets.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/bookflash.es/dev/src/templates/views/page.twig",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/bookflash.es/dev/gulpfile.js",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-dev-kit/dev/src/assets/css/helpers.css",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-dev-kit/dev/gulpfile.js",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-dev-kit/dev/src/includes/dependencies.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-dev-kit/dev/package.json",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-dev-kit/dev/README.md",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-dev-kit/dev/src/config/dependencies.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-dev-kit/dev/src/config/features.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-dev-kit/dev/src/config/main.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-dev-kit/dev/src/config/functions.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-dev-kit/dev/src/config/assets.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-dev-kit/dev/src/assets/css/300-layout._css",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-dev-kit/dev/src/assets/css/100-variables._css",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-dev-kit/dev/src/assets/css/400-templates._css",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-dev-kit/dev/src/config/style.css",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-dev-kit/dev/src/templates/views/base.twig",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-dev-kit/dev/src/inc/features.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-dev-kit/dev/src/assets/css/200-basic._css",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/yww-wp-dev-kit/dev/src/inc/assets.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/yww-wp-dev-kit.sublime-workspace",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/site.yml",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/assets/css/500-helpers._css",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/gulpfile.js",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/assets/css/100-variables._css",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/assets/css/300-layout._css",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/assets/css/400-templates._css",
+		"/Users/andrewstaffell/Library/Application Support/Sublime Text 3/Packages/Default/Default (OSX).sublime-keymap",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/templates/views/page.twig",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/assets/css/200-basic._css",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/inc/dependencies.php",
+		"/Users/andrewstaffell/Library/Application Support/Sublime Text 3/Packages/User/Default (OSX).sublime-keymap",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/yww-wp-dev-kit.sublime-project",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/assets/css/300-layout.css",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/assets/css/600-print._css",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/assets/css/100-variables.css",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/inc/assets.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/config/functions.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/templates/views/archive.twig",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/templates/controllers/archive.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/templates/controllers/single.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/templates/views/base.twig",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/templates/views/single.twig",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/templates/views/404.twig",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/templates/controllers/404.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/inc/features.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/config/inc/assets.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/config/inc/features.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/config/inc/dependencies.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/templates/controllers/page.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/templates/controllers/footer.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/config/style.css",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/config/inc/ajax.php",
+		"/Users/andrewstaffell/Sites/_resources/_vagrant/vccw-yww/yww-wp-dev-kit/src/templates/php/header.php",
+		"/Users/andrewstaffell/Library/Application Support/Sublime Text 3/Packages/User/Gulp.sublime-build",
+		"/Users/andrewstaffell/Sites/_resources/yww-wp-dev-kit/src/css/variables.css",
+		"/Users/andrewstaffell/Sites/_resources/yww-wp-dev-kit/src/css/print.css",
+		"/Users/andrewstaffell/Sites/_resources/yww-wp-dev-kit/src/css/helpers.css",
+		"/Users/andrewstaffell/Sites/_resources/yww-wp-dev-kit/src/php/inc/assets.php",
+		"/Users/andrewstaffell/Sites/_resources/yww-wp-dev-kit/src/css/general.css",
+		"/Users/andrewstaffell/Sites/_resources/yww-wp-dev-kit/gulpfile.js",
+		"/Users/andrewstaffell/Sites/_resources/yww-wp-dev-kit/src/js/core.js",
+		"/Users/andrewstaffell/Sites/_resources/yww-wp-dev-kit/src/js/main.js",
+		"/Users/andrewstaffell/Sites/_resources/yww-wp-dev-kit/src/css/style.css",
+		"/Users/andrewstaffell/Sites/_resources/yww-wp-dev-kit/src/templates/404.php",
+		"/Users/andrewstaffell/Sites/_resources/yww-wp-dev-kit/bower_components/jquery/bower.json",
+		"/Users/andrewstaffell/Sites/_resources/yww-wp-dev-kit/bower_components/normalize-css/bower.json",
+		"/Users/andrewstaffell/Sites/_resources/yww-wp-dev-kit/src/inc/ajax.php",
+		"/Users/andrewstaffell/Sites/_resources/_plugins/yww-admin/yww-admin.php",
+		"/Users/andrewstaffell/Sites/_resources/yww-wp-dev-kit/src/css/main.css",
+		"/Users/andrewstaffell/Sites/_resources/yww-wp-dev-kit/src/style.css",
+		"/Users/andrewstaffell/Sites/_resources/yww-wp-dev-kit/src/functions.php",
+		"/Users/andrewstaffell/Sites/_resources/_plugins/yww-load-data/yww-load-data.php",
+		"/Users/andrewstaffell/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/andrewstaffell/Sites/_vagrant/vccw-yww/dev/composer.json",
+		"/Users/andrewstaffell/Sites/_vagrant/vccw-yww/dev/bower.json",
+		"/Users/andrewstaffell/Downloads/select2/package.json",
+		"/Users/andrewstaffell/Sites/_vagrant/edicionanticipada/wordpress-gulp-starter-kit/package.json",
+		"/Users/andrewstaffell/Sites/_vagrant/edicionanticipada/provision/site.yml",
+		"/Users/andrewstaffell/Sites/_vagrant/edicionanticipada/Vagrantfile"
+	],
+	"find":
+	{
+		"height": 25.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"g",
+			"url_encode",
+			"font-size",
+			"    ",
+			"$books",
+			"$dark",
+			".large",
+			"$dark-blue",
+			".large",
+			"border",
+			"darker-blue-alpha",
+			"5px",
+			"$mobile-spacing",
+			"advent-window",
+			"30px",
+			"Obra",
+			"get_field",
+			"						\n",
+			"Post Type",
+			"text_domain",
+			"site.yml",
+			"how-it-works",
+			"advent-window",
+			"mobile-spacing",
+			"200",
+			"stage",
+			"transition",
+			"opacity",
+			"transition",
+			"notice",
+			"border:",
+			"lost-center",
+			"$highlight",
+			"$bg",
+			"$form-bg",
+			"$bg",
+			"background: ",
+			"scriptname",
+			"heading",
+			"font-size",
+			"signup-form",
+			"lost-golumn",
+			"lost-waffle",
+			"bgalpha",
+			"boxbg",
+			"penguinorange",
+			"advent-day",
+			"$Orange",
+			"darkblue",
+			"calendar__day",
+			"<article>",
+			"dest.",
+			"cb()",
+			"shell",
+			"argv.vagrant",
+			"argv",
+			"stylecss",
+			"build",
+			"stylecss",
+			"includes",
+			"yargs",
+			"tap",
+			"debug",
+			"parallel",
+			"projectauthor",
+			"project",
+			"runsequence",
+			"includes",
+			"runsequence",
+			"includes",
+			"   ",
+			"    ",
+			"config",
+			"includes",
+			"core",
+			"pattern",
+			"file",
+			"includes",
+			"config",
+			"fs",
+			"args",
+			"    ",
+			"csslint",
+			"force",
+			"argv",
+			"gulpif",
+			"dest",
+			"dest.",
+			"});",
+			"projectSettings.name",
+			"    ",
+			"project",
+			"jshint",
+			"csslint",
+			"templates",
+			"dests",
+			"dest.",
+			"dest",
+			"dest.",
+			"glob",
+			"globs",
+			"bower",
+			"styles",
+			"paths.build",
+			"clean",
+			"paths.src",
+			"paths.tmp",
+			"twig",
+			"bower",
+			"script_vars",
+			"scriptVars",
+			"script_vars",
+			"    "
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"escape('url')",
+			"	",
+			"$days",
+			"$bg-blue",
+			"dark-alpha",
+			"advent-day",
+			"Libro",
+			"bookflash",
+			"advent-day",
+			"500",
+			"$beige",
+			"$darkblue",
+			"email-form",
+			"lost-column",
+			"bg-alpha",
+			"box-bg",
+			"prh-orange",
+			"advent-window",
+			"advent-day",
+			"<article class=\"calendar__day\">",
+			"<article>",
+			"style.css",
+			"main",
+			"	",
+			"yargs",
+			"gulpIf",
+			"} );",
+			"projectSettings.slug",
+			"	",
+			"dest",
+			"dests.",
+			"base.build",
+			"base.src",
+			"paths.build",
+			"paths.tmp",
+			"scriptVars",
+			"script_vars",
+			"	"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 1,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "www/gulpfile-starter.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 9199,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								510,
+								510
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "www/package-starter.json",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1188,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								473,
+								473
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JSON.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 25.0
+	},
+	"input":
+	{
+		"height": 33.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 27.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "Packages/User/Gulp.sublime-build",
+	"project": "yww-wp-vagrant-dev-kit.sublime-project",
+	"replace":
+	{
+		"height": 46.0
+	},
+	"save_all_on_build": false,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": false,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 350.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

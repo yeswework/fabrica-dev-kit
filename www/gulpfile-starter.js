@@ -1,9 +1,10 @@
 /* ==========================================================================
-   Yes We Work WordPress + Vagrant development kit - build tasks
+   Yes We Work WordPress + Vagrant development kit
    ========================================================================== */
 
 var gulp = require( 'gulp' ),
 	autoprefixer = require( 'autoprefixer' ),
+	browserSync = require( 'browser-sync' ).create(),
 	del = require( 'del' ),
 	concat = require( 'gulp-concat' ),
 	csslint = require( 'gulp-csslint' ),
@@ -48,9 +49,9 @@ if( typeof projectSettings.title != 'undefined' && projectSettings.title != '' )
 
 // Paths for remapping
 var base = {
-	src: './src/',
-	build: './build/',
-	vagrant: '../www/wordpress/wp-content/themes/' + projectSlug + '/'
+	src: './dev/src/',
+	build: './dev/build/',
+	vagrant: './wordpress/wp-content/themes/' + projectSlug + '/'
 };
 
 // Globs for each file type
@@ -231,6 +232,10 @@ function install( cb ) {
 // Watch: fire build, then watch for changes
 gulp.task( 'watch', gulp.series( 'build', watch ) );
 function watch() {
+	browserSync.init( {
+		proxy: 'bookflash.es',
+		open: false
+	});
 	gulp.watch( glob.includes, gulp.parallel( 'includes' ) );
 	gulp.watch( glob.controllers, gulp.parallel( 'controllers' ) );
 	gulp.watch( glob.views, gulp.parallel( 'views' ) );
@@ -238,33 +243,6 @@ function watch() {
 	gulp.watch( glob.scripts, gulp.parallel( 'scripts' ) );
 	gulp.watch( glob.images, gulp.parallel( 'images' ) );
 	gulp.watch( glob.fonts, gulp.parallel( 'fonts' ) );
-}
-
-// Deploy: fire build, then upload to server via FTP
-gulp.task( 'deploy', gulp.series( 'build', deploy ) );
-function deploy() {
-	if( typeof projectSettings.ftp.host == 'undefined' || projectSettings.ftp.host == null || projectSettings.ftp.host == '' ) {
-		console.log( 'FTP host is not set in ../site.yml, cannot deploy' );
-	} else if( typeof projectSettings.ftp.user == 'undefined' || projectSettings.ftp.user == null || projectSettings.ftp.user == '' ) {
-		console.log( 'FTP user is not set in ../site.yml, cannot deploy' );
-	} else if( typeof projectSettings.ftp.pass == 'undefined' || projectSettings.ftp.pass == null || projectSettings.ftp.pass == '' ) {
-		console.log( 'FTP pass is not set in ../site.yml, cannot deploy' );
-	} else {
-		var conn = ftp.create( {
-			host: projectSettings.ftp.host,
-			user: projectSettings.ftp.user,
-			pass: projectSettings.ftp.pass,
-			parallel: 5,
-			log: 'ftp.log'
-		});
-		if( typeof projectSettings.ftp.dir == 'undefined' || projectSettings.ftp.dir == null ) {
-			projectSettings.ftp.dir = '/';
-		}
-		console.log( 'Beginning FTP deployment...' );
-		return gulp.src( base.build + '**/*', { base: base.build, buffer: false } )
-			.pipe( conn.newer( projectSettings.ftp.dir ) ) // only upload newer files 
-			.pipe( conn.dest( projectSettings.ftp.dir ) );
-	}
 }
 
 // Default

@@ -11,14 +11,11 @@
 # exit on error
 set -e
 
-# clone YWW WP skeleton theme
-git clone git@bitbucket.org:yeswework/yww-wp-theme-source.git dev/src
-
 # change to dev folder
 cd dev
 
-# rename bower-starter.json to bower.json (which is in .gitignore)
-# so that if updates to the kit are pulled, it won't be overwritten
+# rename template files + folders (this saves them being overwritten)
+# by future updates
 mv bower-starter.json bower.json
 
 # install build dependencies (Gulp + extensions)
