@@ -1,7 +1,8 @@
-dev/bower_components/
-dev/bower.json
-dev/build/
-dev/node_modules/
-dev/src/
-node_modules/
+www/dev/bower_components
+www/dev/bower.json
+www/dev/src/
+www/gulpfile.js
+www/node_modules/
+www/package.json
+www/wordpress/
 site.yml
