@@ -55,7 +55,7 @@ var base = {
 
 // Globs for each file type
 var glob = {
-	includes: base.src + 'includes/*.php',
+	includes: base.src + 'includes/**/*.php',
 	controllers: base.src + 'templates/controllers/**/*.php',
 	views: base.src + 'templates/**/*.twig',
 	styles: base.src + 'assets/css/**/*.{css,pcss}',
@@ -139,12 +139,14 @@ gulp.task( 'style.css', function( cb ) {
 gulp.task( 'includes', function() {
 	fs.writeFileSync( base.build + 'functions.php', '<?php\r\n' ); // create a blank functions.php
 	fs.writeFileSync( base.vagrant + 'functions.php', '<?php\r\n' );
+	var nonVendorFilter = gulpFilter( '*.php', { restore: true } ); // only require top-level files in functions.php
 	return gulp.src( glob.includes )
-		.pipe( flatten() )
+		.pipe( nonVendorFilter )
 		.pipe( tap( function( file, t ) { // write an include for this file to our functions.php automatically
 			fs.appendFileSync( base.build + 'functions.php', "require_once( get_stylesheet_directory() . '/" + dest.includes + "/" + file.path.replace( file.base, '' ) + "' );\r\n" );
 			fs.appendFileSync( base.vagrant + 'functions.php', "require_once( get_stylesheet_directory() . '/" + dest.includes + "/" + file.path.replace( file.base, '' ) + "' );\r\n" );
 		}))
+		.pipe( nonVendorFilter.restore )
 		.pipe( gulp.dest( base.build + dest.includes ) )
 		.pipe( gulp.dest( base.vagrant + dest.includes ) );
 });
