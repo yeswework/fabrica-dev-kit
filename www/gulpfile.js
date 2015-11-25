@@ -230,20 +230,17 @@ function install( cb ) {
 }
 
 // Watch: fire build, then watch for changes
-gulp.task( 'watch', gulp.series( 'build', watch ) );
+gulp.task( 'default', gulp.series( 'build', watch ) );
 function watch() {
 	browserSync.init( {
-		proxy: 'bookflash.es',
+		proxy: projectUrl,
 		open: false
 	});
-	gulp.watch( glob.includes, gulp.parallel( 'includes' ) );
-	gulp.watch( glob.controllers, gulp.parallel( 'controllers' ) );
-	gulp.watch( glob.views, gulp.parallel( 'views' ) );
-	gulp.watch( glob.styles, gulp.parallel( 'styles' ) );
-	gulp.watch( glob.scripts, gulp.parallel( 'scripts' ) );
-	gulp.watch( glob.images, gulp.parallel( 'images' ) );
-	gulp.watch( glob.fonts, gulp.parallel( 'fonts' ) );
+	gulp.watch( glob.includes, gulp.series( 'includes', browserSync.reload ) );
+	gulp.watch( glob.controllers, gulp.series( 'controllers', browserSync.reload ) );
+	gulp.watch( glob.views, gulp.series( 'views', browserSync.reload ) );
+	gulp.watch( glob.styles, gulp.series( 'styles', function() { gulp.src( glob.styles ).pipe( browserSync.stream() ) } ) );
+	gulp.watch( glob.scripts, gulp.series( 'scripts', browserSync.reload ) );
+	gulp.watch( glob.images, gulp.series( 'images', browserSync.reload ) );
+	gulp.watch( glob.fonts, gulp.series( 'fonts', browserSync.reload ) );
 }
-
-// Default
-gulp.task ( 'default', gulp.series( 'build' ) );
