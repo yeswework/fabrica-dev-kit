@@ -1,5 +1,3 @@
-www/dev/bower_components
-www/dev/bower.json
 www/dev/src/
 www/gulpfile.js
 www/node_modules/

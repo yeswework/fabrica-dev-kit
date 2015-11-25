@@ -16,10 +16,7 @@ cd www
 
 # rename starter files + folders 
 # this trick preserves them if the dev kit is updated later
-mv package-starter.json package.json
-mv gulpfile-starter.js gulpfile.js
-mv dev/src-starter dev/src
-mv dev/src/bower-starter.json dev/src/bower.json
+mv dev-starter dev
 
 # install build dependencies (Gulp + extensions)
 npm install
@@ -35,9 +32,6 @@ vagrant up
 # run our gulp install task which will activate the theme in WordPress
 # we let Gulp do it because it needs to read slug from site.yml
 gulp install
-
-# install server dependencies (Browsersync)
-npm install
 
 # after which, the site will be ready to run and develop locally
 # during development, run the following processes simultaneously:
