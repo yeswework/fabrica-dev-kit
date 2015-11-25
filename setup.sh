@@ -28,6 +28,13 @@ cd ../..
 # start vagrant
 vagrant up
 
+# TEMPORARILY... upgrade NodeJS in Vagrant to latest version
+vagrant ssh -c "sudo npm install n -g && sudo n stable"
+
+# TEMPORARILY (until Gulp 4 is released)
+# manually uninstall Gulp 3.9 from Vagrant and install Gulp 4
+vagrant ssh -c "sudo npm uninstall gulp -g && sudo npm install gulpjs/gulp-cli#4.0 -g"
+
 # run our gulp install task which will activate the theme in WordPress
 # we let Gulp do it because it needs to read slug from site.yml
 gulp install
