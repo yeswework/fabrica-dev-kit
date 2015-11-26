@@ -56,6 +56,7 @@ var base = {
 
 // Globs for each file type
 var glob = {
+	bower: base.src + 'bower_components/**/*.php',
 	includes: base.src + 'includes/**/*.php',
 	controllers: base.src + 'templates/controllers/**/*.php',
 	views: base.src + 'templates/**/*.twig',
@@ -233,6 +234,7 @@ function install( cb ) {
 gulp.task( 'default', gulp.series( 'build', watch ) );
 function watch() {
 	gulp.watch( glob.styles, { usePolling: true }, gulp.series( 'styles' ) );
+	gulp.watch( glob.bower, { usePolling: true }, gulp.series( 'bower' ) );
 	gulp.watch( glob.includes, { usePolling: true }, gulp.series( 'includes' ) );
 	gulp.watch( glob.controllers, { usePolling: true }, gulp.series( 'controllers' ) );
 	gulp.watch( glob.views, { usePolling: true }, gulp.series( 'views' ) );
