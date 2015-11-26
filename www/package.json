@@ -6,6 +6,7 @@
     "type": "git",
     "url": "https://bitbucket.org/yeswework/yww-wp-vagrant-dev-kit"
   },
+  "private": true,
   "author": "Andrew Staffell (andrew@yeswework.com)",
   "devDependencies": {
     "autoprefixer": "^6.1.0",
