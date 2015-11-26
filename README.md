@@ -27,7 +27,7 @@ NB. You will probably be asked for a password to modify the hosts file, but this
 
 The site will then be up and running and accessible locally on the domain you specified in `site.yml`, and development should be carried out in the `www/dev/src` folder.
 
-To launch a watch tasks, which will run an initial build and then watch for changes, pushing compiled files live to all open browsers using port 3000:
+To launch the main task which will run an initial build and then watch for changes, pushing compiled files live to all open browsers using port 3000:
 `vagrant ssh -c "cd /vagrant/www/ && gulp"`
 
 To shut down the Vagrant box temporarily (eg. to remove the hosts file entry), use `vagrant halt`; to resume it again `vagrant up`
