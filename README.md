@@ -32,9 +32,9 @@ To launch the main task which will run an initial build and then watch for chang
 
 To shut down the Vagrant box temporarily (eg. to remove the hosts file entry), use `vagrant halt`; to resume it again `vagrant up`
 
-To install a front-end dependency, use `bower install <package>` in the `www/dev/src` folder  (they will be automatically loaded into the theme).
+To install a front-end dependency, use `bower install --save <package>` in the `www/dev/src` folder  (they will be automatically loaded into the theme).
 
-To install a back-end dependency use Composer in the `www/dev/src/includes` folder (they will be automatically loaded into the theme).
+To install a back-end dependency use `composer require <package>` and then `composer install` in the `www/dev/src/includes` folder (they will be automatically loaded into the theme).
 
 ## Further info ##
 
