@@ -29,7 +29,7 @@ cd ../..
 vagrant up
 
 # TEMPORARILY... upgrade NodeJS in Vagrant to latest version
-vagrant ssh -c "sudo npm install n -g && sudo n stable"
+vagrant ssh -c "sudo npm install n -g && sudo n 4.2.2"
 
 # TEMPORARILY (until Gulp 4 is released)
 # manually uninstall Gulp 3.9 from Vagrant and install Gulp 4
