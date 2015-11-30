@@ -108,22 +108,26 @@ gulp.task( 'bower', function() {
 		.pipe( sourcemaps.init() )
 		.pipe( gulp.dest( base.build + dest.scripts ) )
 		.pipe( gulp.dest( base.theme + dest.scripts ) )
+		.pipe( browserSync.stream() )
 		.pipe( uglify( options.uglify ) )
 		.pipe( rename( 'lib.min.js' ) )
 		.pipe( sourcemaps.write( '.' ) )
 		.pipe( gulp.dest( base.build + dest.scripts ) )
 		.pipe( gulp.dest( base.theme + dest.scripts ) )
+		.pipe( browserSync.stream() )
 		.pipe( jsFilter.restore )
 		.pipe( cssFilter )
 		.pipe( concat( 'lib.css' ) )
 		.pipe( sourcemaps.init() )
 		.pipe( gulp.dest( base.build + dest.styles ) )
 		.pipe( gulp.dest( base.theme + dest.styles ) )
+		.pipe( browserSync.stream( { match: '**/*.css' } ) )
 		.pipe( cssnano() )
 		.pipe( rename( 'lib.min.css' ) )
 		.pipe( sourcemaps.write( '.' ) )
 		.pipe( gulp.dest( base.build + dest.styles ) )
-		.pipe( gulp.dest( base.theme + dest.styles ) );
+		.pipe( gulp.dest( base.theme + dest.styles ) )
+		.pipe( browserSync.stream( { match: '**/*.css' } ) );
 });
 
 // style.css: auto-create our theme's style.css using project info we already have
@@ -150,7 +154,8 @@ gulp.task( 'includes', function() {
 		}))
 		.pipe( nonVendorFilter.restore )
 		.pipe( gulp.dest( base.build + dest.includes ) )
-		.pipe( gulp.dest( base.theme + dest.includes ) );
+		.pipe( gulp.dest( base.theme + dest.includes ) )
+		.pipe( browserSync.stream() );
 });
 
 // Controllers: copy PHP files, flattening tree
@@ -158,7 +163,8 @@ gulp.task( 'controllers', function() {
 	return gulp.src( glob.controllers )
 		.pipe( flatten() )
 		.pipe( gulp.dest( base.build + dest.controllers ) )
-		.pipe( gulp.dest( base.theme + dest.controllers ) );
+		.pipe( gulp.dest( base.theme + dest.controllers ) )
+		.pipe( browserSync.stream() );
 });
 
 // Views: copy Twig files, flattening tree
@@ -166,7 +172,8 @@ gulp.task( 'views', function() {
 	return gulp.src( glob.views )
 		.pipe( flatten() )
 		.pipe( gulp.dest( base.build + dest.views ) )
-		.pipe( gulp.dest( base.theme + dest.views ) );
+		.pipe( gulp.dest( base.theme + dest.views ) )
+		.pipe( browserSync.stream() );
 });
 
 // Styles (CSS): lint, concatenate into one file, write source map, postcss, save full and minified versions, then copy
@@ -175,18 +182,20 @@ gulp.task( 'styles', function() {
 	return gulp.src( glob.styles )
 		.pipe( postcss( options.postcss ) )
 		.pipe( lintFilter ) // don't lint certain files which we use on all projects
-		.pipe( csslint() )
+		.pipe( csslint( { 'font-sizes': false, 'box-model': false, 'compatible-vendor-prefixes': false } ) )
 		.pipe( csslint.reporter() )
 		.pipe( lintFilter.restore ) // restore all files after linting
 		.pipe( concat( 'main.css' ) )
 		.pipe( sourcemaps.init() )
 		.pipe( gulp.dest( base.build + dest.styles ) )
 		.pipe( gulp.dest( base.theme + dest.styles ) )
+		.pipe( browserSync.stream( { match: '**/*.css' } ) )
 		.pipe( cssnano() )
 		.pipe( rename( 'main.min.css' ) )
 		.pipe( sourcemaps.write( '.' ) )
 		.pipe( gulp.dest( base.build + dest.styles ) )
-		.pipe( gulp.dest( base.theme + dest.styles ) );
+		.pipe( gulp.dest( base.theme + dest.styles ) )
+		.pipe( browserSync.stream( { match: '**/*.css' } ) );
 });
 
 // Scripts (JS): lint, concatenate into one file, save full and minified versions, then copy
@@ -198,11 +207,13 @@ gulp.task( 'scripts', function() {
 		.pipe( sourcemaps.init() )
 		.pipe( gulp.dest( base.build + dest.scripts ) )
 		.pipe( gulp.dest( base.theme + dest.scripts ) )
+		.pipe( browserSync.stream() )
 		.pipe( uglify( options.uglify ) )
 		.pipe( rename( 'main.min.js' ) )
 		.pipe( sourcemaps.write( '.' ) )
 		.pipe( gulp.dest( base.build + dest.scripts ) )
-		.pipe( gulp.dest( base.theme + dest.scripts ) );
+		.pipe( gulp.dest( base.theme + dest.scripts ) )
+		.pipe( browserSync.stream() );
 });
 
 // Images: optimise and copy, maintaining tree
@@ -210,14 +221,16 @@ gulp.task( 'images', function() {
 	return gulp.src( glob.images )
 		.pipe( imagemin( options.imagemin ) )
 		.pipe( gulp.dest( base.build + dest.images ) )
-		.pipe( gulp.dest( base.theme + dest.images ) );
+		.pipe( gulp.dest( base.theme + dest.images ) )
+		.pipe( browserSync.stream() );
 });
 
 // Fonts: just copy, maintaining tree
 gulp.task( 'fonts', function() {
 	return gulp.src( glob.fonts )
 		.pipe( gulp.dest( base.build + dest.fonts ) )
-		.pipe( gulp.dest( base.theme + dest.fonts ) );
+		.pipe( gulp.dest( base.theme + dest.fonts ) )
+		.pipe( browserSync.stream() );
 });
 
 // Build: sequences all the other tasks 
@@ -233,6 +246,10 @@ function install( cb ) {
 // Watch: fire build, then watch for changes
 gulp.task( 'default', gulp.series( 'build', watch ) );
 function watch() {
+	browserSync.init( {
+		proxy: projectUrl,
+		open: false
+	});
 	gulp.watch( glob.styles, { usePolling: true }, gulp.series( 'styles' ) );
 	gulp.watch( glob.bower, { usePolling: true }, gulp.series( 'bower' ) );
 	gulp.watch( glob.includes, { usePolling: true }, gulp.series( 'includes' ) );
@@ -241,9 +258,4 @@ function watch() {
 	gulp.watch( glob.scripts, { usePolling: true }, gulp.series( 'scripts' ) );
 	gulp.watch( glob.images, { usePolling: true }, gulp.series( 'images' ) );
 	gulp.watch( glob.fonts, { usePolling: true }, gulp.series( 'fonts' ) );
-	browserSync.init( {
-		proxy: projectUrl,
-		open: false,
-		files: [ base.theme + '**/!(*.map)' ] // watch compiled files
-	});
 }
