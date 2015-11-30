@@ -4,7 +4,7 @@
 # YWW WP + Vagrant dev kit setup script
 # =============================================================================
 # IMPORTANT: 
-# before running this script, copy project-example.yml to project.yml
+# before running this script, copy site-example.yml to site.yml
 # and modify it with project-specific details
 # =============================================================================
 
