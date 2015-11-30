@@ -1,6 +1,6 @@
 <?php
 
-$context = Timber::get_context();
-$context[ 'title' ] = single_cat_title( '', false );
-$context[ 'posts' ] = Timber::get_posts();
-Timber::render( 'archive.twig', $context );
+$data = Timber::get_context();
+$data[ 'title' ] = single_cat_title( '', false );
+$data[ 'posts' ] = Timber::get_posts();
+Timber::render( 'archive.twig', $data );
