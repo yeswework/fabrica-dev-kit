@@ -16,10 +16,9 @@
 	* install all development and front-end dependencies via NPM and Bower
     * provision and activate the Vagrant virtual machine
     * add a line to the hosts file for local access to the site while Vagrant is up
-    * install WordPress and our selected plugins (eg. ACF and Timber) in the virtual machine
+    * install WordPress and our selected plugins (ACF, Timber and some utilities) in the virtual machine
     * compile the starter site ready for immediate viewing / editing
     * activate the new theme in WordPress
-    * install Browsersync on the virtual machine and configure it ready for use
 
 NB. You will probably be asked for a password to modify the hosts file, but this should be the only user input needed during the set up.
 
