@@ -1,4 +1,4 @@
-www/dev/src/
-www/node_modules/
-www/wordpress/
 site.yml
+dev/src/
+node_modules/
+wordpress/

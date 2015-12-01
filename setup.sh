@@ -10,9 +10,6 @@
 # exit on error
 set -e
 
-# change to dev folder
-cd www
-
 # rename starter source folder: this will preserve changes if/when kit updated
 mv dev/src-starter dev/src
 
@@ -32,4 +29,4 @@ vagrant up
 gulp install
 
 # after which, the site will be ready to run and develop locally
-# just cd www and run gulp
+# just run gulp

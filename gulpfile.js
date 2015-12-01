@@ -52,7 +52,7 @@ if( typeof projectSettings.title != 'undefined' && projectSettings.title != '' )
 var base = {
 	src: './dev/src/',
 	build: './dev/build/',
-	theme: './wordpress/wp-content/themes/' + projectSlug + '/'
+	theme: './www/wordpress/wp-content/themes/' + projectSlug + '/'
 };
 
 // Globs for each file type
