@@ -50,7 +50,7 @@ The Gulp build routine (which is executed by `gulp build`, or `gulp` if you also
     * [postcss-nested](https://github.com/postcss/postcss-nested)
     * [lost grid](https://github.com/corysimmons/lost)
     * [autoprefixer](https://github.com/postcss/autoprefixer)
-* Concatenates author CSS and JS into `core.js` and `core.css` (plus minified versions, with source mapping)
+* Concatenates author CSS and JS into `main.js` and `main.css` (plus minified versions, with source mapping)
 * Optimises images
 
 ## Additional notes ##

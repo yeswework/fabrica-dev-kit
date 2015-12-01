@@ -237,8 +237,8 @@ gulp.task( 'fonts', function() {
 gulp.task( 'build', gulp.series( 'clean', 'bower', gulp.parallel( 'style.css', 'includes', 'controllers', 'views', 'styles', 'scripts', 'images', 'fonts' ) ) );
 
 // Install: tell Vagrant to activate the built theme
-gulp.task( 'install', gulp.series( 'build', install ) );
-function install( cb ) {
+gulp.task( 'install', gulp.series( 'build', activate ) );
+function activate( cb ) {
 	shell.exec( 'vagrant ssh -c "wp theme activate ' + projectSlug + '"' );
 	cb(); // indicate completion
 }
