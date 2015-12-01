@@ -42,10 +42,11 @@ if ( ! function_exists( 'yww_update_script_vars' ) ) {
 
 	function yww_update_script_vars( $scriptVars = array() ) {
 
-		// Non-destructively merge script variables according to page or query conditions (eg. is_single() )
-		if ( 1 == 1 ) {
+		// Non-destructively merge script variables according to page or query conditions
+		if ( is_single() ) {
 			$scriptVars = array_merge( $scriptVars, array(
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'postNonce' => wp_create_nonce( 'yww-post-nonce' ),
 				'nameSpaced' => array(
 					'key1' => __( 'value one', 'yww' ),
 					'key2' => __( 'value two', 'yww' )
@@ -58,26 +59,39 @@ if ( ! function_exists( 'yww_update_script_vars' ) ) {
 
 }
 
+// Send AJAX responses
+if ( ! function_exists( 'yww_send_ajax_response' ) ) {
+
+	function yww_send_ajax_response( $response ) {
+		
+		header( 'Content-Type: application/json' );
+		echo json_encode( $response );
+		exit;
+	}
+
+}
 
 // Handle AJAX requests
-// based on http://www.garyc40.com/2010/03/5-tips-for-using-ajax-in-wordpress/
-// TODO – add nonce check: https://codex.wordpress.org/Function_Reference/check_ajax_referer
 if ( ! function_exists( 'yww_ajax_handler' ) ) {
 
 	function yww_ajax_handler() {
 
-		// Get the submitted parameters
-		$postID = $_POST[ 'postID' ];
+		if ( isset( $_POST[ 'postNonce' ] ) ) {
+			$nonce = $_POST[ 'postNonce' ];
+		} else {
+			send_response( array( 'success' => false, 'error' => "Couldn't retrieve nonce." ) );
+		}
 
-		// Generate the response
-		$response = json_encode( array( 'success' => true ) );
+		if ( ! wp_verify_nonce( $nonce, 'yww-post-nonce' ) ) {
+			send_response( array( 'success' => false, 'error' => 'Invalid nonce.' ) );
+		}
 
-		// Output response
-		header( 'Content-Type: application/json' );
-		echo $response;
+		// Retrieve submitted parameters
+		// $postID = $_POST[ 'postID' ];
 
-		// IMPORTANT: don't forget to "exit"
-		exit;
+		// Now do whatever we need to do
+
+		yww_send_ajax_response( array( 'success' => true ) );
 
 	} 
 	add_action( 'wp_ajax_nopriv_ajax-ACTION', 'yww_ajax_handler' );
