@@ -25,15 +25,15 @@ NB. You will probably be asked for a password to modify the hosts file, but this
 
 ## Then what? ##
 
-The site will then be up and running and accessible locally on the domain you specified in `site.yml`, and development should be carried out in the `www/dev/src` folder.
+The site will then be up and running and accessible locally on the domain you specified in `site.yml`, and development should be carried out in the `dev/src` folder.
 
-To launch the main task which will run an initial build and then watch for changes and push them live to browsers via Browsersync, run `gulp` from the `www` folder. The Browsersync proxy is then accessible at `localhost:3000`.
+To launch the main task which will run an initial build and then watch for changes and push them live to browsers via Browsersync, just run `gulp`. The Browsersync proxy will be accessible at `localhost:3000` until gulp is halted with Ctrl-C.
 
 To shut down the Vagrant box temporarily (eg. to remove the hosts file entry), use `vagrant halt`; to resume it again `vagrant up`.
 
-To install a front-end dependency, use `bower install --save <package>` in the `www/dev/src` folder  (they will be automatically loaded into the theme).
+To install a front-end dependency, use `bower install --save <package>` in the `dev/src` folder  (they will be automatically loaded into the theme).
 
-To install a back-end dependency use `composer require <package>` and then `composer install` in the `www/dev/src/includes` folder (they will be automatically loaded into the theme).
+To install a back-end dependency use `composer require <package>` and then `composer install` in the `dev/src/includes` folder (they will be automatically loaded into the theme).
 
 ## Further info ##
 
