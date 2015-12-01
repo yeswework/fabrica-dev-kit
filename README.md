@@ -27,10 +27,9 @@ NB. You will probably be asked for a password to modify the hosts file, but this
 
 The site will then be up and running and accessible locally on the domain you specified in `site.yml`, and development should be carried out in the `www/dev/src` folder.
 
-To launch the main task which will run an initial build and then watch for changes, pushing compiled files live to all open browsers using port 3000:
-`vagrant ssh -c "cd /vagrant/www/ && gulp"`
+To launch the main task which will run an initial build and then watch for changes and push them live to browsers via Browsersync, run `gulp` from the `www` folder. The Browsersync proxy is then accessible at `localhost:3000`.
 
-To shut down the Vagrant box temporarily (eg. to remove the hosts file entry), use `vagrant halt`; to resume it again `vagrant up`
+To shut down the Vagrant box temporarily (eg. to remove the hosts file entry), use `vagrant halt`; to resume it again `vagrant up`.
 
 To install a front-end dependency, use `bower install --save <package>` in the `www/dev/src` folder  (they will be automatically loaded into the theme).
 
@@ -38,7 +37,7 @@ To install a back-end dependency use `composer require <package>` and then `comp
 
 ## Further info ##
 
-The Gulp build routine (which is executed by `gulp build`, or `gulp` if you also want to live compile changed files) runs the following optimisations:
+The Gulp build routine (which is executed by `gulp build`, or `gulp` if you also want to live compile / sync changed files) runs the following optimisations:
 
 * Assembles all theme assets and code into a WordPress-compatible structure in a `build` folder
 * Creates a `style.css` containing a theme header and a `functions.php` which invokes all other relevant project scripts and styles
