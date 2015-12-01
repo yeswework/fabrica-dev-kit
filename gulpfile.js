@@ -37,7 +37,7 @@ var projectName = 'YWW Project';
 var projectAuthor = 'Yes We Work - http://yeswework.com/';
 
 // Overwrite with defaults from Vagrant's YML file in the parent folder, if available
-var projectSettings = YAML.load( '../site.yml' );
+var projectSettings = YAML.load( 'site.yml' );
 if( typeof projectSettings.slug != 'undefined' && projectSettings.slug != '' ) {
 	var projectSlug = projectSettings.slug;
 }
