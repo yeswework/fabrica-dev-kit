@@ -1,5 +1,6 @@
 slug: yww-project # lowercase, no spaces, URL-friendly
 hostname: yww-project.dev
+ip: 192.168.33.10 # change if you need to run >1 local vagrant
 title: YWW project
 lang: en_US
 multisite: false

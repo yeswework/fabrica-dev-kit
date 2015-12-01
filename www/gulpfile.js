@@ -7,6 +7,7 @@ var gulp = require( 'gulp' ),
 	browserSync = require( 'browser-sync' ).create(),
 	del = require( 'del' ),
 	concat = require( 'gulp-concat' ),
+	changed = require( 'gulp-changed' ),
 	csslint = require( 'gulp-csslint' ),
 	cssnano = require( 'gulp-cssnano' ),
 	gulpFilter = require( 'gulp-filter' ),
@@ -106,12 +107,14 @@ gulp.task( 'bower', function() {
 		.pipe( jsFilter )
 		.pipe( concat( 'lib.js' ) )
 		.pipe( sourcemaps.init() )
+		.pipe( changed( base.build + dest.scripts ) )
 		.pipe( gulp.dest( base.build + dest.scripts ) )
 		.pipe( gulp.dest( base.theme + dest.scripts ) )
 		.pipe( browserSync.stream() )
 		.pipe( uglify( options.uglify ) )
 		.pipe( rename( 'lib.min.js' ) )
 		.pipe( sourcemaps.write( '.' ) )
+		.pipe( changed( base.build + dest.scripts ) )
 		.pipe( gulp.dest( base.build + dest.scripts ) )
 		.pipe( gulp.dest( base.theme + dest.scripts ) )
 		.pipe( browserSync.stream() )
@@ -119,12 +122,14 @@ gulp.task( 'bower', function() {
 		.pipe( cssFilter )
 		.pipe( concat( 'lib.css' ) )
 		.pipe( sourcemaps.init() )
+		.pipe( changed( base.build + dest.styles ) )
 		.pipe( gulp.dest( base.build + dest.styles ) )
 		.pipe( gulp.dest( base.theme + dest.styles ) )
 		.pipe( browserSync.stream( { match: '**/*.css' } ) )
 		.pipe( cssnano() )
 		.pipe( rename( 'lib.min.css' ) )
 		.pipe( sourcemaps.write( '.' ) )
+		.pipe( changed( base.build + dest.styles ) )
 		.pipe( gulp.dest( base.build + dest.styles ) )
 		.pipe( gulp.dest( base.theme + dest.styles ) )
 		.pipe( browserSync.stream( { match: '**/*.css' } ) );
@@ -153,6 +158,7 @@ gulp.task( 'includes', function() {
 			fs.appendFileSync( base.theme + 'functions.php', "require_once( get_stylesheet_directory() . '/" + dest.includes + "/" + file.path.replace( file.base, '' ) + "' );\r\n" );
 		}))
 		.pipe( nonVendorFilter.restore )
+		.pipe( changed( base.build + dest.includes ) )
 		.pipe( gulp.dest( base.build + dest.includes ) )
 		.pipe( gulp.dest( base.theme + dest.includes ) )
 		.pipe( browserSync.stream() );
@@ -162,6 +168,7 @@ gulp.task( 'includes', function() {
 gulp.task( 'controllers', function() {
 	return gulp.src( glob.controllers )
 		.pipe( flatten() )
+		.pipe( changed( base.build + dest.controllers ) )
 		.pipe( gulp.dest( base.build + dest.controllers ) )
 		.pipe( gulp.dest( base.theme + dest.controllers ) )
 		.pipe( browserSync.stream() );
@@ -171,6 +178,7 @@ gulp.task( 'controllers', function() {
 gulp.task( 'views', function() {
 	return gulp.src( glob.views )
 		.pipe( flatten() )
+		.pipe( changed( base.build + dest.views ) )
 		.pipe( gulp.dest( base.build + dest.views ) )
 		.pipe( gulp.dest( base.theme + dest.views ) )
 		.pipe( browserSync.stream() );
@@ -187,12 +195,14 @@ gulp.task( 'styles', function() {
 		.pipe( lintFilter.restore ) // restore all files after linting
 		.pipe( concat( 'main.css' ) )
 		.pipe( sourcemaps.init() )
+		.pipe( changed( base.build + dest.styles ) )
 		.pipe( gulp.dest( base.build + dest.styles ) )
 		.pipe( gulp.dest( base.theme + dest.styles ) )
 		.pipe( browserSync.stream( { match: '**/*.css' } ) )
 		.pipe( cssnano() )
 		.pipe( rename( 'main.min.css' ) )
 		.pipe( sourcemaps.write( '.' ) )
+		.pipe( changed( base.build + dest.styles ) )
 		.pipe( gulp.dest( base.build + dest.styles ) )
 		.pipe( gulp.dest( base.theme + dest.styles ) )
 		.pipe( browserSync.stream( { match: '**/*.css' } ) );
@@ -205,12 +215,14 @@ gulp.task( 'scripts', function() {
 		.pipe( jshint.reporter() )
 		.pipe( concat( 'main.js' ) )
 		.pipe( sourcemaps.init() )
+		.pipe( changed( base.build + dest.scripts ) )
 		.pipe( gulp.dest( base.build + dest.scripts ) )
 		.pipe( gulp.dest( base.theme + dest.scripts ) )
 		.pipe( browserSync.stream() )
 		.pipe( uglify( options.uglify ) )
 		.pipe( rename( 'main.min.js' ) )
 		.pipe( sourcemaps.write( '.' ) )
+		.pipe( changed( base.build + dest.scripts ) )
 		.pipe( gulp.dest( base.build + dest.scripts ) )
 		.pipe( gulp.dest( base.theme + dest.scripts ) )
 		.pipe( browserSync.stream() );
@@ -220,6 +232,7 @@ gulp.task( 'scripts', function() {
 gulp.task( 'images', function() {
 	return gulp.src( glob.images )
 		.pipe( imagemin( options.imagemin ) )
+		.pipe( changed( base.build + dest.images ) )
 		.pipe( gulp.dest( base.build + dest.images ) )
 		.pipe( gulp.dest( base.theme + dest.images ) )
 		.pipe( browserSync.stream() );
@@ -228,6 +241,7 @@ gulp.task( 'images', function() {
 // Fonts: just copy, maintaining tree
 gulp.task( 'fonts', function() {
 	return gulp.src( glob.fonts )
+		.pipe( changed( base.build + dest.fonts ) )
 		.pipe( gulp.dest( base.build + dest.fonts ) )
 		.pipe( gulp.dest( base.theme + dest.fonts ) )
 		.pipe( browserSync.stream() );
