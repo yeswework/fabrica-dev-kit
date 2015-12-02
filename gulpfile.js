@@ -84,9 +84,9 @@ var options = {
 	imagemin: { optimizationLevel: 7, progressive: true, interlaced: true, multipass: true },
 	postcss: [
 		postcssSimpleVars,
-		postcssFontpath,
 		postcssNestedProps,
 		postcssNested,
+		postcssFontpath,
 		lost,
 		autoprefixer( { browsers: [ 'last 3 versions' ] } )
 	]
