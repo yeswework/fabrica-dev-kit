@@ -79,11 +79,11 @@ if ( ! function_exists( 'yww_ajax_handler' ) ) {
 		if ( isset( $_POST[ 'postNonce' ] ) ) {
 			$nonce = $_POST[ 'postNonce' ];
 		} else {
-			send_response( array( 'success' => false, 'error' => "Couldn't retrieve nonce." ) );
+			yww_send_ajax_response( array( 'success' => false, 'error' => "Couldn't retrieve nonce." ) );
 		}
 
 		if ( ! wp_verify_nonce( $nonce, 'yww-post-nonce' ) ) {
-			send_response( array( 'success' => false, 'error' => 'Invalid nonce.' ) );
+			yww_send_ajax_response( array( 'success' => false, 'error' => 'Invalid nonce.' ) );
 		}
 
 		// Retrieve submitted parameters
