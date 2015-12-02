@@ -1,4 +1,7 @@
 site.yml
 dev/src/
+dev/build/
 node_modules/
 wordpress/
+.vagrant/
+Movefile
