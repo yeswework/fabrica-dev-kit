@@ -231,8 +231,8 @@ gulp.task( 'scripts', function() {
 // Images: optimise and copy, maintaining tree
 gulp.task( 'images', function() {
 	return gulp.src( glob.images )
-		.pipe( imagemin( options.imagemin ) )
 		.pipe( changed( base.build + dest.images ) )
+		.pipe( imagemin( options.imagemin ) )
 		.pipe( gulp.dest( base.build + dest.images ) )
 		.pipe( gulp.dest( base.theme + dest.images ) )
 		.pipe( browserSync.stream() );
