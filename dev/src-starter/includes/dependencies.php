@@ -1,7 +1,7 @@
 <?php
-/* ==========================================================================
+/* =========================================================================
    Check required plugins are installed + active, and autoload Composer deps
-   ========================================================================== */
+   ========================================================================= */
 
 // Autoload any Composer dependencies
 if( file_exists( 'vendor/autoload.php' ) ) include_once( 'vendor/autoload.php' );
