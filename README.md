@@ -7,9 +7,14 @@
 * NPM and Bower package files, ready to install development dependencies
 * Gulp script to build, optimise, lint and sync browsers in development (see below for more details)
 
+## Requirements ##
+
+* [Node.js and npm](http://blog.teamtreehouse.com/install-node-js-npm-mac)
+* Only tested on Mac OS X El Capitan, may or may not work on other versions / systems
+
 ## Installation ##
 
-1. Follow steps 1-4 (only) of the [VCCW](http://vccw.cc/) installation process
+1. Follow steps 1-4 (only) of the [VCCW](http://vccw.cc/) installation guide
 2. Clone this repository into a project folder, eg. `git clone https://.../yww-wp-vagrant-dev-kit.git project.dev`
 3. Rename `site-example.yml` to `site.yml` and edit it with basic site details (slug, domain, name, FTP details, etc)
 4. Run the `./setup.sh` shell script which will automatically:
@@ -43,9 +48,9 @@ The Gulp build routine (which is executed by `gulp build`, or `gulp` if you also
 * Concatenates third-party front-end libraries (Bower dependencies) into `lib.css` and `lib.js` (plus minified versions)
 * Preprocesses author CSS using the following PostCSS libraries:
     * [postcss-simple-vars](https://github.com/postcss/postcss-simple-vars)
-    * [postcss-fontpath](https://github.com/seaneking/postcss-fontpath)
     * [postcss-nested-props](https://github.com/jedmao/postcss-nested-props)
     * [postcss-nested](https://github.com/postcss/postcss-nested)
+    * [postcss-fontpath](https://github.com/seaneking/postcss-fontpath)
     * [lost grid](https://github.com/corysimmons/lost)
     * [autoprefixer](https://github.com/postcss/autoprefixer)
 * Concatenates author CSS and JS into `main.js` and `main.css` (plus minified versions, with source mapping)
