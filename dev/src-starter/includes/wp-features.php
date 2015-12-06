@@ -3,9 +3,9 @@
    Register / deregister WP standard theme features
    ========================================================================= */
 
-if ( ! function_exists( 'yww_theme_features' ) ) {
+if ( ! function_exists( 'ywwThemeFeatures' ) ) {
 
-	function yww_theme_features()  {
+	function ywwThemeFeatures()  {
 
 		// Featured images
 		add_theme_support( 'post-thumbnails' );
@@ -40,6 +40,6 @@ if ( ! function_exists( 'yww_theme_features' ) ) {
 		remove_action( 'wp_print_styles', 'print_emoji_styles' );
 
 	}
-	add_action( 'after_setup_theme', 'yww_theme_features' );
+	add_action( 'after_setup_theme', 'ywwThemeFeatures' );
 
 }

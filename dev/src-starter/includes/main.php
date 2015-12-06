@@ -13,10 +13,10 @@ if ( ! isset( $content_width ) ) {
 }
 
 
-// Register menus
-if ( ! function_exists( 'yww_menus' ) ) {
+// Register menus with WP
+if ( ! function_exists( 'ywwMenus' ) ) {
 
-	function yww_menus() {
+	function ywwMenus() {
 
 		$locations = array(
 			'main' => __( 'Main menu', 'yww' ),
@@ -24,24 +24,30 @@ if ( ! function_exists( 'yww_menus' ) ) {
 		register_nav_menus( $locations );
 
 	}
-	add_action( 'init', 'yww_menus' );
+	add_action( 'init', 'ywwMenus' );
 
-	function yww_timber_menus( $context ) {
+}
+
+
+// Register menus with Timber
+if ( ! function_exists( 'ywwTimberMenus' ) ) {
+
+	function ywwTimberMenus( $context ) {
 
 		$context[ 'menus' ][ 'main' ] = new TimberMenu( 'main' );
 		return $context;
 
 	}
-	add_filter( 'timber_context', 'yww_timber_menus' );
+	add_filter( 'timber_context', 'ywwTimberMenus' );
 
 }
 
 
 // Send script variables to front end
 // TODO: Add nonce for AJAX requests
-if ( ! function_exists( 'yww_update_script_vars' ) ) {
+if ( ! function_exists( 'ywwUpdateScriptVars' ) ) {
 
-	function yww_update_script_vars( $scriptVars = array() ) {
+	function ywwUpdateScriptVars( $scriptVars = array() ) {
 
 		// Non-destructively merge script variables according to page or query conditions
 		if ( is_single() ) {
@@ -56,14 +62,14 @@ if ( ! function_exists( 'yww_update_script_vars' ) ) {
 		return $scriptVars;
 
 	}
-	add_filter( 'yww_script_vars', 'yww_update_script_vars' );
+	add_filter( 'yww_script_vars', 'ywwUpdateScriptVars' );
 
 }
 
 // Send AJAX responses
-if ( ! function_exists( 'yww_send_ajax_response' ) ) {
+if ( ! function_exists( 'ywwSendAjaxResponse' ) ) {
 
-	function yww_send_ajax_response( $response ) {
+	function ywwSendAjaxResponse( $response ) {
 		
 		header( 'Content-Type: application/json' );
 		echo json_encode( $response );
@@ -73,18 +79,18 @@ if ( ! function_exists( 'yww_send_ajax_response' ) ) {
 }
 
 // Handle AJAX requests
-if ( ! function_exists( 'yww_ajax_handler' ) ) {
+if ( ! function_exists( 'ywwAjaxHandler' ) ) {
 
-	function yww_ajax_handler() {
+	function ywwAjaxHandler() {
 
 		if ( isset( $_POST[ 'postNonce' ] ) ) {
 			$nonce = $_POST[ 'postNonce' ];
 		} else {
-			yww_send_ajax_response( array( 'success' => false, 'error' => "Couldn't retrieve nonce." ) );
+			ywwSendAjaxResponse( array( 'success' => false, 'error' => "Couldn't retrieve nonce." ) );
 		}
 
 		if ( ! wp_verify_nonce( $nonce, 'yww-post-nonce' ) ) {
-			yww_send_ajax_response( array( 'success' => false, 'error' => 'Invalid nonce.' ) );
+			ywwSendAjaxResponse( array( 'success' => false, 'error' => 'Invalid nonce.' ) );
 		}
 
 		// Retrieve submitted parameters
@@ -92,10 +98,10 @@ if ( ! function_exists( 'yww_ajax_handler' ) ) {
 
 		// Now do whatever we need to do
 
-		yww_send_ajax_response( array( 'success' => true ) );
+		ywwSendAjaxResponse( array( 'success' => true ) );
 
 	} 
-	add_action( 'wp_ajax_nopriv_ajax-ACTION', 'yww_ajax_handler' );
-	add_action( 'wp_ajax_ajax-ACTION', 'yww_ajax_handler' );
+	add_action( 'wp_ajax_nopriv_ajax-ACTION', 'ywwAjaxHandler' );
+	add_action( 'wp_ajax_ajax-ACTION', 'ywwAjaxHandler' );
 
 }

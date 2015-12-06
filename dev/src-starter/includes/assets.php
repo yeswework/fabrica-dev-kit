@@ -4,9 +4,9 @@
    ========================================================================= */
 
 // Enqueue front-end scripts and styles
-if ( !function_exists( 'yww_enqueue_scripts' ) ) { 
+if ( !function_exists( 'ywwEnqueueScripts' ) ) { 
 	
-	function yww_enqueue_scripts() {
+	function ywwEnqueueScripts() {
 
 		// Load uncompressed scripts when debug mode is on
 		if ( WP_DEBUG === true ) {
@@ -24,7 +24,7 @@ if ( !function_exists( 'yww_enqueue_scripts' ) ) {
 
 		// Pass variables to JavaScript at runtime; see: http://codex.wordpress.org/Function_Reference/wp_localize_script
 		$scriptVars = array();
-		$scriptVars = apply_filters( 'yww_script_vars', $scriptVars );
+		$scriptVars = apply_filters( 'ywwScriptVars', $scriptVars );
 		if ( !empty( $scriptVars ) ) {
 			wp_localize_script( 'yww-main', 'yww', $scriptVars );
 		}
@@ -36,14 +36,14 @@ if ( !function_exists( 'yww_enqueue_scripts' ) ) {
 		wp_enqueue_style( 'yww-main' );
 
 	} 
-	add_action( 'wp_enqueue_scripts', 'yww_enqueue_scripts' );
+	add_action( 'wp_enqueue_scripts', 'ywwEnqueueScripts' );
 
 }
 
 // Inject Google Analytics snippet to footer if ID set
-if ( !function_exists( 'yww_inject_analytics' ) ) { 
+if ( !function_exists( 'ywwInjectAnalytics' ) ) { 
 
-	function yww_inject_analytics() {
+	function ywwInjectAnalytics() {
 
 		global $googleAnalyticsId; 
 		if( isset( $googleAnalyticsId ) && $googleAnalyticsId != '' ) {
@@ -60,6 +60,6 @@ if ( !function_exists( 'yww_inject_analytics' ) ) {
 		}
 		
 	}
-	add_action( 'wp_footer', 'yww_inject_analytics' );
+	add_action( 'wp_footer', 'ywwInjectAnalytics' );
 
 }
