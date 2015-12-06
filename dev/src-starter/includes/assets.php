@@ -24,7 +24,7 @@ if ( !function_exists( 'ywwEnqueueScripts' ) ) {
 
 		// Pass variables to JavaScript at runtime; see: http://codex.wordpress.org/Function_Reference/wp_localize_script
 		$scriptVars = array();
-		$scriptVars = apply_filters( 'ywwScriptVars', $scriptVars );
+		$scriptVars = apply_filters( 'yww_script_vars', $scriptVars );
 		if ( !empty( $scriptVars ) ) {
 			wp_localize_script( 'yww-main', 'yww', $scriptVars );
 		}
