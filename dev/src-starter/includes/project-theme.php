@@ -5,18 +5,19 @@
 
 require_once('yww-theme.php');
 
-// Set project namespace
-$projectNamespace = 'yww';
-
 // Set content width value based on the theme's design
 $content_width = 1440;
 
 class ProjectTheme extends YWWTheme {
 
-	// Set Google Analytics ID
-	// protected $googleAnalyticsId = '';
+	public static $namespace = 'yww';
 
 	function __construct() {
+
+		// Set the Google Analytics ID (parent property)
+		$this->googleAnalyticsId = '';
+		// Set the YWWTheme project namespace (parent property)
+		$this->projectNamespace = self::$namespace;
 
 		add_action('init', array($this, 'menus'));
 		add_filter('timber_context', array($this, 'timberMenus'));
@@ -32,7 +33,7 @@ class ProjectTheme extends YWWTheme {
 	function menus() {
 
 		$locations = array(
-			'main' => __('Main menu', $projectNamespace),
+			'main' => __('Main menu', $this->projectNamespace),
 		);
 		register_nav_menus($locations);
 
@@ -55,8 +56,8 @@ class ProjectTheme extends YWWTheme {
 				'ajaxUrl' => admin_url('admin-ajax.php'),
 				'postNonce' => wp_create_nonce('yww-post-nonce'),
 				'nameSpaced' => array(
-					'key1' => __('value one', $projectNamespace),
-					'key2' => __('value two', $projectNamespace)
+					'key1' => __('value one', $this->projectNamespace),
+					'key2' => __('value two', $this->projectNamespace)
 			)));
 		}
 		return $scriptVars;
@@ -96,6 +97,6 @@ class ProjectTheme extends YWWTheme {
 
 }
 
-class_alias(ProjectTheme, $projectNamespace);
+class_alias(ProjectTheme, ProjectTheme::$namespace);
 
 $project = new ProjectTheme();

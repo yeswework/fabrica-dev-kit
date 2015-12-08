@@ -7,6 +7,8 @@ class YWWTheme {
 
 	// Set Google Analytics ID
 	protected $googleAnalyticsId = '';
+	// Project namespace to be set in child class
+	public $projectNamespace;
 
 	function __construct() {
 
@@ -38,7 +40,7 @@ class YWWTheme {
 		$scriptVars = array();
 		$scriptVars = apply_filters('yww_script_vars', $scriptVars);
 		if (!empty($scriptVars)) {
-			wp_localize_script('yww-main', 'yww', $scriptVars);
+			wp_localize_script('yww-main', $this->projectNamespace, $scriptVars);
 		}
 
 		// Repeat for stylesheets, first libraries, then theme-specific
@@ -79,7 +81,7 @@ class YWWTheme {
 		add_theme_support('title-tag');
 
 		// Translation
-		load_theme_textdomain('yww', get_template_directory() . '/language');
+		load_theme_textdomain($this->projectNamespace, get_template_directory() . '/language');
 
 		// Clean up wp_head output
 		remove_action('wp_head', 'rsd_link'); // remove really simple discovery link
