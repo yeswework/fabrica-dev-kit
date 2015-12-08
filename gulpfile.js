@@ -58,7 +58,7 @@ var base = {
 // Globs for each file type
 var glob = {
 	bower: base.src + 'bower_components/**/*.php',
-	includes: base.src + 'includes/**/*.php',
+	includes: [base.src + 'includes/**/*.php', base.src + 'includes/.env'],
 	controllers: base.src + 'templates/controllers/**/*.php',
 	views: base.src + 'templates/**/*.twig',
 	styles: base.src + 'assets/css/**/*.{css,pcss}',
