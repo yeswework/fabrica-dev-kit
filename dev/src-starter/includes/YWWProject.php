@@ -18,13 +18,18 @@ class YWWProject extends YWWBase {
 		$this->googleAnalyticsId = '';
 		// Set the YWW project namespace (parent property)
 		$this->projectNamespace = self::$namespace;
+		// Set namespaced handles and tags
+		$this->mainHandle = $this->projectNamespace . '-main';
+		$this->libHandle = $this->projectNamespace . '-lib';
+		$this->varsTag = $this->projectNamespace . '_script_vars';
 
 		add_action('init', array($this, 'menus'));
 		add_filter('timber_context', array($this, 'timberMenus'));
-		add_filter('yww_script_vars', array($this, 'updateScriptVars'));
+		add_filter($this->varsTag, array($this, 'updateScriptVars'));
 		// AJAX requests
 		add_action('wp_ajax_nopriv_ajax-ACTION', array($this, 'ajaxHandler'));
 		add_action('wp_ajax_ajax-ACTION', array($this, 'ajaxHandler'));
+
 		parent::__construct();
 
 	}

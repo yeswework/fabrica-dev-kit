@@ -9,6 +9,12 @@ class YWWBase {
 	protected $googleAnalyticsId = '';
 	// Project namespace to be set in child class
 	public $projectNamespace;
+	// Project scripts main handle
+	public $mainHandle;
+	// Project scripts lib handle
+	public $libHandle;
+	// Project vars filter tag
+	public $varsTag;
 
 	function __construct() {
 
@@ -31,23 +37,23 @@ class YWWBase {
 
 		// Load third-party libraries, if they exist
 		wp_deregister_script('jquery');
-		wp_enqueue_script('yww-lib', get_stylesheet_directory_uri() . '/js/lib' . $suffix . '.js', array(), filemtime(get_template_directory() . '/js/lib' . $suffix . '.js'), true);
+		wp_enqueue_script($this->libHandle, get_stylesheet_directory_uri() . '/js/lib' . $suffix . '.js', array(), filemtime(get_template_directory() . '/js/lib' . $suffix . '.js'), true);
 
 		// Load theme-specific code
-		wp_enqueue_script('yww-main', get_stylesheet_directory_uri() . '/js/main' . $suffix . '.js', array('yww-lib'), filemtime(get_template_directory() . '/js/main' . $suffix . '.js'), true);
+		wp_enqueue_script($this->mainHandle, get_stylesheet_directory_uri() . '/js/main' . $suffix . '.js', array($this->libHandle), filemtime(get_template_directory() . '/js/main' . $suffix . '.js'), true);
 
 		// Pass variables to JavaScript at runtime; see: http://codex.wordpress.org/Function_Reference/wp_localize_script
 		$scriptVars = array();
-		$scriptVars = apply_filters('yww_script_vars', $scriptVars);
+		$scriptVars = apply_filters($this->varsTag, $scriptVars);
 		if (!empty($scriptVars)) {
-			wp_localize_script('yww-main', $this->projectNamespace, $scriptVars);
+			wp_localize_script($this->mainHandle, $this->projectNamespace, $scriptVars);
 		}
 
 		// Repeat for stylesheets, first libraries, then theme-specific
-		wp_register_style('yww-lib', get_stylesheet_directory_uri() . '/css/lib' . $suffix . '.css', $dependencies = array(), filemtime(get_template_directory() . '/css/lib' . $suffix . '.css'));
-		wp_enqueue_style('yww-lib');
-		wp_register_style('yww-main', get_stylesheet_directory_uri() . '/css/main' . $suffix . '.css', $dependencies = array(), filemtime(get_template_directory() . '/css/main' . $suffix . '.css'));
-		wp_enqueue_style('yww-main');
+		wp_register_style($this->libHandle, get_stylesheet_directory_uri() . '/css/lib' . $suffix . '.css', $dependencies = array(), filemtime(get_template_directory() . '/css/lib' . $suffix . '.css'));
+		wp_enqueue_style($this->libHandle);
+		wp_register_style($this->mainHandle, get_stylesheet_directory_uri() . '/css/main' . $suffix . '.css', $dependencies = array(), filemtime(get_template_directory() . '/css/main' . $suffix . '.css'));
+		wp_enqueue_style($this->mainHandle);
 
 	}
 
