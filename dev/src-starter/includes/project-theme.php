@@ -5,13 +5,16 @@
 
 require_once('yww-theme.php');
 
+// Set project namespace
+$projectNamespace = 'yww';
+
+// Set content width value based on the theme's design
+$content_width = 1440;
+
 class ProjectTheme extends YWWTheme {
 
 	// Set Google Analytics ID
 	// protected $googleAnalyticsId = '';
-
-	// Set content width value based on the theme's design
-	public $content_width = 1440;
 
 	function __construct() {
 
@@ -29,7 +32,7 @@ class ProjectTheme extends YWWTheme {
 	function menus() {
 
 		$locations = array(
-			'main' => __('Main menu', 'yww'),
+			'main' => __('Main menu', $projectNamespace),
 		);
 		register_nav_menus($locations);
 
@@ -52,8 +55,8 @@ class ProjectTheme extends YWWTheme {
 				'ajaxUrl' => admin_url('admin-ajax.php'),
 				'postNonce' => wp_create_nonce('yww-post-nonce'),
 				'nameSpaced' => array(
-					'key1' => __('value one', 'yww'),
-					'key2' => __('value two', 'yww')
+					'key1' => __('value one', $projectNamespace),
+					'key2' => __('value two', $projectNamespace)
 			)));
 		}
 		return $scriptVars;
@@ -93,4 +96,6 @@ class ProjectTheme extends YWWTheme {
 
 }
 
-new ProjectTheme();
+class_alias(ProjectTheme, $projectNamespace);
+
+$project = new ProjectTheme();
