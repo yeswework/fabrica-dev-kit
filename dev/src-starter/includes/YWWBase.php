@@ -87,7 +87,7 @@ class YWWBase {
 		add_theme_support('title-tag');
 
 		// Translation
-		load_theme_textdomain($this->projectNamespace, get_template_directory() . '/language');
+		load_theme_textdomain($this->projectNamespace, get_stylesheet_directory() . '/language');
 
 		// Clean up wp_head output
 		remove_action('wp_head', 'rsd_link'); // remove really simple discovery link

@@ -6,7 +6,9 @@
 require_once('YWWBase.php');
 
 // Set content width value based on the theme's design
-$content_width = 1440;
+if (!isset($content_width)) {
+	$content_width = 1440;
+}
 
 class YWWProject extends YWWBase {
 
