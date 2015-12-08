@@ -3,7 +3,7 @@
    Base class for YWW functions
    ========================================================================= */
 
-class YWWTheme {
+class YWWBase {
 
 	// Set Google Analytics ID
 	protected $googleAnalyticsId = '';

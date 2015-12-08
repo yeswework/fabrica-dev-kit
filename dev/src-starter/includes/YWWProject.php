@@ -1,14 +1,14 @@
 <?php
 /* =========================================================================
-   Project-specific code
+   Project-specific configuration, scripts and handlers
    ========================================================================= */
 
-require_once('yww-theme.php');
+require_once('YWWBase.php');
 
 // Set content width value based on the theme's design
 $content_width = 1440;
 
-class ProjectTheme extends YWWTheme {
+class YWWProject extends YWWBase {
 
 	public static $namespace = 'yww';
 
@@ -16,7 +16,7 @@ class ProjectTheme extends YWWTheme {
 
 		// Set the Google Analytics ID (parent property)
 		$this->googleAnalyticsId = '';
-		// Set the YWWTheme project namespace (parent property)
+		// Set the YWW project namespace (parent property)
 		$this->projectNamespace = self::$namespace;
 
 		add_action('init', array($this, 'menus'));
@@ -97,6 +97,4 @@ class ProjectTheme extends YWWTheme {
 
 }
 
-class_alias(ProjectTheme, ProjectTheme::$namespace);
-
-$project = new ProjectTheme();
+$ywwProject = new YWWProject();
