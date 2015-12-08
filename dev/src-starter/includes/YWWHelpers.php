@@ -9,4 +9,4 @@ class YWWHelpers {
 
 }
 
-class_alias(YWWHelpers, YWWProject::$namespace);
+class_alias(YWWHelpers, $ywwProject->projectNamespace);

@@ -12,14 +12,12 @@ if (!isset($content_width)) {
 
 class YWWProject extends YWWBase {
 
-	public static $namespace = 'yww';
-
 	function __construct() {
 
 		// Set the Google Analytics ID (parent property)
 		$this->googleAnalyticsId = '';
 		// Set the YWW project namespace (parent property)
-		$this->projectNamespace = self::$namespace;
+		$this->projectNamespace = 'yww';
 		// Set namespaced handles and tags
 		$this->mainHandle = $this->projectNamespace . '-main';
 		$this->libHandle = $this->projectNamespace . '-lib';
