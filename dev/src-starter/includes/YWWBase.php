@@ -20,6 +20,9 @@ class YWWBase {
 	// Project vars filter tag
 	public $varsTag;
 
+	// Menus array
+	public $menus;
+
 	function __construct() {
 
 		// Assets
