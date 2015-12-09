@@ -32,6 +32,7 @@ class YWWBase {
 		// Features
 		add_action('after_setup_theme', array($this, 'themeFeatures'));
 
+		// Menus
 		add_action('init', array($this, 'menus'));
 		add_filter('timber_context', array($this, 'timberMenus'));
 
