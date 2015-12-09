@@ -29,6 +29,9 @@ class YWWBase {
 		// Features
 		add_action('after_setup_theme', array($this, 'themeFeatures'));
 
+		add_action('init', array($this, 'menus'));
+		add_filter('timber_context', array($this, 'timberMenus'));
+
 	}
 
 	function enqueueScripts() {
@@ -113,6 +116,27 @@ class YWWBase {
 
 		remove_action('wp_head', 'print_emoji_detection_script', 7);
 		remove_action('wp_print_styles', 'print_emoji_styles');
+
+	}
+
+	// Register menus with WP
+	function menus() {
+
+		$locations = array();
+		foreach ($this->menus as $slug => $name) {
+			$locations[$slug] = __($name, $this->projectNamespace);
+		}
+		register_nav_menus($locations);
+
+	}
+
+	// Register menus with Timber
+	function timberMenus($context) {
+
+		foreach($this->menus as $slug => $name) {
+			$context['menus'][$slug] = new TimberMenu($slug);
+		}
+		return $context;
 
 	}
 

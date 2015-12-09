@@ -33,32 +33,9 @@ class YWWProject extends YWWBase {
 		$this->varsTag = $this->projectNamespace . '_script_vars';
 		$this->postNonce = $this->projectNamespace . '-post-nonce';
 
-		add_action('init', array($this, 'menus'));
-		add_filter('timber_context', array($this, 'timberMenus'));
 		add_filter($this->varsTag, array($this, 'updateScriptVars'));
 
 		parent::__construct();
-
-	}
-
-	// Register menus with WP
-	function menus() {
-
-		$locations = array();
-		foreach ($this->menus as $slug => $name) {
-			$locations[$slug] = __($name, $this->projectNamespace);
-		}
-		register_nav_menus($locations);
-
-	}
-
-	// Register menus with Timber
-	function timberMenus($context) {
-
-		foreach($this->menus as $slug => $name) {
-			$context['menus'][$slug] = new TimberMenu($slug);
-		}
-		return $context;
 
 	}
 
