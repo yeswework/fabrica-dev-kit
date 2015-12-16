@@ -6,6 +6,7 @@ var gulp = require('gulp'),
 	autoprefixer = require('autoprefixer'),
 	browserSync = require('browser-sync').create(),
 	del = require('del'),
+	beml = require('gulp-beml'),
 	concat = require('gulp-concat'),
 	changed = require('gulp-changed'),
 	csslint = require('gulp-csslint'),
@@ -58,7 +59,7 @@ var base = {
 // Globs for each file type
 var glob = {
 	bower: base.src + 'bower_components/**/*.php',
-	includes: [base.src + 'includes/**/*.php', base.src + 'includes/.env'],
+	includes: [base.src + 'includes/**/*.php', base.src + 'includes/*.env'],
 	controllers: base.src + 'templates/controllers/**/*.php',
 	views: base.src + 'templates/**/*.twig',
 	styles: base.src + 'assets/css/**/*.{css,pcss}',
@@ -179,6 +180,11 @@ gulp.task('views', function() {
 	return gulp.src(glob.views)
 		.pipe(flatten())
 		.pipe(changed(base.build + dest.views))
+		.pipe(beml({
+			elemPrefix: '__',
+			modPrefix: '--',
+			modDlmtr: '_'
+		}))
 		.pipe(gulp.dest(base.build + dest.views))
 		.pipe(gulp.dest(base.theme + dest.views))
 		.pipe(browserSync.stream());

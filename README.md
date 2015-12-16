@@ -16,7 +16,7 @@
 
 1. Follow steps 1-4 (only) of the [VCCW](http://vccw.cc/) installation guide
 2. Clone this repository into a project folder, eg. `git clone https://.../yww-wp-vagrant-dev-kit.git project.dev`
-3. Rename `site-example.yml` to `site.yml` and edit it with basic site details (slug, domain, name, FTP details, etc)
+3. Copy `site-example.yml` to `site.yml` and edit it with basic site details (slug, domain, name, FTP details, etc)
 4. Run the `./setup.sh` shell script which will automatically:
 	* install all development and front-end dependencies via NPM and Bower
     * provision and activate the Vagrant virtual machine

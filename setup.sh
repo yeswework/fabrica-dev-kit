@@ -10,8 +10,8 @@
 # exit on error
 set -e
 
-# rename starter source folder: this will preserve changes if/when kit updated
-mv dev/src-starter dev/src
+# copy starter source folder: this will preserve changes if/when kit updated
+cp dev/src-starter dev/src
 
 # install build dependencies (Gulp + extensions)
 npm install
