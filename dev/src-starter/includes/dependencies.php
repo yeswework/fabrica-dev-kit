@@ -4,12 +4,14 @@
    ========================================================================= */
 
 // Autoload any Composer dependencies
-if(file_exists('vendor/autoload.php')) include_once('vendor/autoload.php');
+if (file_exists('vendor/autoload.php')) {
+	include_once('vendor/autoload.php');
+}
 
 // Timber: https://github.com/jarednova/timber/
 if (!class_exists('Timber')) {
 
-	if(is_admin()) {
+	if (is_admin()) {
 
 		add_action('admin_notices', function() {
 			echo '<div class="error"><p>Error: theme requires <strong>Timber</strong> plugin to be installed and activated.</p></div>';
@@ -30,7 +32,7 @@ if (!class_exists('Timber')) {
 // Advanced Custom Fields: http://www.advancedcustomfields.com/
 if (!class_exists('acf')) {
 
-	if(is_admin()) {
+	if (is_admin()) {
 
 		add_action('admin_notices', function() {
 			echo '<div class="error"><p>Error: theme requires <strong>Advanced Custom Fields</strong> plugin to be installed and activated.</p></div>';
