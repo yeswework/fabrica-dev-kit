@@ -12,13 +12,13 @@
 <body class="{{ body_class }}">
 
 	{% block header %}
-		<header class="siteHeader">
-			<a class="siteHeader__logo" href="{{ site.url }}">{{ site.name }}</a>
-			<nav class="siteHeader__menu mainMenu">
+		<header block="siteHeader">
+			<a elem="logo" href="{{ site.url }}">{{ site.name }}</a>
+			<nav elem="menu" mix="block:mainMenu">
 				<h1 class="hidden">Main menu</h1>
-				<ul class="mainMenu__list">
+				<ul block="mainMenu" elem="list">
 					{% for item in menus.main.get_items %}
-						<li class="mainMenu__item{{ item.classes | join(' ') }}"><a class="mainMenu__link" href="{{ item.get_link }}">{{ item.title }}</a></li>
+						<li block="mainMenu" elem="item{{ item.classes | join(' ') }}"><a block="mainMenu" elem="link" href="{{ item.get_link }}">{{ item.title }}</a></li>
 					{% endfor %}
 				</ul>
 			</nav>
