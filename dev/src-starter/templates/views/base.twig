@@ -18,7 +18,7 @@
 				<h1 class="hidden">Main menu</h1>
 				<ul block="mainMenu" elem="list">
 					{% for item in menus.main.get_items %}
-						<li block="mainMenu" elem="item{{ item.classes | join(' ') }}"><a block="mainMenu" elem="link" href="{{ item.get_link }}">{{ item.title }}</a></li>
+						<li elem="item{{ item.classes | join(' ') }}"><a elem="link" href="{{ item.get_link }}">{{ item.title }}</a></li>
 					{% endfor %}
 				</ul>
 			</nav>
