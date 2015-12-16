@@ -183,7 +183,7 @@ gulp.task('views', function() {
 		.pipe(beml({
 			elemPrefix: '__',
 			modPrefix: '--',
-			modDlmtr: '_'
+			modDlmtr: '-'
 		}))
 		.pipe(gulp.dest(base.build + dest.views))
 		.pipe(gulp.dest(base.theme + dest.views))
