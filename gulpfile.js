@@ -59,7 +59,7 @@ var base = {
 // Globs for each file type
 var glob = {
 	bower: base.src + 'bower_components/**/*.php',
-	includes: [base.src + 'includes/**/*.php', base.src + 'includes/*.env'],
+	includes: [base.src + 'includes/**/*.php', base.src + 'includes/.env'],
 	controllers: base.src + 'templates/controllers/**/*.php',
 	views: base.src + 'templates/**/*.twig',
 	styles: base.src + 'assets/css/**/*.{css,pcss}',
@@ -270,12 +270,12 @@ function watch() {
 		proxy: projectUrl,
 		open: false
 	});
-	gulp.watch(glob.styles, {usePolling: true}, gulp.series('styles'));
-	gulp.watch(glob.bower, {usePolling: true}, gulp.series('bower'));
-	gulp.watch(glob.includes, {usePolling: true}, gulp.series('includes'));
-	gulp.watch(glob.controllers, {usePolling: true}, gulp.series('controllers'));
-	gulp.watch(glob.views, {usePolling: true}, gulp.series('views'));
-	gulp.watch(glob.scripts, {usePolling: true}, gulp.series('scripts'));
-	gulp.watch(glob.images, {usePolling: true}, gulp.series('images'));
-	gulp.watch(glob.fonts, {usePolling: true}, gulp.series('fonts'));
+	gulp.watch(glob.styles, gulp.series('styles'));
+	gulp.watch(glob.bower, gulp.series('bower'));
+	gulp.watch(glob.includes, gulp.series('includes'));
+	gulp.watch(glob.controllers, gulp.series('controllers'));
+	gulp.watch(glob.views, gulp.series('views'));
+	gulp.watch(glob.scripts, gulp.series('scripts'));
+	gulp.watch(glob.images, gulp.series('images'));
+	gulp.watch(glob.fonts, gulp.series('fonts'));
 }
