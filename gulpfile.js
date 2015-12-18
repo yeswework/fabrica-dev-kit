@@ -165,7 +165,7 @@ gulp.task('style.css', function(cb) {
 
 // Put ACF JSON back (previously saved with acfPull task)
 gulp.task('acf', function() {
-	fs.mkdir(base.theme + dest.acf); // Create this folder under any circumstances, so ACF saves to it
+	fs.mkdirSync(base.theme + dest.acf); // Create this folder under any circumstances, so ACF saves to it
 	return gulp.src(glob.acf)
 		.pipe(gulp.dest(base.build + dest.acf))
 		.pipe(gulp.dest(base.theme + dest.acf));
