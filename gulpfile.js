@@ -67,7 +67,7 @@ var glob = {
 	styles: base.src + 'assets/css/**/*.{css,pcss}',
 	scripts: base.src + 'assets/js/**/*.js',
 	images: base.src + 'assets/img/**/*',
-	fonts: base.src + 'assets/fonts/**/*',
+	fonts: base.src + 'assets/fonts/**/*'
 };
 
 // Build folder slugs
