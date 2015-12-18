@@ -101,23 +101,23 @@ var options = {
 	}
 };
 
-// Before cleaning, retrieve latest ACF JSON from live theme
-// This is the only task which modifies the src folder
-gulp.task('acfPull', function() {
-	del(base.src + dest.acf);
+// Before cleaning, retrieve latest ACF JSON from live theme (delete first)
+// These are the only tasks which modify the src folder
+function acfClean() {
+	return del(base.src + dest.acf);
+}
+function acfPull() {
 	return gulp.src(glob.acfTheme)
 		.pipe(gulp.dest(base.src + dest.acf));
-});
+}
 
 // Erase build and theme folders before each compile
-gulp.task('clean', function(cb) {
-	del(base.build);
-	del(base.theme, {force: true});
-	cb(); // indicate completion
-});
+function clean() {
+	return del([base.build, base.theme], {force: true});
+}
 
 // Bower: concatenate "main files" into library script and stylesheet and copy
-gulp.task('bower', function() {
+function bower() {
 	var jsFilter = gulpFilter('**/*.js', {restore: true});
 	var cssFilter = gulpFilter('**/*.css', {restore: true});
 	return gulp.src(mainBowerFiles({paths: base.src}))
@@ -150,10 +150,10 @@ gulp.task('bower', function() {
 		.pipe(gulp.dest(base.build + dest.styles))
 		.pipe(gulp.dest(base.theme + dest.styles))
 		.pipe(browserSync.stream({match: '**/*.css'}));
-});
+}
 
 // style.css: auto-create our theme's style.css using project info we already have
-gulp.task('style.css', function(cb) {
+function styleCss(cb) {
 	var data = '/*\r\n'
 		+ 'Theme Name: ' + projectName + '\r\n'
 		+ 'Theme URI: http://' + projectUrl + '\r\n'
@@ -161,18 +161,18 @@ gulp.task('style.css', function(cb) {
 	fs.writeFileSync(base.build + 'style.css', data);
 	fs.writeFileSync(base.theme + 'style.css', data);
 	cb(); // indicate completion
-});
+}
 
 // Put ACF JSON back (previously saved with acfPull task)
-gulp.task('acf', function() {
+function acf() {
 	fs.mkdirSync(base.theme + dest.acf); // Create this folder under any circumstances, so ACF saves to it
 	return gulp.src(glob.acf)
 		.pipe(gulp.dest(base.build + dest.acf))
 		.pipe(gulp.dest(base.theme + dest.acf));
-});
+}
 
 // Includes: copy internal PHP dependencies to an inc folder and auto-create functions.php with includes
-gulp.task('includes', function() {
+function includes() {
 	fs.writeFileSync(base.build + 'functions.php', '<?php\r\n'); // create a blank functions.php
 	fs.writeFileSync(base.theme + 'functions.php', '<?php\r\n');
 	var nonVendorFilter = gulpFilter('*.php', {restore: true}); // only require top-level files in functions.php
@@ -187,31 +187,30 @@ gulp.task('includes', function() {
 		.pipe(gulp.dest(base.build + dest.includes))
 		.pipe(gulp.dest(base.theme + dest.includes))
 		.pipe(browserSync.stream());
-});
+}
 
 // Controllers: copy PHP files, flattening tree
-gulp.task('controllers', function() {
+function controllers() {
 	return gulp.src(glob.controllers)
 		.pipe(flatten())
 		.pipe(changed(base.build + dest.controllers))
 		.pipe(gulp.dest(base.build + dest.controllers))
 		.pipe(gulp.dest(base.theme + dest.controllers))
 		.pipe(browserSync.stream());
-});
+}
 
 // Views: copy Twig files, flattening tree
-gulp.task('views', function() {
-	return gulp.src(glob.views)
+function views() {	return gulp.src(glob.views)
 		.pipe(flatten())
 		.pipe(changed(base.build + dest.views))
-		.pipe(beml(options.beml))
+		// .pipe(beml(options.beml))
 		.pipe(gulp.dest(base.build + dest.views))
 		.pipe(gulp.dest(base.theme + dest.views))
 		.pipe(browserSync.stream());
-});
+}
 
 // Styles (CSS): lint, concatenate into one file, write source map, postcss, save full and minified versions, then copy
-gulp.task('styles', function() {
+function styles() {
 	var lintFilter = gulpFilter(['**/*', '!defaults.css', '!helpers.css'], {restore: true});
 	return gulp.src(glob.styles)
 		.pipe(postcss(options.postcss))
@@ -232,10 +231,10 @@ gulp.task('styles', function() {
 		.pipe(gulp.dest(base.build + dest.styles))
 		.pipe(gulp.dest(base.theme + dest.styles))
 		.pipe(browserSync.stream({match: '**/*.css'}));
-});
+}
 
 // Scripts (JS): lint, concatenate into one file, save full and minified versions, then copy
-gulp.task('scripts', function() {
+function scripts() {
 	return gulp.src(glob.scripts)
 		.pipe(jshint())
 		.pipe(jshint.reporter())
@@ -252,29 +251,29 @@ gulp.task('scripts', function() {
 		.pipe(gulp.dest(base.build + dest.scripts))
 		.pipe(gulp.dest(base.theme + dest.scripts))
 		.pipe(browserSync.stream());
-});
+}
 
 // Images: optimise and copy, maintaining tree
-gulp.task('images', function() {
+function images() {
 	return gulp.src(glob.images)
 		.pipe(changed(base.build + dest.images))
 		.pipe(imagemin(options.imagemin))
 		.pipe(gulp.dest(base.build + dest.images))
 		.pipe(gulp.dest(base.theme + dest.images))
 		.pipe(browserSync.stream());
-});
+}
 
 // Fonts: just copy, maintaining tree
-gulp.task('fonts', function() {
+function fonts() {
 	return gulp.src(glob.fonts)
 		.pipe(changed(base.build + dest.fonts))
 		.pipe(gulp.dest(base.build + dest.fonts))
 		.pipe(gulp.dest(base.theme + dest.fonts))
 		.pipe(browserSync.stream());
-});
+}
 
 // Build: sequences all the other tasks
-gulp.task('build', gulp.series('acfPull', 'clean', 'bower', gulp.parallel('style.css', 'acf', 'includes', 'controllers', 'views', 'styles', 'scripts', 'images', 'fonts')));
+gulp.task('build', gulp.series(acfClean, acfPull, clean, bower, gulp.parallel(styleCss, acf, includes, controllers, views, styles, scripts, images, fonts)));
 
 // Install: tell Vagrant to activate the built theme
 gulp.task('install', gulp.series('build', activate));
@@ -290,12 +289,12 @@ function watch() {
 		proxy: projectUrl,
 		open: false
 	});
-	gulp.watch(glob.styles, gulp.series('styles'));
-	gulp.watch(glob.bower, gulp.series('bower'));
-	gulp.watch(glob.includes, gulp.series('includes'));
-	gulp.watch(glob.controllers, gulp.series('controllers'));
-	gulp.watch(glob.views, gulp.series('views'));
-	gulp.watch(glob.scripts, gulp.series('scripts'));
-	gulp.watch(glob.images, gulp.series('images'));
-	gulp.watch(glob.fonts, gulp.series('fonts'));
+	gulp.watch(glob.styles, gulp.series(styles));
+	gulp.watch(glob.bower, gulp.series(bower));
+	gulp.watch(glob.includes, gulp.series(includes));
+	gulp.watch(glob.controllers, gulp.series(controllers));
+	gulp.watch(glob.views, gulp.series(views));
+	gulp.watch(glob.scripts, gulp.series(scripts));
+	gulp.watch(glob.images, gulp.series(images));
+	gulp.watch(glob.fonts, gulp.series(fonts));
 }
