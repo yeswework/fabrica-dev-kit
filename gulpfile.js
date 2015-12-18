@@ -58,6 +58,8 @@ var base = {
 
 // Globs for each file type
 var glob = {
+	acfTheme: base.theme + 'acf-json/*.json',
+	acf: base.src + 'acf-json/*.json',
 	bower: base.src + 'bower_components/**/*.php',
 	includes: [base.src + 'includes/**/*.php', base.src + 'includes/.env'],
 	controllers: base.src + 'templates/controllers/**/*.php',
@@ -65,11 +67,12 @@ var glob = {
 	styles: base.src + 'assets/css/**/*.{css,pcss}',
 	scripts: base.src + 'assets/js/**/*.js',
 	images: base.src + 'assets/img/**/*',
-	fonts: base.src + 'assets/fonts/**/*'
+	fonts: base.src + 'assets/fonts/**/*',
 };
 
 // Build folder slugs
 var dest = {
+	acf: 'acf-json',
 	includes: 'inc',
 	controllers: '', // need to go in the root theme folder
 	views: 'views',
@@ -90,17 +93,30 @@ var options = {
 		postcssFontpath,
 		lost,
 		autoprefixer({browsers: ['last 3 versions']})
-	]
+	],
+	beml: {
+		elemPrefix: '__',
+		modPrefix: '--',
+		modDlmtr: '-'
+	}
 };
 
-// Erase build folder before each compile
+// Before cleaning, retrieve latest ACF JSON from live theme
+// This is the only task which modifies the src folder
+gulp.task('acfPull', function() {
+	del(base.src + dest.acf);
+	return gulp.src(glob.acfTheme)
+		.pipe(gulp.dest(base.src + dest.acf));
+});
+
+// Erase build and theme folders before each compile
 gulp.task('clean', function(cb) {
 	del(base.build);
 	del(base.theme, {force: true});
 	cb(); // indicate completion
 });
 
-// Bower: concatenate the "main files" into library script and stylesheet and copy
+// Bower: concatenate "main files" into library script and stylesheet and copy
 gulp.task('bower', function() {
 	var jsFilter = gulpFilter('**/*.js', {restore: true});
 	var cssFilter = gulpFilter('**/*.css', {restore: true});
@@ -147,6 +163,14 @@ gulp.task('style.css', function(cb) {
 	cb(); // indicate completion
 });
 
+// Put ACF JSON back (previously saved with acfPull task)
+gulp.task('acf', function() {
+	fs.mkdir(base.theme + dest.acf); // Create this folder under any circumstances, so ACF saves to it
+	return gulp.src(glob.acf)
+		.pipe(gulp.dest(base.build + dest.acf))
+		.pipe(gulp.dest(base.theme + dest.acf));
+});
+
 // Includes: copy internal PHP dependencies to an inc folder and auto-create functions.php with includes
 gulp.task('includes', function() {
 	fs.writeFileSync(base.build + 'functions.php', '<?php\r\n'); // create a blank functions.php
@@ -180,11 +204,7 @@ gulp.task('views', function() {
 	return gulp.src(glob.views)
 		.pipe(flatten())
 		.pipe(changed(base.build + dest.views))
-		.pipe(beml({
-			elemPrefix: '__',
-			modPrefix: '--',
-			modDlmtr: '-'
-		}))
+		/* .pipe(beml(options.beml)) */
 		.pipe(gulp.dest(base.build + dest.views))
 		.pipe(gulp.dest(base.theme + dest.views))
 		.pipe(browserSync.stream());
@@ -254,7 +274,7 @@ gulp.task('fonts', function() {
 });
 
 // Build: sequences all the other tasks
-gulp.task('build', gulp.series('clean', 'bower', gulp.parallel('style.css', 'includes', 'controllers', 'views', 'styles', 'scripts', 'images', 'fonts')));
+gulp.task('build', gulp.series('acfPull', 'clean', 'bower', gulp.parallel('style.css', 'acf', 'includes', 'controllers', 'views', 'styles', 'scripts', 'images', 'fonts')));
 
 // Install: tell Vagrant to activate the built theme
 gulp.task('install', gulp.series('build', activate));
