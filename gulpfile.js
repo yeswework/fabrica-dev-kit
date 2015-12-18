@@ -297,4 +297,5 @@ function watch() {
 	gulp.watch(glob.scripts, gulp.series(scripts));
 	gulp.watch(glob.images, gulp.series(images));
 	gulp.watch(glob.fonts, gulp.series(fonts));
+	gulp.watch(glob.acfTheme, gulp.series(acfClean, acfPull));
 }
