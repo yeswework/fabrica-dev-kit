@@ -204,7 +204,7 @@ gulp.task('views', function() {
 	return gulp.src(glob.views)
 		.pipe(flatten())
 		.pipe(changed(base.build + dest.views))
-		/* .pipe(beml(options.beml)) */
+		.pipe(beml(options.beml))
 		.pipe(gulp.dest(base.build + dest.views))
 		.pipe(gulp.dest(base.theme + dest.views))
 		.pipe(browserSync.stream());
@@ -216,7 +216,7 @@ gulp.task('styles', function() {
 	return gulp.src(glob.styles)
 		.pipe(postcss(options.postcss))
 		.pipe(lintFilter) // don't lint certain files which we use on all projects
-		.pipe(csslint({'font-sizes': false, 'box-model': false, 'compatible-vendor-prefixes': false}))
+		.pipe(csslint({'font-sizes': false, 'box-model': false, 'compatible-vendor-prefixes': false, 'font-faces': false}))
 		.pipe(csslint.reporter())
 		.pipe(lintFilter.restore) // restore all files after linting
 		.pipe(concat('main.css'))
