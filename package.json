@@ -31,16 +31,14 @@
     "gulp-uglify": "^1.5.1",
     "lost": "^6.6.2",
     "main-bower-files": "^2.11.0",
+    "postcss-each": "^0.7.1",
     "postcss-fontpath": "^0.2.0",
+    "postcss-mixins": "^3.0.2",
     "postcss-nested": "^1.0.0",
     "postcss-nested-props": "^1.0.0",
     "postcss-simple-vars": "^1.1.0",
     "shelljs": "^0.5.3",
     "vinyl-ftp": "^0.4.5",
     "yamljs": "^0.2.4"
-  },
-  "dependencies": {
-    "postcss-each": "^0.7.1",
-    "postcss-mixins": "^3.0.2"
   }
 }
