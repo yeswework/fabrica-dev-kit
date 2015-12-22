@@ -40,6 +40,7 @@
     "yamljs": "^0.2.4"
   },
   "dependencies": {
+    "postcss-each": "^0.7.1",
     "postcss-mixins": "^3.0.2"
   }
 }
