@@ -89,8 +89,8 @@ var options = {
 	uglify: {mangle: false},
 	imagemin: {optimizationLevel: 7, progressive: true, interlaced: true, multipass: true},
 	postcss: [
-		postcssEach,
 		postcssMixins,
+		postcssEach,
 		postcssSimpleVars,
 		postcssNestedProps,
 		postcssNested,
