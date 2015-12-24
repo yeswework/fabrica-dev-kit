@@ -207,7 +207,7 @@ function controllers() {
 function views() {	return gulp.src(glob.views)
 		.pipe(flatten())
 		.pipe(changed(base.build + dest.views))
-		// .pipe(beml(options.beml))
+		.pipe(beml(options.beml))
 		.pipe(gulp.dest(base.build + dest.views))
 		.pipe(gulp.dest(base.theme + dest.views))
 		.pipe(browserSync.stream());
