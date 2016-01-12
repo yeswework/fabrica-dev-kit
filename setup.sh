@@ -11,7 +11,7 @@
 set -e
 
 # copy starter source folder: this will preserve changes if/when kit updated
-cp dev/src-starter dev/src
+cp -r dev/src-starter dev/src
 
 # install build dependencies (Gulp + extensions)
 npm install
