@@ -29,6 +29,7 @@
     "gulp-sourcemaps": "^1.6.0",
     "gulp-tap": "^0.1.3",
     "gulp-uglify": "^1.5.1",
+    "jshint": "^2.9.1-rc2",
     "lost": "^6.6.3",
     "main-bower-files": "^2.11.1",
     "postcss-each": "^0.7.1",
