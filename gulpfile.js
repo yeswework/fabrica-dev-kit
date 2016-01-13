@@ -107,11 +107,9 @@ var options = {
 
 // Before cleaning, retrieve latest ACF JSON from live theme (delete first)
 // These are the only tasks which modify the src folder
-function acfClean() {
-	return del(base.src + dest.acf);
-}
 function acfPull() {
 	return gulp.src(glob.acfTheme)
+		.pipe(changed(base.src + dest.acf))
 		.pipe(gulp.dest(base.src + dest.acf));
 }
 
@@ -171,6 +169,7 @@ function styleCss(cb) {
 function acf() {
 	fs.mkdirSync(base.theme + dest.acf); // Create this folder under any circumstances, so ACF saves to it
 	return gulp.src(glob.acf)
+		.pipe(changed(base.build + dest.acf))
 		.pipe(gulp.dest(base.build + dest.acf))
 		.pipe(gulp.dest(base.theme + dest.acf));
 }
@@ -277,7 +276,7 @@ function fonts() {
 }
 
 // Build: sequences all the other tasks
-gulp.task('build', gulp.series(acfClean, acfPull, clean, bower, gulp.parallel(styleCss, acf, includes, controllers, views, styles, scripts, images, fonts)));
+gulp.task('build', gulp.series(acfPull, clean, bower, gulp.parallel(styleCss, acf, includes, controllers, views, styles, scripts, images, fonts)));
 
 // Install: tell Vagrant to activate the built theme
 gulp.task('install', gulp.series('build', activate));
@@ -301,5 +300,5 @@ function watch() {
 	gulp.watch(glob.scripts, gulp.series(scripts));
 	gulp.watch(glob.images, gulp.series(images));
 	gulp.watch(glob.fonts, gulp.series(fonts));
-	gulp.watch(glob.acfTheme, gulp.series(acfClean, acfPull));
+	gulp.watch(glob.acfTheme, gulp.series(acfPull));
 }
