@@ -1,7 +1,7 @@
 {
-  "name": "yww-dev-kit-project",
+  "name": "{{projectSlug}}",
   "version": "0.1.0",
-  "description": "Yes We Work development kit project/front-end",
+  "description": "{{projectName}}",
   "author": "Yes We Work (info@yeswework.com)",
   "dependencies": {
     "jquery": "^2.2.0",

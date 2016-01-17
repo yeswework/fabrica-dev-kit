@@ -43,13 +43,13 @@ var projectUrl = 'yeswework.dev';
 var projectName = 'YWW Project';
 var projectAuthor = 'Yes We Work - http://yeswework.com/';
 
-// Overwrite with defaults from Vagrant's YML file in the parent folder, if available
-var projectSettings = YAML.load('site.yml');
-if(typeof projectSettings.slug != 'undefined' && projectSettings.slug != '') {
-	var projectSlug = projectSettings.slug;
+// Overwrite with user's project settings in package.json
+var projectSettings = require('./dev/src/package.json');
+if (typeof projectSettings.name != 'undefined' && projectSettings.name != '') {
+	var projectSlug = projectSettings.name;
 }
-if(typeof projectSettings.title != 'undefined' && projectSettings.title != '') {
-	var projectName = projectSettings.title;
+if (typeof projectSettings.description != 'undefined' && projectSettings.description != '') {
+	var projectName = projectSettings.description;
 }
 
 // Paths for remapping

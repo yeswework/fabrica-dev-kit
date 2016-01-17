@@ -12,8 +12,16 @@ set -e
 
 # copy starter source folder: this will preserve changes if/when kit updated
 cp -r dev/src-starter dev/src
-# git doesn't save empty folders
-mkdir dev/build
+
+# get project info from user
+echo "[setup.sh] Project slug (lowercase, no spaces, URL-friendly):"
+read slug
+echo "[setup.sh] Project title:"
+read title
+
+# replace project info in package.json
+sed -i -e 's/{{projectSlug}}/'"$slug"'/g' dev/src/package.json
+sed -i -e 's/{{projectTitle}}/'"$title"'/g' dev/src/package.json
 
 # install build dependencies (Gulp + extensions)
 echo "[setup.sh] Installing build dependencies..."

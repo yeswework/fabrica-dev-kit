@@ -1,7 +1,5 @@
-slug: yww-project # lowercase, no spaces, URL-friendly
 hostname: yww-project.dev
 ip: 192.168.33.10 # if you are running more than 1 vagrant, they need to have different IPs
-title: YWW project
 lang: en_US
 multisite: false
 rewrite_structure: /%postname%
