@@ -7,8 +7,10 @@ var gulp = require('gulp'),
 	browserSync = require('browser-sync').create(),
 	del = require('del'),
 	beml = require('gulp-beml'),
+	browserify = require('browserify'),
 	concat = require('gulp-concat'),
 	changed = require('gulp-changed'),
+	through = require('through2');
 	csslint = require('gulp-csslint'),
 	cssnano = require('gulp-cssnano'),
 	gulpFilter = require('gulp-filter'),
@@ -23,6 +25,7 @@ var gulp = require('gulp'),
 	uglify = require('gulp-uglify'),
 	lost = require('lost'),
 	mainBowerFiles = require('main-bower-files'),
+	postcssImport = require("postcss-import"),
 	postcssFontpath = require('postcss-fontpath'),
 	postcssEach = require('postcss-each'),
 	postcssMixins = require('postcss-mixins'),
@@ -30,6 +33,9 @@ var gulp = require('gulp'),
 	postcssNestedProps = require('postcss-nested-props'),
 	postcssSimpleVars = require('postcss-simple-vars'),
 	shell = require('shelljs'),
+	globby = require('globby'),
+	source = require('vinyl-source-stream'),
+	buffer = require('vinyl-buffer'),
 	ftp = require('vinyl-ftp'),
 	YAML = require('yamljs');
 
@@ -43,9 +49,6 @@ var projectAuthor = 'Yes We Work - http://yeswework.com/';
 var projectSettings = YAML.load('site.yml');
 if(typeof projectSettings.slug != 'undefined' && projectSettings.slug != '') {
 	var projectSlug = projectSettings.slug;
-}
-if(typeof projectSettings.hostname != 'undefined' && projectSettings.hostname != '') {
-	var projectUrl = projectSettings.hostname;
 }
 if(typeof projectSettings.title != 'undefined' && projectSettings.title != '') {
 	var projectName = projectSettings.title;
@@ -81,7 +84,8 @@ var dest = {
 	styles: 'css',
 	scripts: 'js',
 	images: 'img',
-	fonts: 'fonts'
+	fonts: 'fonts',
+	modules: 'node_modules'
 };
 
 // Plugin options
@@ -95,6 +99,7 @@ var options = {
 		postcssNestedProps,
 		postcssNested,
 		postcssFontpath,
+		postcssImport,
 		lost,
 		autoprefixer({browsers: ['last 3 versions']})
 	],
@@ -115,43 +120,11 @@ function acfPull() {
 
 // Erase build and theme folders before each compile
 function clean() {
-	return del([base.build, base.theme], {force: true});
-}
-
-// Bower: concatenate "main files" into library script and stylesheet and copy
-function bower() {
-	var jsFilter = gulpFilter('**/*.js', {restore: true});
-	var cssFilter = gulpFilter('**/*.css', {restore: true});
-	return gulp.src(mainBowerFiles({paths: base.src}))
-		.pipe(jsFilter)
-		.pipe(concat('lib.js'))
-		.pipe(sourcemaps.init())
-		.pipe(changed(base.build + dest.scripts))
-		.pipe(gulp.dest(base.build + dest.scripts))
-		.pipe(gulp.dest(base.theme + dest.scripts))
-		.pipe(browserSync.stream())
-		.pipe(uglify(options.uglify))
-		.pipe(rename('lib.min.js'))
-		.pipe(sourcemaps.write('.'))
-		.pipe(changed(base.build + dest.scripts))
-		.pipe(gulp.dest(base.build + dest.scripts))
-		.pipe(gulp.dest(base.theme + dest.scripts))
-		.pipe(browserSync.stream())
-		.pipe(jsFilter.restore)
-		.pipe(cssFilter)
-		.pipe(concat('lib.css'))
-		.pipe(sourcemaps.init())
-		.pipe(changed(base.build + dest.styles))
-		.pipe(gulp.dest(base.build + dest.styles))
-		.pipe(gulp.dest(base.theme + dest.styles))
-		.pipe(browserSync.stream({match: '**/*.css'}))
-		.pipe(cssnano())
-		.pipe(rename('lib.min.css'))
-		.pipe(sourcemaps.write('.'))
-		.pipe(changed(base.build + dest.styles))
-		.pipe(gulp.dest(base.build + dest.styles))
-		.pipe(gulp.dest(base.theme + dest.styles))
-		.pipe(browserSync.stream({match: '**/*.css'}));
+	return del([base.build, base.theme], {force: true})
+		.then(function() {
+			fs.mkdirSync(base.build);
+			fs.mkdirSync(base.theme);
+		});
 }
 
 // style.css: auto-create our theme's style.css using project info we already have
@@ -203,7 +176,8 @@ function controllers() {
 }
 
 // Views: copy Twig files, flattening tree
-function views() {	return gulp.src(glob.views)
+function views() {
+	return gulp.src(glob.views)
 		.pipe(flatten())
 		.pipe(changed(base.build + dest.views))
 		.pipe(beml(options.beml))
@@ -214,6 +188,7 @@ function views() {	return gulp.src(glob.views)
 
 // Styles (CSS): lint, concatenate into one file, write source map, postcss, save full and minified versions, then copy
 function styles() {
+	// create stream
 	var lintFilter = gulpFilter(['**/*', '!defaults.css', '!helpers.css'], {restore: true});
 	return gulp.src(glob.styles)
 		.pipe(postcss(options.postcss))
@@ -238,22 +213,38 @@ function styles() {
 
 // Scripts (JS): lint, concatenate into one file, save full and minified versions, then copy
 function scripts() {
-	return gulp.src(glob.scripts)
+	// create stream
+	var bundledStream = through();
+
+	bundledStream.pipe(source('app.js'))
+		.pipe(buffer())
 		.pipe(jshint())
 		.pipe(jshint.reporter())
-		.pipe(concat('main.js'))
-		.pipe(sourcemaps.init())
 		.pipe(changed(base.build + dest.scripts))
+		.pipe(sourcemaps.init({loadMaps: true}))
 		.pipe(gulp.dest(base.build + dest.scripts))
 		.pipe(gulp.dest(base.theme + dest.scripts))
 		.pipe(browserSync.stream())
-		.pipe(uglify(options.uglify))
-		.pipe(rename('main.min.js'))
+		.pipe(uglify())
+		.pipe(sourcemaps.write('.'))
+		.pipe(rename('app.min.js'))
 		.pipe(sourcemaps.write('.'))
 		.pipe(changed(base.build + dest.scripts))
 		.pipe(gulp.dest(base.build + dest.scripts))
 		.pipe(gulp.dest(base.theme + dest.scripts))
 		.pipe(browserSync.stream());
+
+	globby([glob.scripts]).then(function(entries) {
+		var b = browserify({
+			entries: entries,
+			debug: true,
+			paths: [base.src + dest.modules]
+		});
+		// pipe Browserify stream into the previously created one
+		b.bundle().pipe(bundledStream);
+	});
+
+	return bundledStream;
 }
 
 // Images: optimise and copy, maintaining tree
@@ -276,7 +267,7 @@ function fonts() {
 }
 
 // Build: sequences all the other tasks
-gulp.task('build', gulp.series(acfPull, clean, bower, gulp.parallel(styleCss, acf, includes, controllers, views, styles, scripts, images, fonts)));
+gulp.task('build', gulp.series(acfPull, clean, gulp.parallel(styleCss, acf, includes, controllers, views, styles, scripts, images, fonts)));
 
 // Install: tell Vagrant to activate the built theme
 gulp.task('install', gulp.series('build', activate));
