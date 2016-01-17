@@ -14,9 +14,6 @@ class YWWBase {
 	// Project scripts main handle
 	public $mainHandle;
 
-	// Project scripts lib handle
-	public $libHandle;
-
 	// Project vars filter tag
 	public $varsTag;
 
@@ -47,12 +44,9 @@ class YWWBase {
 			$suffix = '.min';
 		}
 
-		// Load third-party libraries, if they exist
+		// Load third-party libraries and project code
 		wp_deregister_script('jquery');
-		wp_enqueue_script($this->libHandle, get_stylesheet_directory_uri() . '/js/lib' . $suffix . '.js', array(), filemtime(get_template_directory() . '/js/lib' . $suffix . '.js'), true);
-
-		// Load theme-specific code
-		wp_enqueue_script($this->mainHandle, get_stylesheet_directory_uri() . '/js/main' . $suffix . '.js', array($this->libHandle), filemtime(get_template_directory() . '/js/main' . $suffix . '.js'), true);
+		wp_enqueue_script($this->mainHandle, get_stylesheet_directory_uri() . '/js/main' . $suffix . '.js', array(), filemtime(get_template_directory() . '/js/main' . $suffix . '.js'), true);
 
 		// Pass variables to JavaScript at runtime
 		$scriptVars = array();
@@ -62,8 +56,6 @@ class YWWBase {
 		}
 
 		// Repeat for stylesheets, first libraries, then theme-specific
-		wp_register_style($this->libHandle, get_stylesheet_directory_uri() . '/css/lib' . $suffix . '.css', $dependencies = array(), filemtime(get_template_directory() . '/css/lib' . $suffix . '.css'));
-		wp_enqueue_style($this->libHandle);
 		wp_register_style($this->mainHandle, get_stylesheet_directory_uri() . '/css/main' . $suffix . '.css', $dependencies = array(), filemtime(get_template_directory() . '/css/main' . $suffix . '.css'));
 		wp_enqueue_style($this->mainHandle);
 

@@ -29,7 +29,6 @@ class YWWProject extends YWWBase {
 
 		// Namespaced handles and tags
 		$this->mainHandle = $this->projectNamespace . '-main';
-		$this->libHandle = $this->projectNamespace . '-lib';
 		$this->varsTag = $this->projectNamespace . '_script_vars';
 		$this->postNonce = $this->projectNamespace . '-post-nonce';
 

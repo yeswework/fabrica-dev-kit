@@ -24,7 +24,6 @@ var gulp = require('gulp'),
 	fs = require('fs'),
 	uglify = require('gulp-uglify'),
 	lost = require('lost'),
-	mainBowerFiles = require('main-bower-files'),
 	postcssImport = require("postcss-import"),
 	postcssFontpath = require('postcss-fontpath'),
 	postcssEach = require('postcss-each'),
@@ -36,7 +35,6 @@ var gulp = require('gulp'),
 	globby = require('globby'),
 	source = require('vinyl-source-stream'),
 	buffer = require('vinyl-buffer'),
-	ftp = require('vinyl-ftp'),
 	YAML = require('yamljs');
 
 // Default project settings
@@ -65,7 +63,6 @@ var base = {
 var glob = {
 	acfTheme: base.theme + 'acf-json/*.json',
 	acf: base.src + 'acf-json/*.json',
-	bower: base.src + 'bower_components/**/*.php',
 	includes: [base.src + 'includes/**/*.php', base.src + 'includes/.env'],
 	controllers: base.src + 'templates/controllers/**/*.php',
 	views: base.src + 'templates/**/*.twig',
@@ -216,7 +213,7 @@ function scripts() {
 	// create stream
 	var bundledStream = through();
 
-	bundledStream.pipe(source('app.js'))
+	bundledStream.pipe(source('main.js'))
 		.pipe(buffer())
 		.pipe(jshint())
 		.pipe(jshint.reporter())
@@ -227,7 +224,7 @@ function scripts() {
 		.pipe(browserSync.stream())
 		.pipe(uglify())
 		.pipe(sourcemaps.write('.'))
-		.pipe(rename('app.min.js'))
+		.pipe(rename('main.min.js'))
 		.pipe(sourcemaps.write('.'))
 		.pipe(changed(base.build + dest.scripts))
 		.pipe(gulp.dest(base.build + dest.scripts))
@@ -284,7 +281,6 @@ function watch() {
 		open: false
 	});
 	gulp.watch(glob.styles, gulp.series(styles));
-	gulp.watch(glob.bower, gulp.series(bower));
 	gulp.watch(glob.includes, gulp.series(includes));
 	gulp.watch(glob.controllers, gulp.series(controllers));
 	gulp.watch(glob.views, gulp.series(views));
