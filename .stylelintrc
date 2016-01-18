@@ -1,0 +1,7 @@
+{
+	"extends": "stylelint-config-standard",
+	"rules": {
+		"string-quotes": null,
+		"at-rule-empty-line-before": null
+	}
+}

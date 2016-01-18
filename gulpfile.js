@@ -7,7 +7,6 @@ var gulp = require('gulp'),
 	browserSync = require('browser-sync').create(),
 	del = require('del'),
 	beml = require('gulp-beml'),
-	browserify = require('browserify'),
 	concat = require('gulp-concat'),
 	changed = require('gulp-changed'),
 	csslint = require('gulp-csslint'),
@@ -33,8 +32,7 @@ var gulp = require('gulp'),
 	postcssSimpleVars = require('postcss-simple-vars'),
 	stylelint = require("stylelint"),
 	shell = require('shelljs'),
-	source = require('vinyl-source-stream'),
-	buffer = require('vinyl-buffer'),
+	webpack = require('webpack-stream'),
 	YAML = require('yamljs');
 
 // Load project and local settings from package.json and site.yml
@@ -208,12 +206,10 @@ function scriptsLint() {
 // Scripts (JS): get third-party dependencies, concatenate all scripts into one file, save full and minified versions, then copy
 function scripts(done) {
 	// create stream
-	return browserify({
-		entries: base.src + 'assets/js/main.js',
-		debug: true
-	}).bundle()
-		.pipe(source('main.js'))
-		.pipe(buffer())
+	return gulp.src(base.src + 'assets/js/main.js')
+		.pipe(jshint())
+		.pipe(jshint.reporter())
+		.pipe(webpack({ output: { filename: 'main.js' } }))
 		.pipe(changed(base.build + dest.scripts))
 		.pipe(sourcemaps.init({loadMaps: true}))
 		.pipe(gulp.dest(base.build + dest.scripts))
