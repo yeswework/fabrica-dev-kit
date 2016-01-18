@@ -1,3 +1,6 @@
+// Import third-party libraries with Browserify
+require('jquery');
+
 // Replace html.no-js class with .js
 document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, 'js');
 
@@ -6,7 +9,7 @@ document.documentElement.className = document.documentElement.className.replace(
 	/*
 	$.post(wp_ajax.ajaxurl, {action: 'ACTION'}, function(data) {
 		// results come back in JSON, format data.property
-	}, 'json'); 
+	}, 'json');
 	*/
 
 }(jQuery));
