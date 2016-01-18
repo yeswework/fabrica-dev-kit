@@ -13,15 +13,25 @@ set -e
 # copy starter source folder: this will preserve changes if/when kit updated
 cp -r dev/src-starter dev/src
 
-# get project info from user
-echo "[setup.sh] Project slug (lowercase, no spaces, URL-friendly):"
-read slug
-echo "[setup.sh] Project title:"
-read title
+# get project info from user and replace values in package.json
+read -r -p "[setup.sh] Project slug (mandatory, lowercase, no spaces, URL-friendly): " slug
+if [ -z "$slug" ]; then
+	echo "Project slug is mandatory. Setup cannot proceed without this value, please try again."
+	exit
+fi
+sed -i '' -e 's%{{projectSlug}}%'"$slug"'%g' dev/src/package.json
 
-# replace project info in package.json
-sed -i -e 's/{{projectSlug}}/'"$slug"'/g' dev/src/package.json
-sed -i -e 's/{{projectTitle}}/'"$title"'/g' dev/src/package.json
+read -r -p "[setup.sh] Project title [Yes We Work development kit project front-end]: " title
+title=${title:-Yes We Work development kit project front-end}
+sed -i '' -e 's%{{projectTitle}}%'"$title"'%g' dev/src/package.json
+
+read -r -p "[setup.sh] Project autor [Yes We Work <info@yeswework> (http://yeswework.com)]: " author
+author=${author:-"Yes We Work <info@yeswework> (http://yeswework.com)"}
+sed -i '' -e 's%{{projectAuthor}}%'"$author"'%g' dev/src/package.json
+
+read -r -p "[setup.sh] Project homepage [http://yeswework.com]: " homepage
+homepage=${homepage:-"http://yeswework.com"}
+sed -i '' -e 's%{{projectHomepage}}%'"$homepage"'%g' dev/src/package.json
 
 # install build dependencies (Gulp + extensions)
 echo "[setup.sh] Installing build dependencies..."
@@ -33,7 +43,7 @@ cd dev/src
 npm install
 cd ../..
 
-# start vagrant
+start vagrant
 echo "[setup.sh] Starting Vagrant VM..."
 vagrant up
 

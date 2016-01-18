@@ -37,20 +37,14 @@ var gulp = require('gulp'),
 	buffer = require('vinyl-buffer'),
 	YAML = require('yamljs');
 
-// Default project settings
-var projectSlug = 'yww-project';
-var projectUrl = 'yeswework.dev';
-var projectName = 'YWW Project';
-var projectAuthor = 'Yes We Work - http://yeswework.com/';
-
-// Overwrite with user's project settings in package.json
-var projectSettings = require('./dev/src/package.json');
-if (typeof projectSettings.name != 'undefined' && projectSettings.name != '') {
-	var projectSlug = projectSettings.name;
-}
-if (typeof projectSettings.description != 'undefined' && projectSettings.description != '') {
-	var projectName = projectSettings.description;
-}
+// Load project and local settings from package.json and site.yml
+var projectSettings = require('./dev/src/package.json'),
+	localSettings = YAML.load('site.yml');
+var projectSlug = projectSettings.name,
+	projectTitle = projectSettings.description,
+	projectHomepage = projectSettings.homepage,
+	projectAuthor = projectSettings.author,
+	projectUrl = localSettings.hostname;
 
 // Paths for remapping
 var base = {
@@ -81,8 +75,7 @@ var dest = {
 	styles: 'css',
 	scripts: 'js',
 	images: 'img',
-	fonts: 'fonts',
-	modules: 'node_modules'
+	fonts: 'fonts'
 };
 
 // Plugin options
@@ -127,8 +120,8 @@ function clean() {
 // style.css: auto-create our theme's style.css using project info we already have
 function styleCss(cb) {
 	var data = '/*\r\n'
-		+ 'Theme Name: ' + projectName + '\r\n'
-		+ 'Theme URI: http://' + projectUrl + '\r\n'
+		+ 'Theme Name: ' + projectTitle + '\r\n'
+		+ 'Theme URI: http://' + projectHomepage + '\r\n'
 		+ 'Author: ' + projectAuthor + '\r\n' + '*/';
 	fs.writeFileSync(base.build + 'style.css', data);
 	fs.writeFileSync(base.theme + 'style.css', data);
@@ -208,22 +201,26 @@ function styles() {
 		.pipe(browserSync.stream({match: '**/*.css'}));
 }
 
-// Scripts (JS): lint, concatenate into one file, save full and minified versions, then copy
+// Lint script (JS)
+function scriptsLint() {
+	return gulp.src(glob.scripts)
+		.pipe(jshint())
+		.pipe(jshint.reporter());
+}
+
+// Scripts (JS): get third-party dependencies, concatenate all scripts into one file, save full and minified versions, then copy
 function scripts() {
 	// create stream
 	var bundledStream = through();
 
 	bundledStream.pipe(source('main.js'))
 		.pipe(buffer())
-		.pipe(jshint())
-		.pipe(jshint.reporter())
 		.pipe(changed(base.build + dest.scripts))
 		.pipe(sourcemaps.init({loadMaps: true}))
 		.pipe(gulp.dest(base.build + dest.scripts))
 		.pipe(gulp.dest(base.theme + dest.scripts))
 		.pipe(browserSync.stream())
 		.pipe(uglify())
-		.pipe(sourcemaps.write('.'))
 		.pipe(rename('main.min.js'))
 		.pipe(sourcemaps.write('.'))
 		.pipe(changed(base.build + dest.scripts))
@@ -234,8 +231,7 @@ function scripts() {
 	globby([glob.scripts]).then(function(entries) {
 		var b = browserify({
 			entries: entries,
-			debug: true,
-			paths: [base.src + dest.modules]
+			debug: true
 		});
 		// pipe Browserify stream into the previously created one
 		b.bundle().pipe(bundledStream);
@@ -264,7 +260,7 @@ function fonts() {
 }
 
 // Build: sequences all the other tasks
-gulp.task('build', gulp.series(acfPull, clean, gulp.parallel(styleCss, acf, includes, controllers, views, styles, scripts, images, fonts)));
+gulp.task('build', gulp.series(acfPull, clean, gulp.parallel(styleCss, acf, includes, controllers, views, styles, scriptsLint, scripts, images, fonts)));
 
 // Install: tell Vagrant to activate the built theme
 gulp.task('install', gulp.series('build', activate));
