@@ -196,13 +196,6 @@ function styles() {
 		.pipe(browserSync.stream({match: '**/*.css'}));
 }
 
-// Lint script (JS)
-function scriptsLint() {
-	return gulp.src(glob.scripts)
-		.pipe(jshint())
-		.pipe(jshint.reporter());
-}
-
 // Scripts (JS): get third-party dependencies, concatenate all scripts into one file, save full and minified versions, then copy
 function scripts(done) {
 	// create stream
@@ -245,7 +238,7 @@ function fonts() {
 }
 
 // Build: sequences all the other tasks
-gulp.task('build', gulp.series(acfPull, clean, gulp.parallel(styleCss, acf, includes, controllers, views, styles, scriptsLint, scripts, images, fonts)));
+gulp.task('build', gulp.series(acfPull, clean, gulp.parallel(styleCss, acf, includes, controllers, views, styles, scripts, images, fonts)));
 
 // Install: tell Vagrant to activate the built theme
 gulp.task('install', gulp.series('build', activate));
