@@ -1,8 +1,9 @@
 {
   "name": "{{projectSlug}}",
   "version": "0.1.0",
-  "description": "{{projectName}}",
+  "description": "{{projectTitle}}",
   "author": "Yes We Work (info@yeswework.com)",
+  "private": true,
   "dependencies": {
     "jquery": "^2.2.0",
     "normalize.css": "^3.0.3"
