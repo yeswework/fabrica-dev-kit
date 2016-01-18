@@ -29,7 +29,9 @@ var gulp = require('gulp'),
 	postcssMixins = require('postcss-mixins'),
 	postcssNested = require('postcss-nested'),
 	postcssNestedProps = require('postcss-nested-props'),
+	postcssReporter = require("postcss-reporter"),
 	postcssSimpleVars = require('postcss-simple-vars'),
+	stylelint = require("stylelint"),
 	shell = require('shelljs'),
 	source = require('vinyl-source-stream'),
 	buffer = require('vinyl-buffer'),
@@ -73,8 +75,7 @@ var dest = {
 	styles: 'css',
 	scripts: 'js',
 	images: 'img',
-	fonts: 'fonts',
-	modules: 'node_modules'
+	fonts: 'fonts'
 };
 
 // Plugin options
@@ -82,6 +83,8 @@ var options = {
 	uglify: {mangle: false},
 	imagemin: {optimizationLevel: 7, progressive: true, interlaced: true, multipass: true},
 	postcss: [
+		stylelint(),
+		postcssReporter({ clearMessages: true }),
 		postcssMixins,
 		postcssEach,
 		postcssSimpleVars,
@@ -178,13 +181,8 @@ function views() {
 // Styles (CSS): lint, concatenate into one file, write source map, postcss, save full and minified versions, then copy
 function styles() {
 	// create stream
-	var lintFilter = gulpFilter(['**/*', '!defaults.css', '!helpers.css'], {restore: true});
-	return gulp.src(glob.styles)
+	return gulp.src(base.src + 'assets/css/main.pcss')
 		.pipe(postcss(options.postcss))
-		.pipe(lintFilter) // don't lint certain files which we use on all projects
-		.pipe(csslint({'font-sizes': false, 'box-model': false, 'compatible-vendor-prefixes': false, 'font-faces': false}))
-		.pipe(csslint.reporter())
-		.pipe(lintFilter.restore) // restore all files after linting
 		.pipe(concat('main.css'))
 		.pipe(sourcemaps.init())
 		.pipe(changed(base.build + dest.styles))
@@ -209,10 +207,10 @@ function scriptsLint() {
 
 // Scripts (JS): get third-party dependencies, concatenate all scripts into one file, save full and minified versions, then copy
 function scripts(done) {
+	// create stream
 	return browserify({
 		entries: base.src + 'assets/js/main.js',
-		debug: true,
-		paths: [base.src + dest.modules]
+		debug: true
 	}).bundle()
 		.pipe(source('main.js'))
 		.pipe(buffer())
