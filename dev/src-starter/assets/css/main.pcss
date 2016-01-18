@@ -6,3 +6,42 @@
 
 @lost flexbox flex;
 @lost gutter 1.5rem;
+
+/* media queries */
+$mobileOnly: (max-width: 540px);
+$mobileTablet: (max-width: 960px);
+$tabletOnly: (min-width: 541px) and (max-width: 960px);
+$tabletDesktop: (min-width: 541px);
+$desktopOnly: (min-width: 961px);
+
+/* mixins */
+@define-mixin responsive $properties, $mobile, $tablet, $desktop {
+	@media $mobileOnly {
+		@each $property in $(properties) {
+			$(property): $mobile;
+		}
+	}
+	@media $tabletOnly {
+		@each $property in $(properties) {
+			$(property): $tablet;
+		}
+	}
+	@media $desktopOnly {
+		@each $property in $(properties) {
+			$(property): $desktop;
+		}
+	}
+}
+
+/* spacing defaults */
+@define-mixin small-spacing $properties {
+	@mixin responsive $(properties), 0.5rem, 0.75rem, 0.875rem;
+}
+
+@define-mixin medium-spacing $properties {
+	@mixin responsive $(properties), 0.75rem, 1rem, 1.25rem;
+}
+
+@define-mixin large-spacing $properties {
+	@mixin responsive $(properties), 0.875rem, 1.5rem, 1.75rem;
+}
