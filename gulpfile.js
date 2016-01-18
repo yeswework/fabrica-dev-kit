@@ -52,7 +52,7 @@ var base = {
 };
 
 // Globs for each file type
-var glob = {
+var path = {
 	acfTheme: base.theme + 'acf-json/*.json',
 	acf: base.src + 'acf-json/*.json',
 	includes: [base.src + 'includes/**/*.php', base.src + 'includes/.env'],
@@ -61,14 +61,10 @@ var glob = {
 	styles: base.src + 'assets/css/**/*.{css,pcss}',
 	scripts: base.src + 'assets/js/**/*.js',
 	images: base.src + 'assets/img/**/*',
-	fonts: base.src + 'assets/fonts/**/*'
+	fonts: base.src + 'assets/fonts/**/*',
+	styleMain: base.src + 'assets/css/main.pcss',
+	scriptMain: base.src + 'assets/js/main.js',
 };
-
-// Paths to individual entry files
-var entry = {
-	styles: base.src + 'assets/css/main.pcss',
-	scripts: base.src + 'assets/js/main.js',
-}
 
 // Build folder slugs
 var dest = {
@@ -109,7 +105,7 @@ var options = {
 // Before cleaning, retrieve latest ACF JSON from live theme (delete first)
 // These are the only tasks which modify the src folder
 function acfPull() {
-	return gulp.src(glob.acfTheme)
+	return gulp.src(path.acfTheme)
 		.pipe(changed(base.src + dest.acf))
 		.pipe(gulp.dest(base.src + dest.acf));
 }
@@ -137,7 +133,7 @@ function styleCss(cb) {
 // Put ACF JSON back (previously saved with acfPull task)
 function acf() {
 	fs.mkdirSync(base.theme + dest.acf); // Create this folder under any circumstances, so ACF saves to it
-	return gulp.src(glob.acf)
+	return gulp.src(path.acf)
 		.pipe(changed(base.build + dest.acf))
 		.pipe(gulp.dest(base.build + dest.acf))
 		.pipe(gulp.dest(base.theme + dest.acf));
@@ -148,7 +144,7 @@ function includes() {
 	fs.writeFileSync(base.build + 'functions.php', '<?php\r\n'); // create a blank functions.php
 	fs.writeFileSync(base.theme + 'functions.php', '<?php\r\n');
 	var nonVendorFilter = gulpFilter('*.php', {restore: true}); // only require top-level files in functions.php
-	return gulp.src(glob.includes)
+	return gulp.src(path.includes)
 		.pipe(nonVendorFilter)
 		.pipe(tap(function(file, t) {// write an include for this file to our functions.php automatically
 			fs.appendFileSync(base.build + 'functions.php', "require_once(get_stylesheet_directory() . '/" + dest.includes + "/" + file.path.replace(file.base, '') + "');\r\n");
@@ -163,7 +159,7 @@ function includes() {
 
 // Controllers: copy PHP files, flattening tree
 function controllers() {
-	return gulp.src(glob.controllers)
+	return gulp.src(path.controllers)
 		.pipe(flatten())
 		.pipe(changed(base.build + dest.controllers))
 		.pipe(gulp.dest(base.build + dest.controllers))
@@ -173,7 +169,7 @@ function controllers() {
 
 // Views: copy Twig files, flattening tree
 function views() {
-	return gulp.src(glob.views)
+	return gulp.src(path.views)
 		.pipe(flatten())
 		.pipe(changed(base.build + dest.views))
 		.pipe(beml(options.beml))
@@ -185,7 +181,7 @@ function views() {
 // Styles (CSS): lint, concatenate into one file, write source map, postcss, save full and minified versions, then copy
 function styles() {
 	// create stream
-	return gulp.src(entry.styles)
+	return gulp.src(path.styleMain)
 		.pipe(postcss(options.postcss))
 		.pipe(concat('main.css'))
 		.pipe(sourcemaps.init())
@@ -205,7 +201,7 @@ function styles() {
 // Scripts (JS): get third-party dependencies, concatenate all scripts into one file, save full and minified versions, then copy
 function scripts(done) {
 	// create stream
-	return gulp.src(entry.scripts)
+	return gulp.src(path.scriptMain)
 		.pipe(jshint())
 		.pipe(jshint.reporter())
 		.pipe(webpack({ output: { filename: 'main.js' } }))
@@ -226,7 +222,7 @@ function scripts(done) {
 
 // Images: optimise and copy, maintaining tree
 function images() {
-	return gulp.src(glob.images)
+	return gulp.src(path.images)
 		.pipe(changed(base.build + dest.images))
 		.pipe(imagemin(options.imagemin))
 		.pipe(gulp.dest(base.build + dest.images))
@@ -236,7 +232,7 @@ function images() {
 
 // Fonts: just copy, maintaining tree
 function fonts() {
-	return gulp.src(glob.fonts)
+	return gulp.src(path.fonts)
 		.pipe(changed(base.build + dest.fonts))
 		.pipe(gulp.dest(base.build + dest.fonts))
 		.pipe(gulp.dest(base.theme + dest.fonts))
@@ -260,12 +256,12 @@ function watch() {
 		proxy: projectUrl,
 		open: false
 	});
-	gulp.watch(glob.styles, gulp.series(styles));
-	gulp.watch(glob.includes, gulp.series(includes));
-	gulp.watch(glob.controllers, gulp.series(controllers));
-	gulp.watch(glob.views, gulp.series(views));
-	gulp.watch(glob.scripts, gulp.series(scripts));
-	gulp.watch(glob.images, gulp.series(images));
-	gulp.watch(glob.fonts, gulp.series(fonts));
-	gulp.watch(glob.acfTheme, gulp.series(acfPull));
+	gulp.watch(path.styles, gulp.series(styles));
+	gulp.watch(path.includes, gulp.series(includes));
+	gulp.watch(path.controllers, gulp.series(controllers));
+	gulp.watch(path.views, gulp.series(views));
+	gulp.watch(path.scripts, gulp.series(scripts));
+	gulp.watch(path.images, gulp.series(images));
+	gulp.watch(path.fonts, gulp.series(fonts));
+	gulp.watch(path.acfTheme, gulp.series(acfPull));
 }
