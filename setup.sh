@@ -43,7 +43,7 @@ cd dev/src
 npm install
 cd ../..
 
-start vagrant
+# start vagrant
 echo "[setup.sh] Starting Vagrant VM..."
 vagrant up
 

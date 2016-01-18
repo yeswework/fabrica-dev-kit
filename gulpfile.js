@@ -10,7 +10,6 @@ var gulp = require('gulp'),
 	browserify = require('browserify'),
 	concat = require('gulp-concat'),
 	changed = require('gulp-changed'),
-	through = require('through2');
 	csslint = require('gulp-csslint'),
 	cssnano = require('gulp-cssnano'),
 	gulpFilter = require('gulp-filter'),
@@ -32,7 +31,6 @@ var gulp = require('gulp'),
 	postcssNestedProps = require('postcss-nested-props'),
 	postcssSimpleVars = require('postcss-simple-vars'),
 	shell = require('shelljs'),
-	globby = require('globby'),
 	source = require('vinyl-source-stream'),
 	buffer = require('vinyl-buffer'),
 	YAML = require('yamljs');
@@ -75,7 +73,8 @@ var dest = {
 	styles: 'css',
 	scripts: 'js',
 	images: 'img',
-	fonts: 'fonts'
+	fonts: 'fonts',
+	modules: 'node_modules'
 };
 
 // Plugin options
@@ -209,11 +208,13 @@ function scriptsLint() {
 }
 
 // Scripts (JS): get third-party dependencies, concatenate all scripts into one file, save full and minified versions, then copy
-function scripts() {
-	// create stream
-	var bundledStream = through();
-
-	bundledStream.pipe(source('main.js'))
+function scripts(done) {
+	return browserify({
+		entries: base.src + 'assets/js/main.js',
+		debug: true,
+		paths: [base.src + dest.modules]
+	}).bundle()
+		.pipe(source('main.js'))
 		.pipe(buffer())
 		.pipe(changed(base.build + dest.scripts))
 		.pipe(sourcemaps.init({loadMaps: true}))
@@ -221,23 +222,13 @@ function scripts() {
 		.pipe(gulp.dest(base.theme + dest.scripts))
 		.pipe(browserSync.stream())
 		.pipe(uglify())
+		.pipe(sourcemaps.write('.'))
 		.pipe(rename('main.min.js'))
 		.pipe(sourcemaps.write('.'))
 		.pipe(changed(base.build + dest.scripts))
 		.pipe(gulp.dest(base.build + dest.scripts))
 		.pipe(gulp.dest(base.theme + dest.scripts))
 		.pipe(browserSync.stream());
-
-	globby([glob.scripts]).then(function(entries) {
-		var b = browserify({
-			entries: entries,
-			debug: true
-		});
-		// pipe Browserify stream into the previously created one
-		b.bundle().pipe(bundledStream);
-	});
-
-	return bundledStream;
 }
 
 // Images: optimise and copy, maintaining tree
