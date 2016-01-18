@@ -64,6 +64,12 @@ var glob = {
 	fonts: base.src + 'assets/fonts/**/*'
 };
 
+// Paths to individual entry files
+var entry = {
+	styles: base.src + 'assets/css/main.pcss',
+	scripts: base.src + 'assets/js/main.js',
+}
+
 // Build folder slugs
 var dest = {
 	acf: 'acf-json',
@@ -179,7 +185,7 @@ function views() {
 // Styles (CSS): lint, concatenate into one file, write source map, postcss, save full and minified versions, then copy
 function styles() {
 	// create stream
-	return gulp.src(base.src + 'assets/css/main.pcss')
+	return gulp.src(entry.styles)
 		.pipe(postcss(options.postcss))
 		.pipe(concat('main.css'))
 		.pipe(sourcemaps.init())
@@ -199,7 +205,7 @@ function styles() {
 // Scripts (JS): get third-party dependencies, concatenate all scripts into one file, save full and minified versions, then copy
 function scripts(done) {
 	// create stream
-	return gulp.src(base.src + 'assets/js/main.js')
+	return gulp.src(entry.scripts)
 		.pipe(jshint())
 		.pipe(jshint.reporter())
 		.pipe(webpack({ output: { filename: 'main.js' } }))
