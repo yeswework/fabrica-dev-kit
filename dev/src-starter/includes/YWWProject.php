@@ -15,7 +15,9 @@ class YWWProject extends YWWBase {
 	function __construct() {
 
 		// Namespace for this project
-		$this->projectNamespace = 'yww';
+		$dotenv = new Dotenv\Dotenv(__DIR__);
+		$dotenv->load();
+		$this->projectNamespace = getenv('PROJECT_SLUG');
 
 		// Google Analytics ID (injected by parent class)
 		$this->googleAnalyticsId = '';

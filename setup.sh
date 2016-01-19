@@ -20,6 +20,8 @@ if [ -z "$slug" ]; then
 	exit
 fi
 sed -i '' -e 's%{{projectSlug}}%'"$slug"'%g' dev/src/package.json
+# save project slug as environment variable to be read in WP
+echo "PROJECT_SLUG=$slug" > dev/src/includes/.env
 
 read -r -p "[setup.sh] Project title [Yes We Work development kit project front-end]: " title
 title=${title:-Yes We Work development kit project front-end}
