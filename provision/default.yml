@@ -4,7 +4,7 @@
 #
 # General Settings
 #
-wp_box: miya0001/vccw
+wp_box: ubuntu/trusty64
 chef_cookbook_path: ./provision
 
 #
