@@ -16,13 +16,13 @@ FileUtils.cp_r 'dev/src-starter', 'dev/src'
 # load setup settings
 puts "[setup.rb] Reading settings..."
 begin
-	config = YAML.load_file('setup.yml')
+	config = YAML.load_file 'setup.yml'
 rescue
 	abort('[setup.rb] Could not load "setup.yml". Please create this file based on "setup-example.yml".')
 end
 # replace settings in package.json
 package_file = 'dev/src/package.json'
-project_data = File.read(package_file)
+project_data = File.read package_file
 project_data = project_data.gsub(/{{projectSlug}}/, config['slug'])
 project_data = project_data.gsub(/{{projectTitle}}/, config['title'])
 project_data = project_data.gsub(/{{projectAuthor}}/, config['author'])
@@ -31,6 +31,8 @@ File.open(package_file, "w") {|file| file.puts project_data }
 # save project slug as environment variable to be read in WP
 File.open('dev/src/includes/.env', "w") {|file| file.puts "PROJECT_SLUG=#{config['slug']}" }
 
+# rename/backup "setup.yml"
+FileUtils.mv 'setup.yml', 'setup.bak.yml'
 # create "site.yml" file for Vagrant
 config.reject! {|key| ['slug', 'title', 'author', 'homepage'].include?(key) }
 File.open('site.yml', 'w') {|file| file.write config.to_yaml }

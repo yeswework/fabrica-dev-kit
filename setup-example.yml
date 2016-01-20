@@ -2,6 +2,7 @@ slug: yww-project
 title: YWW Project
 author: Yes We Work <info@yeswework> (http://yeswework.com)
 homepage: http://yeswework.com/ # remote homepage
+# the following values are used to configure the vagrant box
 hostname: yww-project.dev       # local url to be set in hosts
 ip: 192.168.33.10               # if you are running more than 1 vagrant, they need to have different IPs
 lang: en_US

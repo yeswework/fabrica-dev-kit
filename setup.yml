@@ -18,3 +18,4 @@ plugins:
   - force-regenerate-thumbnails
   - query-monitor
 # - http://yeswework.com/_dev/plugins/yww-admin-tweaks.zip
+memory: 1024
