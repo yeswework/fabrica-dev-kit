@@ -28,8 +28,11 @@ project_data = project_data.gsub(/{{projectTitle}}/, config['title'])
 project_data = project_data.gsub(/{{projectAuthor}}/, config['author'])
 project_data = project_data.gsub(/{{projectHomepage}}/, config['homepage'])
 File.open(package_file, "w") {|file| file.puts project_data }
-# save project slug as environment variable to be read in WP
-File.open('dev/src/includes/.env', "w") {|file| file.puts "PROJECT_SLUG=#{config['slug']}" }
+# replace project slug in YWWProject.php
+project_php_file = 'dev/src/includes/YWWProject.php'
+project_php = File.read project_php
+project_php = project_php.gsub(/{{projectSlug}}/, config['slug'])
+File.open(project_php_file, "w") {|file| file.puts project_php }
 
 # rename/backup "setup.yml"
 FileUtils.mv 'setup.yml', 'setup.bak.yml'
