@@ -1,0 +1,11 @@
+# encoding: utf-8
+
+site 'http://community.opscode.com/api/v1'
+
+cookbook 'apt'
+cookbook 'nginx', {}
+cookbook 'mysql2_chef_gem', {}
+cookbook 'database', {}
+cookbook 'php', {}
+cookbook 'php-fpm', {}
+cookbook 'wp-cli', {}

@@ -4,7 +4,7 @@
 #
 # Author:: Joseph Holsten (<joseph@josephholsten.com>)
 #
-# Copyright 2008-2012, Opscode, Inc.
+# Copyright 2008-2013, Chef Software, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,17 +19,24 @@
 # limitations under the License.
 #
 
+include_recipe 'chef-sugar'
+
 execute 'apt-get update' do
   ignore_failure true
   action :nothing
 end.run_action(:run) if 'debian' == node['platform_family']
 
-node.set['build_essential']['compiletime'] = true
-include_recipe "build-essential"
+node.default['build-essential']['compile_time'] = true
+node.default['xml']['compiletime'] = true
+include_recipe 'build-essential::default'
 include_recipe 'xml::default'
 
-node['xml']['packages'].each do |xml_pack|
-  resources("package[#{xml_pack}]").run_action(:install)
+if node['xml']['nokogiri']['use_system_libraries']
+  ENV['NOKOGIRI_USE_SYSTEM_LIBRARIES'] = node['xml']['nokogiri']['use_system_libraries'].to_s
 end
 
-chef_gem 'nokogiri'
+chef_gem 'nokogiri' do
+  version node['xml']['nokogiri']['version'] if node['xml']['nokogiri']['version']
+  action :install
+  compile_time true if defined? compile_time
+end

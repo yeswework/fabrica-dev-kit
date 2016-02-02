@@ -1,0 +1,12 @@
+# Automatically generated for Debian scripts (Managed by CHEF). DO NOT TOUCH!
+[client]
+host     = <%= node['mariadb']['debian']['host'] %>
+user     = <%= node['mariadb']['debian']['user'] %>
+password = <%= node['mariadb']['debian']['password'] %>
+socket   = <%= node['mariadb']['client']['socket'] %>
+[mysql_upgrade]
+host     = <%= node['mariadb']['debian']['host'] %>
+user     = <%= node['mariadb']['debian']['user'] %>
+password = <%= node['mariadb']['debian']['password'] %>
+socket   = <%= node['mariadb']['mysqld_safe']['socket'] %>
+basedir  = <%= node['mariadb']['mysqld']['basedir'] %>

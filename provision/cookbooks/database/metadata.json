@@ -1,0 +1,49 @@
+{
+  "name": "database",
+  "description": "provides LWRPs for common database tasks",
+  "long_description": "",
+  "maintainer": "Chef Software, Inc.",
+  "maintainer_email": "cookbooks@chef.io",
+  "license": "Apache 2.0",
+  "platforms": {
+    "debian": ">= 0.0.0",
+    "ubuntu": ">= 0.0.0",
+    "centos": ">= 0.0.0",
+    "suse": ">= 0.0.0",
+    "fedora": ">= 0.0.0",
+    "redhat": ">= 0.0.0",
+    "scientific": ">= 0.0.0",
+    "oracle": ">= 0.0.0",
+    "amazon": ">= 0.0.0"
+  },
+  "dependencies": {
+    "postgresql": ">= 1.0.0"
+  },
+  "recommendations": {
+
+  },
+  "suggestions": {
+
+  },
+  "conflicting": {
+
+  },
+  "providing": {
+
+  },
+  "replacing": {
+
+  },
+  "attributes": {
+
+  },
+  "groupings": {
+
+  },
+  "recipes": {
+
+  },
+  "version": "4.0.9",
+  "source_url": "https://github.com/opscode-cookbooks/database",
+  "issues_url": "https://github.com/opscode-cookbooks/database/issues"
+}

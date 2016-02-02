@@ -1,0 +1,191 @@
+# DEPLOYED BY CHEF
+# MariaDB database server configuration file.
+#
+# You can copy this file to one of:
+# - "/etc/mysql/my.cnf" to set global options,
+# - "~/.my.cnf" to set user-specific options.
+#
+# One can use all long options that the program supports.
+# Run program with --help to get a list of available options and with
+# --print-defaults to see which it would actually understand and use.
+#
+# For explanations see
+# http://dev.mysql.com/doc/mysql/en/server-system-variables.html
+
+# This will be passed to all mysql clients
+# It has been reported that passwords should be enclosed with ticks/quotes
+# escpecially if they contain "#" chars...
+# Remember to edit /etc/mysql/debian.cnf when changing the socket location.
+[client]
+port		= <%= node['mariadb']['client']['port']   %>
+socket		= <%= node['mariadb']['client']['socket'] %>
+<% if node['mariadb']['client'].attribute?('host') && !node['mariadb']['client']['host'].nil? %>
+host		= <%= node['mariadb']['client']['host'] %>
+<% end %>
+
+# Here is entries for some specific programs
+# The following values assume you have at least 32M ram
+
+# This was formally known as [safe_mysqld]. Both versions are currently parsed.
+[mysqld_safe]
+socket		= <%= node['mariadb']['mysqld_safe']['socket'] %>
+nice		= 0
+
+[mysqld]
+#
+# * Basic Settings
+#
+user		= <%= node['mariadb']['mysqld']['user']            %>
+<% if node['mariadb']['mysqld'].attribute?('pid_file') %>
+pid-file	= <%= node['mariadb']['mysqld']['pid_file']        %>
+<% end %>
+socket		= <%= node['mariadb']['mysqld']['socket']          %>
+port		= <%= node['mariadb']['mysqld']['port']            %>
+basedir		= <%= node['mariadb']['mysqld']['basedir']         %>
+datadir		= <%= node['mariadb']['mysqld']['default_datadir']         %>
+tmpdir		= <%= node['mariadb']['mysqld']['tmpdir']          %>
+lc_messages_dir	= <%= node['mariadb']['mysqld']['lc_messages_dir'] %>
+lc_messages	= <%= node['mariadb']['mysqld']['lc_messages']     %>
+<% if node['mariadb']['mysqld']['skip_external_locking'] == 'true' -%>
+skip-external-locking
+<% end -%>
+#
+# Instead of skip-networking the default is now to listen only on
+# localhost which is more compatible and is not less secure.
+<% unless node['mariadb']['mysqld']['bind_address'].nil? or node['mariadb']['mysqld']['bind_address'].empty? -%>
+bind-address		= <%= node['mariadb']['mysqld']['bind_address'] %>
+<% end -%>
+#
+# * Fine Tuning
+#
+max_connections		= <%= node['mariadb']['mysqld']['max_connections']         %>
+connect_timeout		= <%= node['mariadb']['mysqld']['connect_timeout']         %>
+wait_timeout		= <%= node['mariadb']['mysqld']['wait_timeout']            %>
+max_allowed_packet	= <%= node['mariadb']['mysqld']['max_allowed_packet']      %>
+thread_cache_size       = <%= node['mariadb']['mysqld']['thread_cache_size']       %>
+sort_buffer_size	= <%= node['mariadb']['mysqld']['sort_buffer_size']        %>
+bulk_insert_buffer_size	= <%= node['mariadb']['mysqld']['bulk_insert_buffer_size'] %>
+tmp_table_size		= <%= node['mariadb']['mysqld']['tmp_table_size']          %>
+max_heap_table_size	= <%= node['mariadb']['mysqld']['max_heap_table_size']     %>
+#
+# * MyISAM
+#
+# This replaces the startup script and checks MyISAM tables if needed
+# the first time they are touched. On error, make copy and try a repair.
+myisam_recover          = <%= node['mariadb']['mysqld']['myisam_recover']  %>
+key_buffer_size		= <%= node['mariadb']['mysqld']['key_buffer_size'] %>
+<% if node['mariadb']['mysqld']['open_files_limit'].empty? -%>
+#open-files-limit	= 2000
+<% else -%>
+open-files-limit	= <%= node['mariadb']['mysqld']['open_files_limit'] %>
+<% end -%>
+table_open_cache	= <%= node['mariadb']['mysqld']['table_open_cache']        %>
+myisam_sort_buffer_size	= <%= node['mariadb']['mysqld']['myisam_sort_buffer_size'] %>
+concurrent_insert	= <%= node['mariadb']['mysqld']['concurrent_insert']       %>
+read_buffer_size	= <%= node['mariadb']['mysqld']['read_buffer_size']        %>
+read_rnd_buffer_size	= <%= node['mariadb']['mysqld']['read_rnd_buffer_size']    %>
+#
+# * Query Cache Configuration
+#
+# Cache only tiny result sets, so we can fit more in the query cache.
+query_cache_limit		= <%= node['mariadb']['mysqld']['query_cache_limit'] %>
+query_cache_size		= <%= node['mariadb']['mysqld']['query_cache_size']  %>
+# for more write intensive setups, set to DEMAND or OFF
+<% if node['mariadb']['mysqld']['query_cache_type'].empty? -%>
+#query_cache_type		= DEMAND
+<% else -%>
+query_cache_type                = <%= node['mariadb']['mysqld']['query_cache_type']  %>
+<% end -%>
+#
+# * Logging and Replication
+#
+# Both location gets rotated by the cronjob.
+# Be aware that this log type is a performance killer.
+# As of 5.1 you can enable the log at runtime!
+#general_log_file        = /var/log/mysql/mysql.log
+#general_log             = 1
+#
+# Error logging goes to syslog due to /etc/mysql/conf.d/mysqld_safe_syslog.cnf.
+#
+# we do want to know about network errors and such
+log_warnings		= 2
+#
+# Enable the slow query log to see queries with especially long duration
+#slow_query_log[={0|1}]
+slow_query_log_file	= /var/log/mysql/mariadb-slow.log
+long_query_time = 10
+#log_slow_rate_limit	= 1000
+log_slow_verbosity	= query_plan
+
+#log-queries-not-using-indexes
+#log_slow_admin_statements
+#
+# The following can be used as easy to replay backup logs or for replication.
+# note: if you are setting up a replication slave, see README.Debian about
+#       other settings you may need to change.
+#report_host		= master1
+#auto_increment_increment = 2
+#auto_increment_offset	= 1
+# not fab for performance, but safer
+#sync_binlog		= 1
+# slaves
+#relay_log		= /var/log/mysql/relay-bin
+#relay_log_index	= /var/log/mysql/relay-bin.index
+#relay_log_info_file	= /var/log/mysql/relay-bin.info
+#log_slave_updates
+#read_only
+#
+# If applications support it, this stricter sql_mode prevents some
+# mistakes like inserting invalid dates etc.
+#sql_mode		= NO_ENGINE_SUBSTITUTION,TRADITIONAL
+
+default_storage_engine	= <%= node['mariadb']['mysqld']['default_storage_engine'] %>
+
+#
+# * Security Features
+#
+# Read the manual, too, if you want chroot!
+# chroot = /var/lib/mysql/
+#
+# For generating SSL certificates I recommend the OpenSSL GUI "tinyca".
+#
+# ssl-ca=/etc/mysql/cacert.pem
+# ssl-cert=/etc/mysql/server-cert.pem
+# ssl-key=/etc/mysql/server-key.pem
+
+<% if node['mariadb']['mysqld'].key?('options') -%>
+<%   node['mariadb']['mysqld']['options'].each { |key, value| -%>
+<%= key %> = <%= value %>
+<%   } -%>
+<% end -%>
+
+#
+# * Plugins Options
+#
+<% plugin_load = [] -%>
+<%   node['mariadb']['plugins_loading'].each { |plugin, loading| -%>
+  <% plugin_load.push(loading) if node['mariadb']['plugins'][plugin] %>
+<%   } -%>
+plugin-load = <%= plugin_load.join(';') %>
+
+[mysqldump]
+<% if node['mariadb']['mysqldump']['quick'].empty? -%>
+quick
+<% end -%>
+<% if node['mariadb']['mysqldump']['quote_names'].empty? -%>
+quote-names
+<% end -%>
+max_allowed_packet	= <%= node['mariadb']['mysqldump']['max_allowed_packet'] %>
+
+[mysql]
+#no-auto-rehash	# faster start of mysql but no tab completition
+
+[isamchk]
+key_buffer		= <%= node['mariadb']['isamchk']['key_buffer'] %>
+
+#
+# * IMPORTANT: Additional settings that can override those from this file!
+#   The files must end with '.cnf', otherwise they'll be ignored.
+#
+!includedir <%= node['mariadb']['configuration']['includedir'] %>/
+

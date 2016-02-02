@@ -5,4 +5,5 @@ dev/build/
 node_modules/
 wordpress/
 .vagrant/
+provision/tmp/
 Movefile

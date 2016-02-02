@@ -48,13 +48,13 @@ system 'npm install'
 FileUtils.cd '../..'
 
 # start vagrant
-# puts "[setup.rb] Starting Vagrant VM..."
-# system 'vagrant up'
-#
-# # run our gulp install task which will activate the theme in WordPress
-# # we let Gulp do it because it needs to read slug from site.yml
-# puts "[setup.rb] Activating theme in WordPress..."
-# system 'gulp install'
+puts "[setup.rb] Starting Vagrant VM..."
+system 'vagrant up'
+
+# run our gulp install task which will activate the theme in WordPress
+# we let Gulp do it because it needs to read slug from site.yml
+puts "[setup.rb] Activating theme in WordPress..."
+system 'gulp install'
 
 # after which, the site will be ready to run and develop locally
 # just run gulp

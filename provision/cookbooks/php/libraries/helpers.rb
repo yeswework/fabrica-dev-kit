@@ -1,5 +1,5 @@
 #
-# Author::  Joshua Timberman (<joshua@opscode.com>)
+# Author::  Joshua Timberman (<joshua@getchef.com>)
 # Cookbook Name:: php
 # Libraries:: helpers
 #
@@ -19,5 +19,5 @@
 #
 
 def el5_range
-  (0..99).to_a.map{|i| "5.#{i}"}
+  (0..99).to_a.map { |i| "5.#{i}" }
 end

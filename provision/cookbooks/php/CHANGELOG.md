@@ -2,6 +2,107 @@ php Cookbook CHANGELOG
 ======================
 This file is used to list changes made in each version of the php cookbook.
 
+v1.7.2 (2015-8-24)
+------------------
+- Correct spelling in fpm_pool_start_servers (was servres)
+
+v1.7.1 (2015-8-17)
+------------------
+- Correct permissions on ext_conf_dir folder (644 -> 755)
+
+v1.7.0 (2015-7-31)
+------------------
+- NOTICE - This version changes the way the ['php']['directives'] is placed into configuration files. Quotes are no longer automatically placed around these aditional directives. Please take care when rolling out this version.
+- Allow additional PHP FPM config
+- Add recipe to recompile PHP from source
+- Move source dependencies to attributes file
+- Misc bug fixes
+
+v1.6.0 (2015-7-6)
+-----------------
+- Added ChefSpec matchers
+- Added basic PHP-FPM Support (Pre-Release)
+- Added support for FreeBSD
+- Updated cookbook to use MySQL 6.0 cookbook
+- Update cookbook to use php5enmod on supported platforms
+- Allow users to override php-mysql package
+
+v1.5.0 (2014-10-06)
+-------------------
+- Adding package_options attribute, utilizing in package resource
+
+v1.4.6 (2014-03-19)
+-------------------
+- [COOK-4436] - Test this cookbook, not yum. Also test Fedora 20.
+- [COOK-4427] - Add oracle as supported operating system
+
+
+v1.4.4 (2014-03-12)
+-------------------
+- [COOK-4393] - Fix convergence bug in source install
+
+
+v1.4.2 (2014-02-27)
+-------------------
+[COOK-4300] - Simplified and fixed pear/pecl logic. [Fixes #56 / #57]
+
+
+v1.4.0 (2014-02-27)
+-------------------
+[COOK-3639] - Allow users to specify php.ini source template
+
+
+v1.3.14 (2014-02-21)
+--------------------
+### Bug
+- **[COOK-4186](https://tickets.opscode.com/browse/COOK-4186)** - Upgrade_package concatenates an empty version string when version is not set or is empty.
+
+
+v1.3.12 (2014-01-28)
+--------------------
+Fix github issue 'Cannot find a resource for preferred_state'
+
+
+v1.3.10
+-------
+Fixing my stove
+
+
+v1.3.8
+------
+Version bump to ensure artifact sanity
+
+
+v1.3.6
+------
+Version bump for toolchain
+
+
+v1.3.4
+------
+Adding platform_family check to include_recipe in source.rb
+
+
+v1.3.2
+------
+Fixing style cops. Updating test harness
+
+
+v1.3.0
+------
+### Bug
+- **[COOK-3479](https://tickets.opscode.com/browse/COOK-3479)** - Added Windows support to PHP
+- **[COOK-2909](https://tickets.opscode.com/browse/COOK-2909)** - Warnings about Chef::Exceptions::ShellCommandFailed is deprecated
+
+
+v1.2.6
+------
+### Bug
+- **[COOK-3628](https://tickets.opscode.com/browse/COOK-3628)** - Fix PHP download URL
+- **[COOK-3568](https://tickets.opscode.com/browse/COOK-3568)** - Fix Test Kitchen tests
+- **[COOK-3402](https://tickets.opscode.com/browse/COOK-3402)** - When the `ext_dir` setting is present, configure php properly for the source recipe
+- **[COOK-2926](https://tickets.opscode.com/browse/COOK-2926)** - Fix pear package detection when installing specific version
+
 
 v1.2.4
 ------

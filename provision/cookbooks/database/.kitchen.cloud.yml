@@ -1,0 +1,182 @@
+#<% require 'kitchen-sync' %>
+---
+driver_config:
+  digitalocean_client_id: <%= ENV['DIGITAL_OCEAN_CLIENT_ID'] %>
+  google_client_email: <%= ENV['GOOGLE_CLIENT_EMAIL'] %>
+  google_key_location: <%= ENV['GOOGLE_KEY_LOCATION'] %>
+  google_project: <%= ENV['GOOGLE_PROJECT'] %>
+  joyent_username: <%= ENV['SDC_CLI_ACCOUNT'] %>
+  joyent_keyfile: <%= ENV['SDC_CLI_IDENTITY'] %>
+  joyent_keyname: <%= ENV['SDC_CLI_KEY_ID'] %>
+  joyent_url: <%= ENV['SDC_CLI_URL'] %>
+  aws_access_key_id: <%= ENV['AWS_ACCESS_KEY_ID'] %>
+  aws_secret_access_key: <%= ENV['AWS_SECRET_ACCESS_KEY'] %>
+  aws_ssh_key_id: <%= ENV['AWS_KEYPAIR_NAME'] %>
+  flavor_id: <%= ENV['EC2_FLAVOR_ID'] %>
+  availability_zone: <%= ENV['AWS_AVAILABILITY_ZONE'] %>
+
+provisioner:
+  name: chef_zero
+  # require_chef_omnibus: 11.16.8
+  # require_chef_omnibus: 12.0.3
+  require_chef_omnibus: latest
+
+platforms:
+- name: centos-5.8
+  driver_plugin: digital_ocean
+  driver_config:
+    size: 2gb
+    image: centos-5-8-x64
+    region: <%= ENV['DIGITAL_OCEAN_REGION'] %>
+    ssh_key_ids: <%= ENV['DIGITAL_OCEAN_SSH_KEY_IDS'] %>
+    ssh_key: <%= ENV['DIGITAL_OCEAN_SSH_KEY_PATH'] %>
+
+- name: centos-6.5
+  driver_plugin: digital_ocean
+  driver_config:
+    size: 2gb
+    image: centos-6-5-x64
+    region: <%= ENV['DIGITAL_OCEAN_REGION'] %>
+    ssh_key_ids: <%= ENV['DIGITAL_OCEAN_SSH_KEY_IDS'] %>
+    ssh_key: <%= ENV['DIGITAL_OCEAN_SSH_KEY_PATH'] %>
+
+- name: centos-7.0
+  driver_plugin: digital_ocean
+  driver_config:
+    size: 2gb
+    image: centos-7-0-x64
+    region: <%= ENV['DIGITAL_OCEAN_REGION'] %>
+    ssh_key_ids: <%= ENV['DIGITAL_OCEAN_SSH_KEY_IDS'] %>
+    ssh_key: <%= ENV['DIGITAL_OCEAN_SSH_KEY_PATH'] %>
+
+- name: amazon-2014.09
+  driver_plugin: ec2
+  driver_config:
+    image_id: ami-9a6ed3f2
+    username: ec2-user
+    ssh_key: <%= ENV['EC2_SSH_KEY_PATH'] %>
+
+- name: fedora-20
+  driver_plugin: digital_ocean
+  driver_config:
+    size: 2gb
+    image: fedora-20-x64
+    region: <%= ENV['DIGITAL_OCEAN_REGION'] %>
+    ssh_key_ids: <%= ENV['DIGITAL_OCEAN_SSH_KEY_IDS'] %>
+    ssh_key: <%= ENV['DIGITAL_OCEAN_SSH_KEY_PATH'] %>
+
+- name: suse-11.3
+  driver_plugin: ec2
+  driver_config:
+    image_id: ami-e8084981
+    username: root
+    ssh_key: <%= ENV['EC2_SSH_KEY_PATH'] %>
+
+- name: debian-7.0
+  driver_plugin: gce
+  driver_config:
+    image_name: debian-7-wheezy-v20131120
+    zone: <%= ENV['GCE_ZONE'] %>
+    area: <%= ENV['GCE_AREA'] %>
+    network: <%= ENV['GCE_NETWORK'] %>
+    username: <%= ENV['GCE_USERNAME'] %>
+    public_key_path: <%= ENV['GCE_PUBLIC_KEY_PATH'] %>
+    ssh_key: <%= ENV['GCE_SSH_KEY_PATH'] %>
+  run_list:
+  - recipe[apt]
+
+- name: ubuntu-10.04
+  driver_plugin: digital_ocean
+  driver_config:
+    size: 2gb
+    image: ubuntu-10-04-x64
+    region: <%= ENV['DIGITAL_OCEAN_REGION'] %>
+    ssh_key_ids: <%= ENV['DIGITAL_OCEAN_SSH_KEY_IDS'] %>
+    ssh_key: <%= ENV['DIGITAL_OCEAN_SSH_KEY_PATH'] %>
+  run_list:
+  - recipe[apt]
+
+- name: ubuntu-12.04
+  driver_plugin: digital_ocean
+  driver_config:
+    size: 2gb
+    image: ubuntu-12-04-x64
+    region: <%= ENV['DIGITAL_OCEAN_REGION'] %>
+    ssh_key_ids: <%= ENV['DIGITAL_OCEAN_SSH_KEY_IDS'] %>
+    ssh_key: <%= ENV['DIGITAL_OCEAN_SSH_KEY_PATH'] %>
+  run_list:
+  - recipe[apt]
+
+- name: ubuntu-14.04
+  driver_plugin: digital_ocean
+  driver_config:
+    size: 2gb
+    image: ubuntu-14-04-x64
+    region: <%= ENV['DIGITAL_OCEAN_REGION'] %>
+    ssh_key_ids: <%= ENV['DIGITAL_OCEAN_SSH_KEY_IDS'] %>
+    ssh_key: <%= ENV['DIGITAL_OCEAN_SSH_KEY_PATH'] %>
+  run_list:
+  - recipe[apt]
+
+suites:
+  #
+  # database-test
+  #
+  - name: myclient50
+    run_list:
+    - recipe[mysql_database_test]
+    attributes:
+      mysql:
+       version: '5.0'
+    includes: [
+      'centos-5.8'
+    ]
+
+  - name: myclient51
+    run_list:
+    - recipe[mysql_database_test]
+    attributes:
+      mysql:
+       version: '5.1'
+    includes: [
+      'centos-6.5',
+      'ubuntu-10.04'
+    ]
+
+  - name: myclient55
+    run_list:
+    - recipe[mysql_database_test]
+    attributes:
+      mysql:
+       version: '5.5'
+    includes: [
+      'centos-6.5',
+      'debian-7.0',
+      'ubuntu-12.04',
+      'ubuntu-14.04'
+    ]
+
+  - name: myclient56
+    run_list:
+    - recipe[mysql_database_test]
+    attributes:
+      mysql:
+       version: '5.6'
+    includes: [
+      'centos-5.8',
+      'centos-6.5',
+      'centos-7.0',
+      'ubuntu-14.04'
+    ]
+
+  - name: myclient57
+    run_list:
+    - recipe[mysql_database_test]
+    attributes:
+      mysql:
+       version: '5.7'
+    includes: [
+      'centos-5.8',
+      'centos-6.5',
+      'centos-7.0'
+    ]

@@ -1,0 +1,19 @@
+# DEPLOYED BY CHEF
+[<%= @section -%>]
+<% @options.each do | option_name, option_value |-%>
+ <% if option_value.to_s == 'true' -%>
+<%= option_name %>
+ <% else -%>
+  <% if option_value.kind_of?(String) &&  option_value.start_with?('#') -%>
+<%= option_value %>
+  <% else -%>
+    <% if option_value.kind_of?(Array) -%>
+      <% option_value.each do | option_value_array_value | -%>
+<%= option_name -%> = <%= option_value_array_value %>
+      <% end -%>
+    <% else -%>
+<%= option_name -%> = <%= option_value %>
+    <% end -%>
+  <% end -%>
+ <% end -%>
+<% end -%>

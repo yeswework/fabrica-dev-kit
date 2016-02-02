@@ -1,0 +1,41 @@
+{
+  "name": "wp-cli",
+  "description": "Installs wp-cli",
+  "long_description": "wp-cli Chef Cookbook\n===============\nInstalls [WP-CLI](http://wp-cli.org/).\n\n\nAttributes\n----------\n<table>\n  <tr>\n    <th>Key</th>\n    <th>Type</th>\n    <th>Description</th>\n    <th>Default</th>\n  </tr>\n  <tr>\n    <td><tt>['wp-cli']['dir']</tt></td>\n    <td>String</td>\n    <td>The installation dir</td>\n    <td><tt>/usr/local/share/wp-cli</tt></td>\n  </tr>\n  <tr>\n    <td><tt>['wp-cli']['link']</tt></td>\n    <td>String</td>\n    <td>The binary link</td>\n    <td><tt>/usr/local/bin/wp</tt></td>\n  </tr>\n</table>\n\nUsage\n-----\nJust include `wp-cli` in your node's `run_list`:\n\n```json\n{\n  \"name\":\"my_node\",\n  \"run_list\": [\n    \"recipe[wp-cli]\"\n  ]\n}\n```\n\nResources / Providers\n---------------------\n\nThis cookbook includes an LWRP for execute `wp-cli` commands\n\n### `wp_cli_command`\n\nExecute WP-CLI with the desired command and arguments.\n\n### Parameters:\n\n* `command` - WP-CLI command.\n* `args` - Hash with the command arguments\n* `stdin` - Free text to the standard input (see `wp core config --extra-php`)\n* `cwd` - WordPress installation path.\n* `user` - Execute WP-CLI with under the desired user privileges.\n\n### Examples:\n\nExecute `wp core is-installed` over the WordPress installation directory.\n\n```\n    wp_cli_command 'core is-installed' do\n      args(\n        'path' => '/path/to/wordpress/',\n        'allow-root' => ''\n      )\n    end\n```\n\nor\n\n```\n    wp_cli_command 'core is-installed' do\n      args(\n        'allow-root' => ''\n      )\n      cwd '/path/to/wordpress/'\n    end\n```\n\nContributing\n------------\n1. Fork the repository on Github\n2. Create a named feature branch (like `add_component_x`)\n3. Write your change\n4. Test your change\n5. Submit a Pull Request using Github\n\nAuthor(s)\n---------\nRubem Nakamura\n\nLicense\n-------\n[MIT LICENSE](http://opensource.org/licenses/MIT)\n",
+  "maintainer": "Rubem Nakamura",
+  "maintainer_email": "rubem.nakamura@gmail.com",
+  "license": "MIT",
+  "platforms": {
+
+  },
+  "dependencies": {
+
+  },
+  "recommendations": {
+
+  },
+  "suggestions": {
+
+  },
+  "conflicting": {
+
+  },
+  "providing": {
+
+  },
+  "replacing": {
+
+  },
+  "attributes": {
+
+  },
+  "groupings": {
+
+  },
+  "recipes": {
+
+  },
+  "version": "0.1.4",
+  "source_url": "",
+  "issues_url": ""
+}

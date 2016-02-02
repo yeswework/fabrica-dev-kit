@@ -1,0 +1,13 @@
+<%
+# Value obtained via the debconf-get-selections tool on debian wheezy
+pack_w_version = @package_name + '-' + node['mariadb']['install']['version']
+-%>
+<%= pack_w_version %>	mysql-server/root_password_again	select	<%= node['mariadb']['server_root_password'] %>
+<%= pack_w_version %>	mysql-server/root_password	select	<%= node['mariadb']['server_root_password'] %>
+<%= pack_w_version %>	mysql-server/error_setting_password	boolean	false
+<%= pack_w_version %>	mysql-server-5.1/nis_warning	note	
+<%= pack_w_version %>	mysql-server-5.1/start_on_boot	boolean	true
+<%= pack_w_version %>	<%= pack_w_version %>/really_downgrade	boolean	false
+<%= pack_w_version %>	mysql-server-5.1/postrm_remove_databases	boolean	false
+<%= pack_w_version %>	mysql-server/password_mismatch	boolean	false
+<%= pack_w_version %>	mysql-server/no_upgrade_when_using_ndb	boolean	true

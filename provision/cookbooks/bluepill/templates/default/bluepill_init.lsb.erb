@@ -1,0 +1,37 @@
+#!/bin/sh
+#
+### BEGIN INIT INFO
+# Provides: <%= @service_name %>
+# Required-Start:
+# Required-Stop:
+# Defalt-Start: 2 3 4 5
+# Default-Stop: 0 1 2 6
+# Description: Bluepill loader for <%= @service_name %>
+### END INIT INFO
+
+BLUEPILL_BIN=<%= node['bluepill']['bin'] %>
+BLUEPILL_CONFIG=<%= @config_file %>
+SERVICE_NAME=<%= @service_name %>
+
+[ -r <%= node['bluepill']['defaults_dir'] %>/$SERVICE_NAME ] && . <%= node['bluepill']['defaults_dir'] %>/$SERVICE_NAME
+
+case "$1" in
+  start)
+    echo "Loading bluepill configuration for $SERVICE_NAME "
+    $BLUEPILL_BIN load $BLUEPILL_CONFIG
+    ;;
+  stop)
+    $BLUEPILL_BIN $SERVICE_NAME stop
+    $BLUEPILL_BIN $SERVICE_NAME quit
+    ;;
+  restart)
+    $BLUEPILL_BIN $SERVICE_NAME restart
+    ;;
+  status)
+    $BLUEPILL_BIN $SERVICE_NAME status
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+    ;;
+esac

@@ -1,108 +1,78 @@
 # encoding: utf-8
-# vim: ft=ruby expandtab shiftwidth=2 tabstop=2
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
 
-#
-# General Settings
-#
+# General
 wp_box: ubuntu/trusty64
 chef_cookbook_path: ./provision
 
-#
-# Virtual Machine Settings
-#
+# Virtual machine
 memory: 512
 cpus: 1
 
-#
-# Network Settings
-#
-hostname: vccw.dev
+# DB will be reset when provision
+reset_db_on_provision: true
+
+# ~ [TODO]
+# Are you hurrying a lot?
+disable_devkit_cookbook: false
+
+# User and Group
+user: vagrant
+group: vagrant
+
+# phpenv
+php_version: default
+
+# Network
+hostname: kit.dev
 ip: 192.168.33.10
 sync_folder: 'www/wordpress'
 
-#
-# WordPress Settings
-#
+# WordPress
 version: latest
 lang: en_US
 title: Welcome to the VCCW
 multisite: false
 rewrite_structure: /archives/%post_id%
 
-#
-# WordPress Path
-#
+# Wordpress path
 document_root: '/var/www/wordpress'
-wp_siteurl: ''  # Path to the WP_SITEURL like "wp"
-wp_home: ''     # Path to the WP_HOME like "wp"
+siteurl: ''  # Path to the WP_SITEURL like "wp"
+home: ''     # Path to the WP_HOME like "wp"
 
-#
-# WordPress User
-#
+# Wordpress users
 admin_user: admin
 admin_pass: admin
-admin_email: vccw@example.com
+admin_email: devkit@example.com
 
-#
 # WordPress Database
-#
 db_prefix: wp_
 db_host: localhost
 
-#
-# WordPress Default Plugins
+# Default Plugins
 # Plugin's slug or url to the plugin's slug.
-#
 plugins:
-  - dynamic-hostname
-  - wp-total-hacks
-  - tinymce-templates
+- advanced-custom-fields
+- timber-library
+- sucuri-scanner
+- force-regenerate-thumbnails
+- query-monitor
 
-#
 # WordPress Default Theme
 # Theme's slug or url to the theme's .zip.
-#
 theme: ''
 
-#
 # WordPress Options
-#
 options:
-  blogdescription: Hello VCCW.
+  blogdescription: Hello Dev Kit.
 
-#
 # The values of wp-config.php
-#
 force_ssl_admin: false
 wp_debug: true
 savequeries: false
 
-#
 # Theme unit testing
-#
 theme_unit_test: false
 theme_unit_test_uri: https://wpcom-themes.svn.automattic.com/demo/theme-unit-test-data.xml
 # theme_unit_test_uri: https://raw.githubusercontent.com/jawordpressorg/theme-test-data-ja/master/wordpress-theme-test-date-ja.xml
-
-#
-# DB will be reset when provision
-#
-reset_db_on_provision: true
-
-#
-# Are you hurrying a lot?
-#
-disable_vccw_cookbook: false
-
-
-#
-# User and Group
-#
-user: vagrant
-group: vagrant
-
-
-#
-# phpenv
-#
-php_version: default
