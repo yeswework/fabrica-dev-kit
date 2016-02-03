@@ -30,7 +30,7 @@ project_data = project_data.gsub(/{{projectHomepage}}/, config['homepage'])
 File.open(package_file, "w") {|file| file.puts project_data }
 # replace project slug in YWWProject.php
 project_php_file = 'dev/src/includes/YWWProject.php'
-project_php = File.read project_php
+project_php = File.read project_php_file
 project_php = project_php.gsub(/{{projectSlug}}/, config['slug'])
 File.open(project_php_file, "w") {|file| file.puts project_php }
 

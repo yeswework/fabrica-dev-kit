@@ -15,7 +15,7 @@ class YWWProject extends YWWBase {
 	function __construct() {
 
 		// Namespace for this project
-		$this->projectNamespace = '{{projectSlug}}');
+		$this->projectNamespace = '{{projectSlug}}';
 
 		// Google Analytics ID (injected by parent class)
 		$this->googleAnalyticsId = '';
