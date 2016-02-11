@@ -23,7 +23,7 @@ rescue
 	abort('[setup.rb] Could not load "setup.yml". Please create this file based on "setup-example.yml".')
 end
 
-# replace settings in package.json and project slug in YWWProject.php
+# set configuration data in package.json, YWWProject.php and Wordmove files
 configostruct = OpenStruct.new(config)
 def renderSourceFile(filename, configostruct)
 	template = File.read "#{filename}.erb"
@@ -33,6 +33,7 @@ def renderSourceFile(filename, configostruct)
 end
 renderSourceFile('dev/src/package.json', configostruct)
 renderSourceFile('dev/src/includes/YWWProject.php', configostruct)
+renderSourceFile('Movefile.erb', configostruct)
 
 # rename/backup "setup.yml"
 FileUtils.mv 'setup.yml', 'setup.bak.yml'

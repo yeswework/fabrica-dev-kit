@@ -1,0 +1,48 @@
+local:
+  vhost: "<%= homepage %>"
+  wordpress_path: '<%= "#{__DIR__}/#{sync_folder}/" %>' # use an absolute path here
+
+  database:
+    name: "wordpress"
+    user: "wordpress"
+    password: "wordpress"
+    host: "<%= hostname %>"
+
+production:
+  vhost: "<%= homepage %>"
+  wordpress_path: "server path" # use an absolute path here
+
+  database:
+    name: "server db name"
+    user: "server db user"
+    password: "server db password"
+    host: "server db host"
+    # port: "3308" # Use just in case you have exotic server config
+
+  exclude:
+    - ".git/"
+    - ".gitignore"
+    - ".sass-cache/"
+    - "bin/"
+    - "tmp/*"
+    - "Gemfile*"
+    - "Movefile"
+    - "wp-config.php"
+    - "wp-content/*.sql"
+
+  # ssh:
+  #   host: "host"
+  #   user: "user"
+  #   password: "password" # password is optional, will use public keys if available.
+  #   port: 22 # Port is optional
+  #   rsync_options: "--verbose" # Additional rsync options, optional
+  #   gateway: # Gateway is optional
+  #     host: "host"
+  #     user: "user"
+  #     password: "password" # password is optional, will use public keys if available.
+
+  # ftp:
+  #   user: "user"
+  #   password: "password"
+  #   host: "host"
+  #   passive: true
