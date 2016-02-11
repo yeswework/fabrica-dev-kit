@@ -74,12 +74,15 @@ Vagrant.configure("2") do |config|
       File.join(chef_cookbooks_path, 'cookbooks'),
       File.join(chef_cookbooks_path, 'site-cookbooks')
     ]
+    # disable unnecessary Ohai plugins
+    chef.custom_config_path = File.join(chef_cookbooks_path, 'chefclient.rb')
 
     chef.json = {
       :nginx => {
         :user                     => settings['user'],
         :group                    => settings['group'],
         :default_root             => settings['document_root'],
+        :worker_processes         => settings['cpus'],
         :init_style               => 'runit'
       },
       :mysql => {
@@ -88,6 +91,18 @@ Vagrant.configure("2") do |config|
         :server_repl_password     => 'wordpress',
         :server_debian_password   => 'wordpress'
       },
+      # ~ :php => {
+      #   # :packages => %w(php5-mysql),
+      #   :packages => %w(php5-cli php5-devel php5-mbstring php5-mysql php5-gd php5-xdebug),
+      #   :directives => {
+      #     'default_charset'            => 'UTF-8',
+      #     'mbstring.language'          => 'neutral',
+      #     'mbstring.internal_encoding' => 'UTF-8',
+      #     'date.timezone'              => 'UTC',
+      #     'short_open_tag'             => 'Off',
+      #     'session.save_path'          => '/tmp'
+      #   }
+      # },
       'php-fpm' => {
         :user                     => settings['user'],
         :group                    => settings['group']
@@ -121,11 +136,9 @@ Vagrant.configure("2") do |config|
       }
     }
 
-    chef.add_recipe 'apt'
     chef.add_recipe 'php-fpm'
     chef.add_recipe 'nginx'
     chef.add_recipe 'php'
-    chef.add_recipe 'php::module_mysql'
     chef.add_recipe 'wp-cli'
 
     chef.add_recipe 'devkit'

@@ -23,7 +23,6 @@ template File.join(wpcli_config_path, "config.yml") do
   )
 end
 
-# ~%~ [TODO][WIP]
 db_connection_info = {
   host: node[:devkit][:dbhost],
   username: 'root',
@@ -55,4 +54,3 @@ mysql_database_user node[:devkit][:dbuser] do
   password node[:devkit][:dbpassword]
   action [:create, :grant]
 end
-# ~%~

@@ -3,9 +3,18 @@
 
 require 'shellwords'
 
-service "iptables" do
+service 'iptables' do
   supports :status => true, :restart => true
   action [:disable, :stop]
+end
+
+# PHP modules
+package ['php5-mysql', 'php5-gd', 'php5-xdebug'] do
+  action :install
+end
+
+execute 'regenerate-locales' do
+  command 'dpkg-reconfigure locales'
 end
 
 wp_site_home = File.join(node[:devkit][:wp_docroot], node[:devkit][:wp_home])
@@ -194,39 +203,7 @@ if node[:devkit][:is_multisite] == true then
     user node[:devkit][:user]
     cwd wp_site_path
   end
-
-  # ~ [TODO] fix location
-  template File.join(wp_site_home, 'nginx.conf') do
-    source "multisite.nginx.conf.erb"
-    owner node[:devkit][:user]
-    group node[:devkit][:group]
-    mode "0644"
-  end
 end
-
-# create .gitignore file
-template File.join(wp_site_home, '.gitignore') do
-  source "gitignore.erb"
-  owner node[:devkit][:user]
-  group node[:devkit][:group]
-  mode "0644"
-  action :create_if_missing
-  variables(
-    :siteurl => File.join(node[:devkit][:wp_siteurl], '/')
-  )
-end
-
-# ~%~ [TODO] 'port' to Nginx
-# apache_site "000-default" do
-#   enable false
-# end
-
-# web_app "wordpress" do
-#   template "wordpress.conf.erb"
-#   docroot node[:devkit][:wp_docroot]
-#   server_name node[:fqdn]
-# end
-# ~%~
 
 # Nginx configurartion
 template File.join(node[:nginx][:dir], 'sites-available/default') do
@@ -235,7 +212,8 @@ template File.join(node[:nginx][:dir], 'sites-available/default') do
   group "root"
   mode "0644"
   variables(
-    :docroot => wp_site_path
+    :docroot    => wp_site_path,
+    :multisite  => node[:devkit][:is_multisite]
   )
 end
 

@@ -32,7 +32,7 @@ sync_folder: 'www/wordpress'
 # WordPress
 version: latest
 lang: en_US
-title: Welcome to the VCCW
+title: Welcome to the Dev Kit
 multisite: false
 rewrite_structure: /archives/%post_id%
 

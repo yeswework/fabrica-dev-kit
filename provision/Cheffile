@@ -2,7 +2,6 @@
 
 site 'http://community.opscode.com/api/v1'
 
-cookbook 'apt'
 cookbook 'nginx', {}
 cookbook 'mysql2_chef_gem', {}
 cookbook 'database', {}
