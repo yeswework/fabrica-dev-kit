@@ -1,9 +1,0 @@
-location / {
-    # add a trailing slash to /wp-admin
-    rewrite ^/([_0-9a-zA-Z-]+/)?wp-admin$ /$1wp-admin/ redirect;
-    if (-e $request_filename) {
-        rewrite ^/([_0-9a-zA-Z-]+/)?(wp-(content|admin|includes).*) /$2 break;
-    }
-    rewrite ^/([_0-9a-zA-Z-]+/)?(.*\.php)$ /$2 break;
-    rewrite ^(.*)$ /index.php break;
-}

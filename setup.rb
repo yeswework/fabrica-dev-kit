@@ -7,8 +7,10 @@
 # and modify it with project info. see README.md for more info
 # =============================================================================
 
-require 'yaml'
+require 'erb'
 require 'fileutils'
+require 'yaml'
+require 'ostruct'
 
 # copy starter source folder: this will preserve changes if/when kit updated
 FileUtils.cp_r 'dev/src-starter', 'dev/src'
@@ -20,19 +22,17 @@ begin
 rescue
 	abort('[setup.rb] Could not load "setup.yml". Please create this file based on "setup-example.yml".')
 end
-# replace settings in package.json
-package_file = 'dev/src/package.json'
-project_data = File.read package_file
-project_data = project_data.gsub(/{{projectSlug}}/, config['slug'])
-project_data = project_data.gsub(/{{projectTitle}}/, config['title'])
-project_data = project_data.gsub(/{{projectAuthor}}/, config['author'])
-project_data = project_data.gsub(/{{projectHomepage}}/, config['homepage'])
-File.open(package_file, "w") {|file| file.puts project_data }
-# replace project slug in YWWProject.php
-project_php_file = 'dev/src/includes/YWWProject.php'
-project_php = File.read project_php_file
-project_php = project_php.gsub(/{{projectSlug}}/, config['slug'])
-File.open(project_php_file, "w") {|file| file.puts project_php }
+
+# replace settings in package.json and project slug in YWWProject.php
+configostruct = OpenStruct.new(config)
+def renderSourceFile(filename, configostruct)
+	template = File.read "#{filename}.erb"
+	file_data = ERB.new(template).result(configostruct.instance_eval { binding })
+	File.open(filename, "w") {|file| file.puts file_data }
+	FileUtils.rm "#{filename}.erb"
+end
+renderSourceFile('dev/src/package.json', configostruct)
+renderSourceFile('dev/src/includes/YWWProject.php', configostruct)
 
 # rename/backup "setup.yml"
 FileUtils.mv 'setup.yml', 'setup.bak.yml'
