@@ -91,18 +91,16 @@ Vagrant.configure("2") do |config|
         :server_repl_password     => 'wordpress',
         :server_debian_password   => 'wordpress'
       },
-      # ~ :php => {
-      #   # :packages => %w(php5-mysql),
-      #   :packages => %w(php5-cli php5-devel php5-mbstring php5-mysql php5-gd php5-xdebug),
-      #   :directives => {
-      #     'default_charset'            => 'UTF-8',
-      #     'mbstring.language'          => 'neutral',
-      #     'mbstring.internal_encoding' => 'UTF-8',
-      #     'date.timezone'              => 'UTC',
-      #     'short_open_tag'             => 'Off',
-      #     'session.save_path'          => '/tmp'
-      #   }
-      # },
+      :php => {
+        :directives => {
+          'default_charset'            => 'UTF-8',
+          'mbstring.language'          => 'neutral',
+          'mbstring.internal_encoding' => 'UTF-8',
+          'date.timezone'              => 'UTC',
+          'short_open_tag'             => 'Off',
+          'session.save_path'          => '/tmp'
+        }
+      },
       'php-fpm' => {
         :user                     => settings['user'],
         :group                    => settings['group']
