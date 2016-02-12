@@ -10,12 +10,10 @@ chef_cookbook_path: ./provision
 memory: 512
 cpus: 1
 
+linked_clone: false
+
 # DB will be reset when provision
 reset_db_on_provision: true
-
-# ~ [TODO]
-# Are you hurrying a lot?
-disable_devkit_cookbook: false
 
 # User and Group
 user: vagrant

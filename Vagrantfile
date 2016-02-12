@@ -48,10 +48,11 @@ Vagrant.configure("2") do |config|
   end
 
   if Vagrant.has_plugin?('vagrant-vbguest')
-    config.vbguest.auto_update = false
+    config.vbguest.auto_update = true
   end
 
   config.vm.provider :virtualbox do |vb|
+    vb.linked_clone = settings['linked_clone'] if Vagrant::VERSION =~ /^1.8/
     vb.name = settings['hostname']
     vb.memory = settings['memory'].to_i
     vb.cpus = settings['cpus'].to_i
@@ -135,8 +136,8 @@ Vagrant.configure("2") do |config|
     }
 
     chef.add_recipe 'php-fpm'
-    chef.add_recipe 'nginx'
     chef.add_recipe 'php'
+    chef.add_recipe 'nginx'
     chef.add_recipe 'wp-cli'
 
     chef.add_recipe 'devkit'

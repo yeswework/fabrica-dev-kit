@@ -52,14 +52,6 @@ end
 mysql_database_user node[:devkit][:dbuser] do
   connection db_connection_info
   password node[:devkit][:dbpassword]
-  host '%'  # ~~~
+  host '%'
   action [:create, :grant]
 end
-
-# ~%~
-# mysql_database_user node[:devkit][:dbuser] do
-#   connection db_connection_info
-#   password node[:devkit][:dbpassword]
-#   action :grant
-# end
-# ~%~
