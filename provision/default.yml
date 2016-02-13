@@ -13,7 +13,7 @@ cpus: 1
 linked_clone: false
 
 # DB will be reset when provision
-reset_db_on_provision: true
+reset_db_on_provision: false
 
 # User and Group
 user: vagrant
