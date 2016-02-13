@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "[mailhog.sh] Installing MailHog and configuring WordPress"
+echo "[mailhog.sh] MailHog install and configuration"
 
 # WordPress plugin to send mails to MailHog's port
 echo "[mailhog.sh] Copying WordPress plugin"
