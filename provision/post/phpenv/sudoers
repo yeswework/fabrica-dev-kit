@@ -1,0 +1,1 @@
+Defaults    secure_path = /usr/local/phpenv/shims:/usr/local/phpenv/bin:/sbin:/bin:/usr/sbin:/usr/bin

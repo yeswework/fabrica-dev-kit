@@ -44,7 +44,12 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder settings['sync_folder'], settings['document_root'], :create => 'true', :mount_options => ['dmode=755', 'fmode=755']
 
   if Vagrant.has_plugin?('vagrant-hostsupdater')
-    config.hostsupdater.remove_on_suspend = true
+    if Vagrant::VERSION =~ /^1.8/
+      # `vagrant resume` on v.1.8 runs provioning again so `vagrant up` has to be used instead and it doesn't set the host again so it's best not to remomve it on suspend
+      config.hostsupdater.remove_on_suspend = false
+    else
+      config.hostsupdater.remove_on_suspend = true
+    end
   end
 
   if Vagrant.has_plugin?('vagrant-vbguest')
@@ -122,6 +127,7 @@ Vagrant.configure("2") do |config|
         :default_theme            => settings['theme'],
         :title                    => settings['title'],
         :is_multisite             => settings['multisite'],
+        :use_ssl                  => settings['use_ssl'],
         :force_ssl_admin          => settings['force_ssl_admin'],
         :debug_mode               => settings['wp_debug'],
         :savequeries              => settings['savequeries'],

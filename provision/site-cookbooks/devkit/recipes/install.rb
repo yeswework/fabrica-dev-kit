@@ -217,19 +217,26 @@ template File.join(node[:nginx][:dir], 'sites-available/default') do
   )
 end
 
-# ~%~ [TODO] port to Nginx
-# bash "create-ssl-keys" do
-#   user "root"
-#   group "root"
-#   cwd File.join(node[:nginx][:dir], 'ssl')
-#   code <<-EOH
-#     openssl genrsa -out server.key 2048
-#     openssl req -new -key server.key -sha256 -subj '/C=JP/ST=Wakayama/L=Kushimoto/O=My Corporate/CN=#{node[:fqdn]}' -out server.csr
-#     openssl x509 -in server.csr -days 365 -req -signkey server.key > server.crt
-#   EOH
-#   notifies :restart, "service[nginx]"
-# end
-# ~%~
+# create SSL keys
+nginx_ssl_path = File.join(node[:nginx][:dir], 'ssl')
+directory nginx_ssl_path do
+    recursive true
+    user "root"
+    group "root"
+end
+
+bash "create-ssl-keys" do
+  user "root"
+  group "root"
+  cwd nginx_ssl_path
+  code <<-EOH
+    openssl genrsa -out server.key 2048
+    openssl req -new -key server.key -sha256 -subj '/C=JP/ST=Wakayama/L=Kushimoto/O=My Corporate/CN=#{node[:fqdn]}' -out server.csr
+    openssl x509 -in server.csr -days 365 -req -signkey server.key > server.crt
+    openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
+  EOH
+  notifies :restart, "service[nginx]"
+end
 
 template File.join(node[:devkit][:wp_docroot], ".editorconfig") do
   source "editorconfig.erb"
