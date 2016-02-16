@@ -46,7 +46,7 @@ var projectSlug = projectSettings.name,
 // Paths for remapping
 var base = {
 	src: './dev/src/',
-	build: './dev/build/',
+	guestSrc: '/vagrant/dev/src/',
 	theme: './www/wordpress/wp-content/themes/' + projectSlug + '/'
 };
 
@@ -61,6 +61,8 @@ var path = {
 	fonts: base.src + 'assets/fonts/**/*',
 	styleMain: base.src + 'assets/css/main.pcss',
 	scriptMain: base.src + 'assets/js/main.js',
+	buildLink: './dev/build',
+	buildTarget: '../' + base.theme,
 };
 
 // Build folder slugs
@@ -101,9 +103,8 @@ var options = {
 
 // Erase build and theme folders before each compile
 function clean() {
-	return del([base.build, base.theme], {force: true})
+	return del([base.theme], {force: true})
 		.then(function() {
-			fs.mkdirSync(base.build);
 			fs.mkdirSync(base.theme);
 		});
 }
@@ -114,7 +115,6 @@ function styleCss(cb) {
 		+ 'Theme Name: ' + projectTitle + '\r\n'
 		+ 'Theme URI: http://' + projectHomepage + '\r\n'
 		+ 'Author: ' + projectAuthor + '\r\n' + '*/';
-	fs.writeFileSync(base.build + 'style.css', data);
 	fs.writeFileSync(base.theme + 'style.css', data);
 	cb(); // indicate completion
 }
@@ -122,24 +122,21 @@ function styleCss(cb) {
 // Create a symlink to ACF JSON in theme folder so that the source and theme are always in sync
 function acf(cb) {
 	// symlink to absolute path in VM (it must be synced on the guest but not necessarily on the host)
-	fs.symlinkSync('/vagrant/' + base.src + dest.acf, base.theme + dest.acf);
+	fs.symlinkSync(base.guestSrc + dest.acf, base.theme + dest.acf);
 	cb(); // indicate completion
 }
 
 // Includes: copy internal PHP dependencies to an inc folder and auto-create functions.php with includes
 function includes() {
-	fs.writeFileSync(base.build + 'functions.php', '<?php\r\n'); // create a blank functions.php
 	fs.writeFileSync(base.theme + 'functions.php', '<?php\r\n');
 	var nonVendorFilter = gulpFilter('*.php', {restore: true}); // only require top-level files in functions.php
 	return gulp.src(path.includes)
 		.pipe(nonVendorFilter)
 		.pipe(tap(function(file, t) {// write an include for this file to our functions.php automatically
-			fs.appendFileSync(base.build + 'functions.php', "require_once(get_stylesheet_directory() . '/" + dest.includes + "/" + file.path.replace(file.base, '') + "');\r\n");
 			fs.appendFileSync(base.theme + 'functions.php', "require_once(get_stylesheet_directory() . '/" + dest.includes + "/" + file.path.replace(file.base, '') + "');\r\n");
 		}))
 		.pipe(nonVendorFilter.restore)
-		.pipe(changed(base.build + dest.includes))
-		.pipe(gulp.dest(base.build + dest.includes))
+		.pipe(changed(base.theme + dest.includes))
 		.pipe(gulp.dest(base.theme + dest.includes))
 		.pipe(browserSync.stream());
 }
@@ -148,8 +145,7 @@ function includes() {
 function controllers() {
 	return gulp.src(path.controllers)
 		.pipe(flatten())
-		.pipe(changed(base.build + dest.controllers))
-		.pipe(gulp.dest(base.build + dest.controllers))
+		.pipe(changed(base.theme + dest.controllers))
 		.pipe(gulp.dest(base.theme + dest.controllers))
 		.pipe(browserSync.stream());
 }
@@ -158,9 +154,8 @@ function controllers() {
 function views() {
 	return gulp.src(path.views)
 		.pipe(flatten())
-		.pipe(changed(base.build + dest.views))
+		.pipe(changed(base.theme + dest.views))
 		.pipe(beml(options.beml))
-		.pipe(gulp.dest(base.build + dest.views))
 		.pipe(gulp.dest(base.theme + dest.views))
 		.pipe(browserSync.stream());
 }
@@ -172,15 +167,13 @@ function styles() {
 		.pipe(postcss(options.postcss))
 		.pipe(concat('main.css'))
 		.pipe(sourcemaps.init())
-		.pipe(changed(base.build + dest.styles))
-		.pipe(gulp.dest(base.build + dest.styles))
+		.pipe(changed(base.theme + dest.styles))
 		.pipe(gulp.dest(base.theme + dest.styles))
 		.pipe(browserSync.stream({match: '**/*.css'}))
 		.pipe(cssnano())
 		.pipe(rename('main.min.css'))
 		.pipe(sourcemaps.write('.'))
-		.pipe(changed(base.build + dest.styles))
-		.pipe(gulp.dest(base.build + dest.styles))
+		.pipe(changed(base.theme + dest.styles))
 		.pipe(gulp.dest(base.theme + dest.styles))
 		.pipe(browserSync.stream({match: '**/*.css'}));
 }
@@ -192,17 +185,15 @@ function scripts(done) {
 		.pipe(jshint())
 		.pipe(jshint.reporter())
 		.pipe(webpack({ output: { filename: 'main.js' } }))
-		.pipe(changed(base.build + dest.scripts))
+		.pipe(changed(base.theme + dest.scripts))
 		.pipe(sourcemaps.init({loadMaps: true}))
-		.pipe(gulp.dest(base.build + dest.scripts))
 		.pipe(gulp.dest(base.theme + dest.scripts))
 		.pipe(browserSync.stream())
 		.pipe(uglify())
 		.pipe(sourcemaps.write('.'))
 		.pipe(rename('main.min.js'))
 		.pipe(sourcemaps.write('.'))
-		.pipe(changed(base.build + dest.scripts))
-		.pipe(gulp.dest(base.build + dest.scripts))
+		.pipe(changed(base.theme + dest.scripts))
 		.pipe(gulp.dest(base.theme + dest.scripts))
 		.pipe(browserSync.stream());
 }
@@ -210,9 +201,8 @@ function scripts(done) {
 // Images: optimise and copy, maintaining tree
 function images() {
 	return gulp.src(path.images)
-		.pipe(changed(base.build + dest.images))
+		.pipe(changed(base.theme + dest.images))
 		.pipe(imagemin(options.imagemin))
-		.pipe(gulp.dest(base.build + dest.images))
 		.pipe(gulp.dest(base.theme + dest.images))
 		.pipe(browserSync.stream());
 }
@@ -220,8 +210,7 @@ function images() {
 // Fonts: just copy, maintaining tree
 function fonts() {
 	return gulp.src(path.fonts)
-		.pipe(changed(base.build + dest.fonts))
-		.pipe(gulp.dest(base.build + dest.fonts))
+		.pipe(changed(base.theme + dest.fonts))
 		.pipe(gulp.dest(base.theme + dest.fonts))
 		.pipe(browserSync.stream());
 }
@@ -232,6 +221,12 @@ gulp.task('build', gulp.series(clean, gulp.parallel(styleCss, acf, includes, con
 // Install: tell Vagrant to activate the built theme
 gulp.task('install', gulp.series('build', activate));
 function activate(cb) {
+	// create symlink in dev folder to theme for quick reference
+	try {
+		fs.symlinkSync(path.buildTarget, path.buildLink);
+	} catch (e) {
+		// symlink already exists
+	}
 	shell.exec('vagrant ssh -c "wp theme activate ' + projectSlug + '"');
 	cb(); // indicate completion
 }
