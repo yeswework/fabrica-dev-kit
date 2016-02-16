@@ -38,6 +38,7 @@ renderSourceFile('Movefile', configostruct)
 # rename/backup "setup.yml"
 FileUtils.mv 'setup.yml', 'setup.bak.yml'
 # create "site.yml" file for Vagrant
+slug = config['slug']
 config.reject! {|key| ['slug', 'title', 'author', 'homepage'].include?(key) }
 File.open('site.yml', 'w') {|file| file.write config.to_yaml }
 
@@ -55,10 +56,12 @@ FileUtils.cd '../..'
 puts "[setup.rb] Starting Vagrant VM..."
 system 'vagrant up'
 
-# run our gulp install task which will activate the theme in WordPress
-# we let Gulp do it because it needs to read slug from site.yml
-puts "[setup.rb] Activating theme in WordPress..."
-system 'gulp install'
+# run our gulp build task and activate the theme in WordPress
+puts "[setup.rb] Building theme and activating in WordPress..."
+system 'gulp build'
+# create symlink to theme folder in dev for quick access
+FileUtils.ln_s "../www/wordpress/themes/#{slug}/", 'dev/build'
+system "vagrant ssh -c \"wp theme activate '#{slug}'\""
 
 # after which, the site will be ready to run and develop locally
 # just run gulp

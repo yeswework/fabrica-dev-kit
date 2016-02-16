@@ -61,8 +61,6 @@ var path = {
 	fonts: base.src + 'assets/fonts/**/*',
 	styleMain: base.src + 'assets/css/main.pcss',
 	scriptMain: base.src + 'assets/js/main.js',
-	buildLink: './dev/build',
-	buildTarget: '../' + base.theme,
 };
 
 // Build folder slugs
@@ -217,19 +215,6 @@ function fonts() {
 
 // Build: sequences all the other tasks
 gulp.task('build', gulp.series(clean, gulp.parallel(styleCss, acf, includes, controllers, views, styles, scripts, images, fonts)));
-
-// Install: tell Vagrant to activate the built theme
-gulp.task('install', gulp.series('build', activate));
-function activate(cb) {
-	// create symlink in dev folder to theme for quick reference
-	try {
-		fs.symlinkSync(path.buildTarget, path.buildLink);
-	} catch (e) {
-		// symlink already exists
-	}
-	shell.exec('vagrant ssh -c "wp theme activate ' + projectSlug + '"');
-	cb(); // indicate completion
-}
 
 // Watch: fire build, then watch for changes
 gulp.task('default', gulp.series('build', watch));
