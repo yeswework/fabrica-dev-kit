@@ -208,27 +208,42 @@ if node[:devkit][:is_multisite] == true then
 end
 
 # Nginx configurartion
-template File.join(node[:nginx][:dir], 'sites-available/default') do
-  source "nginx.erb"
+directory File.join(node[:nginx][:dir], 'global') do
+    recursive true
+    user "root"
+    group "root"
+end
+
+template File.join(node[:nginx][:dir], 'global/wordpress.conf') do
+  source "nginx.global.erb"
   owner "root"
   group "root"
   mode "0644"
   variables(
     :docroot    => wp_site_path,
     :multisite  => node[:devkit][:is_multisite],
+  )
+end
+
+template File.join(node[:nginx][:dir], 'sites-available/default') do
+  source "nginx.erb"
+  owner "root"
+  group "root"
+  mode "0644"
+  variables(
     :use_ssl    => node[:devkit][:use_ssl],
   )
 end
 
 # create SSL keys
-nginx_ssl_path = File.join(node[:nginx][:dir], 'ssl')
-directory nginx_ssl_path do
-    recursive true
-    user "root"
-    group "root"
-end
-
 if node[:devkit][:use_ssl] == true then
+  nginx_ssl_path = File.join(node[:nginx][:dir], 'ssl')
+  directory nginx_ssl_path do
+      recursive true
+      user "root"
+      group "root"
+  end
+
   bash "create-ssl-keys" do
     user "root"
     group "root"

@@ -1,5 +1,5 @@
-// Import third-party libraries with Browserify
-require('jquery');
+// Import third-party libraries with Webpack
+var jQuery = require('jquery');
 
 (function($) {
 

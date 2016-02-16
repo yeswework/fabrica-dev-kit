@@ -2,34 +2,8 @@ server {
     listen 80;
     server_name localhost;
 
-    root <%= @docroot %>;
-    index index.php index.html;
-
-    # Important for VirtualBox
-    sendfile off;
-
-    location / {
-        try_files $uri $uri/ =404;
-    }
-
-    <% if @multisite %>
-        # Rewrite multisite '.../wp-.*' and '.../*.php'.
-        if (!-e $request_filename) {
-            rewrite /wp-admin$ $scheme://$host$uri/ permanent;
-            rewrite ^/[_0-9a-zA-Z-]+(/wp-.*) $1 last;
-            rewrite ^/[_0-9a-zA-Z-]+(/.*\.php)$ $1 last;
-        }
-    <% end %>
-
-    location ~* \.php {
-        include fastcgi_params;
-
-        fastcgi_pass unix:/var/run/php-fpm-www.sock;
-
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        fastcgi_cache off;
-        fastcgi_index index.php;
-    }
+    # Load common configuration
+    include global/wordpress.conf;
 }
 
 <% if @use_ssl %>
@@ -57,33 +31,7 @@ server {
         ssl_prefer_server_ciphers on;
         ssl_ciphers 'ECDH+AESGCM:ECDH+AES256:ECDH+AES128:DH+3DES:!ADH:!AECDH:!MD5';
 
-        root <%= @docroot %>;
-        index index.php index.html;
-
-        # Important for VirtualBox
-        sendfile off;
-
-        location / {
-            try_files $uri $uri/ =404;
-        }
-
-        <% if @multisite %>
-            # Rewrite multisite '.../wp-.*' and '.../*.php'.
-            if (!-e $request_filename) {
-                rewrite /wp-admin$ $scheme://$host$uri/ permanent;
-                rewrite ^/[_0-9a-zA-Z-]+(/wp-.*) $1 last;
-                rewrite ^/[_0-9a-zA-Z-]+(/.*\.php)$ $1 last;
-            }
-        <% end %>
-
-        location ~* \.php {
-            include fastcgi_params;
-
-            fastcgi_pass unix:/var/run/php-fpm-www.sock;
-
-            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-            fastcgi_cache off;
-            fastcgi_index index.php;
-        }
+        # Load common configuration
+        include global/wordpress.conf;
     }
 <% end %>
