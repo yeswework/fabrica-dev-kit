@@ -60,7 +60,7 @@ system 'vagrant up'
 puts "[setup.rb] Building theme and activating in WordPress..."
 system 'gulp build'
 # create symlink to theme folder in dev for quick access
-FileUtils.ln_s "../www/wordpress/themes/#{slug}/", 'dev/build'
+FileUtils.ln_s "../www/wordpress/wp-content/themes/#{slug}/", 'dev/build'
 system "vagrant ssh -c \"wp theme activate '#{slug}'\""
 
 # after which, the site will be ready to run and develop locally
