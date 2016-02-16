@@ -89,7 +89,8 @@ Vagrant.configure("2") do |config|
         :group                    => settings['group'],
         :default_root             => settings['document_root'],
         :worker_processes         => settings['cpus'],
-        :init_style               => 'runit'
+        :init_style               => 'runit',
+        :client_max_body_size     => '13m'
       },
       :mysql => {
         :bind_address             => '0.0.0.0',
