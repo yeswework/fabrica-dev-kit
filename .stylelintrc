@@ -2,6 +2,8 @@
 	"extends": "stylelint-config-standard",
 	"rules": {
 		"string-quotes": null,
-		"at-rule-empty-line-before": null
+		"at-rule-empty-line-before": null,
+		"indentation": "tab",
+		"function-whitespace-after": null
 	}
 }
