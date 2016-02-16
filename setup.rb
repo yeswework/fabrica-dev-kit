@@ -25,15 +25,15 @@ end
 
 # set configuration data in package.json, YWWProject.php and Wordmove files
 configostruct = OpenStruct.new(config)
-def renderSourceFile(filename, configostruct)
+def renderSourceFile(filename, configostruct, keeptemplate = nil)
 	template = File.read "#{filename}.erb"
 	file_data = ERB.new(template).result(configostruct.instance_eval { binding })
 	File.open(filename, "w") {|file| file.puts file_data }
-	FileUtils.rm "#{filename}.erb"
+	FileUtils.rm "#{filename}.erb" unless keeptemplate
 end
 renderSourceFile('dev/src/package.json', configostruct)
 renderSourceFile('dev/src/includes/YWWProject.php', configostruct)
-renderSourceFile('Movefile', configostruct)
+renderSourceFile('Movefile', configostruct, true)
 
 # rename/backup "setup.yml"
 FileUtils.mv 'setup.yml', 'setup.bak.yml'

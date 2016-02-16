@@ -215,7 +215,8 @@ template File.join(node[:nginx][:dir], 'sites-available/default') do
   mode "0644"
   variables(
     :docroot    => wp_site_path,
-    :multisite  => node[:devkit][:is_multisite]
+    :multisite  => node[:devkit][:is_multisite],
+    :use_ssl    => node[:devkit][:use_ssl],
   )
 end
 
