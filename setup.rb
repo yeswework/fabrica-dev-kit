@@ -37,10 +37,10 @@ renderSourceFile('Movefile', configostruct, true)
 
 # rename/backup "setup.yml"
 FileUtils.mv 'setup.yml', 'setup.bak.yml'
-# create "site.yml" file for Vagrant
+# create "vagrant.yml" file for Vagrant
 slug = config['slug']
 config.reject! {|key| ['slug', 'title', 'author', 'homepage'].include?(key) }
-File.open('site.yml', 'w') {|file| file.write config.to_yaml }
+File.open('vagrant.yml', 'w') {|file| file.write config.to_yaml }
 
 # install build dependencies (Gulp + extensions)
 puts "[setup.rb] Installing build dependencies..."

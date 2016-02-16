@@ -1,6 +1,6 @@
 setup.yml
 setup.bak.yml
-site.yml
+vagrant.yml
 dev/src/
 dev/build
 node_modules/

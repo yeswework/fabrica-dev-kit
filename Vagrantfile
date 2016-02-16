@@ -17,7 +17,7 @@ Vagrant.configure("2") do |config|
     end
   end
   settings.merge_settings!(File.join(ENV["HOME"], '.devkit/config.yml'))
-  settings.merge_settings!(File.join(File.dirname(__FILE__), 'site.yml'))
+  settings.merge_settings!(File.join(File.dirname(__FILE__), 'vagrant.yml'))
 
   # get Chef cookbook path
   if File.exists?(settings['chef_cookbook_path'])

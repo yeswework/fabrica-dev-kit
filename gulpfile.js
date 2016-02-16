@@ -21,7 +21,7 @@ var gulp = require('gulp'),
 	fs = require('fs'),
 	uglify = require('gulp-uglify'),
 	lost = require('lost'),
-	postcssImport = require("postcss-import"),
+	postcssImport = require('postcss-import'),
 	postcssFontpath = require('postcss-fontpath'),
 	postcssEach = require('postcss-each'),
 	postcssMixins = require('postcss-mixins'),
@@ -34,9 +34,9 @@ var gulp = require('gulp'),
 	webpack = require('webpack-stream'),
 	YAML = require('yamljs');
 
-// Load project and local settings from package.json and site.yml
+// Load project and local settings from package.json and vagrant.yml
 var projectSettings = require('./dev/src/package.json'),
-	localSettings = YAML.load('site.yml');
+	localSettings = YAML.load('vagrant.yml');
 var projectSlug = projectSettings.name,
 	projectTitle = projectSettings.description,
 	projectHomepage = projectSettings.homepage,
@@ -131,7 +131,7 @@ function includes() {
 	return gulp.src(path.includes)
 		.pipe(nonVendorFilter)
 		.pipe(tap(function(file, t) {// write an include for this file to our functions.php automatically
-			fs.appendFileSync(base.theme + 'functions.php', "require_once(get_stylesheet_directory() . '/" + dest.includes + "/" + file.path.replace(file.base, '') + "');\r\n");
+			fs.appendFileSync(base.theme + 'functions.php', "require_once(get_stylesheet_directory() . '/" + dest.includes + '/' + file.path.replace(file.base, '') + "');\r\n");
 		}))
 		.pipe(nonVendorFilter.restore)
 		.pipe(changed(base.theme + dest.includes))
@@ -160,7 +160,6 @@ function views() {
 
 // Styles (CSS): lint, concatenate into one file, write source map, postcss, save full and minified versions, then copy
 function styles() {
-	// create stream
 	return gulp.src(path.styleMain)
 		.pipe(postcss(options.postcss))
 		.pipe(concat('main.css'))

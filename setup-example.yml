@@ -7,7 +7,7 @@ hostname: yww-project.dev       # local url to be set in hosts
 ip: 192.168.33.10               # if you are running more than 1 vagrant, they need to have different IPs
 lang: en_US
 multisite: false
-rewrite_structure: /%postname%
+rewrite_structure: /%postname%/
 admin_user: yeswework
 admin_pass: Sh0ve11!ng
 admin_email: info@yeswework.com
