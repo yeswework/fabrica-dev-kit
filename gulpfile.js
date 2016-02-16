@@ -52,8 +52,6 @@ var base = {
 
 // Globs for each file type
 var path = {
-	acfTheme: base.theme + 'acf-json/*.json',
-	acf: base.src + 'acf-json/*.json',
 	includes: [base.src + 'includes/**/*.php', base.src + 'includes/.env'],
 	controllers: base.src + 'templates/controllers/**/*.php',
 	views: base.src + 'templates/**/*.twig',
@@ -101,14 +99,6 @@ var options = {
 	}
 };
 
-// Before cleaning, retrieve latest ACF JSON from live theme (delete first)
-// These are the only tasks which modify the src folder
-function acfPull() {
-	return gulp.src(path.acfTheme)
-		.pipe(changed(base.src + dest.acf))
-		.pipe(gulp.dest(base.src + dest.acf));
-}
-
 // Erase build and theme folders before each compile
 function clean() {
 	return del([base.build, base.theme], {force: true})
@@ -129,13 +119,11 @@ function styleCss(cb) {
 	cb(); // indicate completion
 }
 
-// Put ACF JSON back (previously saved with acfPull task)
-function acf() {
-	fs.mkdirSync(base.theme + dest.acf); // Create this folder under any circumstances, so ACF saves to it
-	return gulp.src(path.acf)
-		.pipe(changed(base.build + dest.acf))
-		.pipe(gulp.dest(base.build + dest.acf))
-		.pipe(gulp.dest(base.theme + dest.acf));
+// Create a symlink to ACF JSON in theme folder so that the source and theme are always in sync
+function acf(cb) {
+	// symlink to absolute path in VM (it must be synced on the guest but not necessarily on the host)
+	fs.symlinkSync('/vagrant/' + base.src + dest.acf, base.theme + dest.acf);
+	cb(); // indicate completion
 }
 
 // Includes: copy internal PHP dependencies to an inc folder and auto-create functions.php with includes
@@ -239,7 +227,7 @@ function fonts() {
 }
 
 // Build: sequences all the other tasks
-gulp.task('build', gulp.series(acfPull, clean, gulp.parallel(styleCss, acf, includes, controllers, views, styles, scripts, images, fonts)));
+gulp.task('build', gulp.series(clean, gulp.parallel(styleCss, acf, includes, controllers, views, styles, scripts, images, fonts)));
 
 // Install: tell Vagrant to activate the built theme
 gulp.task('install', gulp.series('build', activate));
@@ -262,5 +250,4 @@ function watch() {
 	gulp.watch(path.scripts, gulp.series(scripts));
 	gulp.watch(path.images, gulp.series(images));
 	gulp.watch(path.fonts, gulp.series(fonts));
-	gulp.watch(path.acfTheme, gulp.series(acfPull));
 }

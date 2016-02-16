@@ -3,6 +3,8 @@
 
 require 'shellwords'
 
+puts "~ use_ssl: #{node[:devkit][:use_ssl]} #{'it is true' if node[:devkit][:use_ssl]}"
+
 service 'iptables' do
   supports :status => true, :restart => true
   action [:disable, :stop]
@@ -225,17 +227,19 @@ directory nginx_ssl_path do
     group "root"
 end
 
-bash "create-ssl-keys" do
-  user "root"
-  group "root"
-  cwd nginx_ssl_path
-  code <<-EOH
-    openssl genrsa -out server.key 2048
-    openssl req -new -key server.key -sha256 -subj '/C=JP/ST=Wakayama/L=Kushimoto/O=My Corporate/CN=#{node[:fqdn]}' -out server.csr
-    openssl x509 -in server.csr -days 365 -req -signkey server.key > server.crt
-    openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
-  EOH
-  notifies :restart, "service[nginx]"
+if node[:devkit][:use_ssl] == true then
+  bash "create-ssl-keys" do
+    user "root"
+    group "root"
+    cwd nginx_ssl_path
+    code <<-EOH
+      openssl genrsa -out server.key 2048
+      openssl req -new -key server.key -sha256 -subj '/C=JP/ST=Wakayama/L=Kushimoto/O=My Corporate/CN=#{node[:fqdn]}' -out server.csr
+      openssl x509 -in server.csr -days 365 -req -signkey server.key > server.crt
+      openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
+    EOH
+    notifies :restart, "service[nginx]"
+  end
 end
 
 template File.join(node[:devkit][:wp_docroot], ".editorconfig") do
