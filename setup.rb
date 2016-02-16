@@ -33,7 +33,7 @@ def renderSourceFile(filename, configostruct)
 end
 renderSourceFile('dev/src/package.json', configostruct)
 renderSourceFile('dev/src/includes/YWWProject.php', configostruct)
-renderSourceFile('Movefile.erb', configostruct)
+renderSourceFile('Movefile', configostruct)
 
 # rename/backup "setup.yml"
 FileUtils.mv 'setup.yml', 'setup.bak.yml'
