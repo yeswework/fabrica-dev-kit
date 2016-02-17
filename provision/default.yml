@@ -25,7 +25,7 @@ use_ssl: false
 # Network
 hostname: kit.dev
 ip: 192.168.33.10
-sync_folder: 'www/wordpress'
+sync_folder: 'www'
 
 # WordPress
 version: latest
@@ -35,7 +35,7 @@ multisite: false
 rewrite_structure: /archives/%post_id%
 
 # Wordpress path
-document_root: '/var/www/wordpress'
+document_root: '/var/www'
 siteurl: ''  # Path to the WP_SITEURL like "wp"
 home: ''     # Path to the WP_HOME like "wp"
 

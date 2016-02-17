@@ -18,29 +18,39 @@ FileUtils.cp_r 'dev/src-starter', 'dev/src'
 # load setup settings
 puts "[setup.rb] Reading settings..."
 begin
-	config = YAML.load_file 'setup.yml'
+	# load default, user and project/site settings, in that order
+	settings = YAML.load_file(File.join(File.dirname(__FILE__), 'provision/default.yml'))
+	def settings.merge_settings!(settings_filename)
+		if File.exists?(settings_filename)
+			new_settings = YAML.load_file(settings_filename)
+			self.merge!(new_settings) if new_settings.is_a?(Hash)
+			return new_settings
+		end
+	end
+	settings.merge_settings!(File.join(ENV["HOME"], '.devkit/settings.yml'))
+	setup_settings = settings.merge_settings!(File.join(File.dirname(__FILE__), 'setup.yml'))
+	setup_settings['sync_folder'] = if setup_settings.has_key?('sync_folder') then setup_settings['sync_folder'] else settings['sync_folder'] end
 rescue
 	abort('[setup.rb] Could not load "setup.yml". Please create this file based on "setup-example.yml".')
 end
 
 # set configuration data in package.json, YWWProject.php and Wordmove files
-configostruct = OpenStruct.new(config)
-def renderSourceFile(filename, configostruct, keeptemplate = nil)
+settingsostruct = OpenStruct.new(settings)
+def renderSourceFile(filename, settingsostruct, keeptemplate = nil)
 	template = File.read "#{filename}.erb"
-	file_data = ERB.new(template).result(configostruct.instance_eval { binding })
+	file_data = ERB.new(template).result(settingsostruct.instance_eval { binding })
 	File.open(filename, "w") {|file| file.puts file_data }
 	FileUtils.rm "#{filename}.erb" unless keeptemplate
 end
-renderSourceFile('dev/src/package.json', configostruct)
-renderSourceFile('dev/src/includes/YWWProject.php', configostruct)
-renderSourceFile('Movefile', configostruct, true)
+renderSourceFile('dev/src/package.json', settingsostruct)
+renderSourceFile('dev/src/includes/YWWProject.php', settingsostruct)
+renderSourceFile('Movefile', settingsostruct, true)
 
 # rename/backup "setup.yml"
 FileUtils.mv 'setup.yml', 'setup.bak.yml'
 # create "vagrant.yml" file for Vagrant
-slug = config['slug']
-config.reject! {|key| ['slug', 'title', 'author', 'homepage'].include?(key) }
-File.open('vagrant.yml', 'w') {|file| file.write config.to_yaml }
+setup_settings.reject! {|key| ['slug', 'title', 'author', 'homepage'].include?(key) }
+File.open('vagrant.yml', 'w') {|file| file.write setup_settings.to_yaml }
 
 # install build dependencies (Gulp + extensions)
 puts "[setup.rb] Installing build dependencies..."
@@ -60,8 +70,8 @@ system 'vagrant up'
 puts "[setup.rb] Building theme and activating in WordPress..."
 system 'gulp build'
 # create symlink to theme folder in dev for quick access
-FileUtils.ln_s "../www/wordpress/wp-content/themes/#{slug}/", 'dev/build'
-system "vagrant ssh -c \"wp theme activate '#{slug}'\""
+FileUtils.ln_s "../#{settings['sync_folder']}/wp-content/themes/#{settings['slug']}/", 'dev/build'
+system "vagrant ssh -c \"wp theme activate '#{settings['slug']}'\""
 
 # after which, the site will be ready to run and develop locally
 # just run gulp

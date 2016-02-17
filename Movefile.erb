@@ -1,6 +1,6 @@
 local:
-  vhost: "<%= homepage %>"
-  wordpress_path: '<%= "#{__DIR__}/#{sync_folder}/" %>' # use an absolute path here
+  vhost: "<%= hostname %>"
+  wordpress_path: '<%= "#{Dir.pwd}/#{sync_folder}/" %>' # use an absolute path here
 
   database:
     name: "wordpress"
@@ -30,6 +30,42 @@ production:
     - "wp-config.php"
     - "wp-content/*.sql"
 
+  <% if ftp %>
+  ftp:
+    host: "<%= ftp['host'] %>"
+    user: "<%= ftp['user'] %>"
+    password: "<%= ftp['password'] %>"
+    passive: <%= if ftp.has_key?('passive') then ftp['passive'] else true end %>
+  <% else %>
+  # ftp:
+  #   user: "user"
+  #   password: "password"
+  #   host: "host"
+  #   passive: true
+  <% end %>
+
+  <% if ssh %>
+  ssh:
+    host: "<%= ssh['host'] %>"
+    user: "<%= ssh['user'] %>"
+    <% if ssh['password'] %>
+    password: "<%= ssh['password'] %>"
+    <% end %>
+    <% if ssh['port'] %>
+    port: <%= ssh['port'] %>
+    <% end %>
+    <% if ssh['rsync_options'] %>
+    rsync_options: "<%= ssh['rsync_options'] %>"
+    <% end %>
+    <% if ssh['gateway'] %>
+    gateway:
+      host: "<%= ssh['gateway']['host'] %>"
+      user: "<%= ssh['gateway']['user'] %>"
+      <% if ssh['gateway']['password'] %>
+      password: "<%= ssh['gateway']['password'] %>"
+      <% end %>
+    <% end %>
+  <% else %>
   # ssh:
   #   host: "host"
   #   user: "user"
@@ -40,9 +76,4 @@ production:
   #     host: "host"
   #     user: "user"
   #     password: "password" # password is optional, will use public keys if available.
-
-  # ftp:
-  #   user: "user"
-  #   password: "password"
-  #   host: "host"
-  #   passive: true
+  <% end %>

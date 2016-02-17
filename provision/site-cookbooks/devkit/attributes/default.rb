@@ -15,7 +15,7 @@ default[:devkit][:wp_version] = "latest"
 default[:devkit][:wp_host] = "wordpress.local"
 default[:devkit][:wp_home] = ""
 default[:devkit][:wp_siteurl] = ""
-default[:devkit][:wp_docroot] = "/var/www/wordpress"
+default[:devkit][:wp_docroot] = "/var/www"
 default[:devkit][:title] = "Welcome to the WordPress"
 
 default[:devkit][:admin_user] = "admin"

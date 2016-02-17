@@ -41,13 +41,14 @@ var projectSlug = projectSettings.name,
 	projectTitle = projectSettings.description,
 	projectHomepage = projectSettings.homepage,
 	projectAuthor = projectSettings.author,
-	projectUrl = localSettings.hostname;
+	projectUrl = localSettings.hostname,
+	projectSyncFolder = localSettings.sync_folder;
 
 // Paths for remapping
 var base = {
 	src: './dev/src/',
 	guestSrc: '/vagrant/dev/src/',
-	theme: './www/wordpress/wp-content/themes/' + projectSlug + '/'
+	theme: './' + projectSyncFolder + '/wp-content/themes/' + projectSlug + '/'
 };
 
 // Globs for each file type
