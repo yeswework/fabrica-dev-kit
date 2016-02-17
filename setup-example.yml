@@ -1,21 +1,29 @@
+# Basics
 slug: yww-project
 title: YWW Project
 author: Yes We Work <info@yeswework> (http://yeswework.com)
-homepage: http://yeswework.com/ # remote homepage
-# the following values are used to configure the vagrant box
-hostname: yww-project.dev       # local url to be set in hosts
-ip: 192.168.33.10               # if you are running more than 1 vagrant, they need to have different IPs
-lang: en_US
-multisite: false
-rewrite_structure: /%postname%/
+url: http://yeswework.com/
+
+# Vagrant
+dev_url: yww-project.dev
+dev_ip: 192.168.33.10
+
+# WordPress
 admin_user: yeswework
 admin_pass: Sh0ve11!ng
 admin_email: info@yeswework.com
+lang: en_US
+rewrite_structure: /%postname%/
+multisite: false
 plugins:
   - advanced-custom-fields
-# - http://yeswework.com/_dev/plugins/advanced-custom-fields-pro.zip
   - timber-library
   - sucuri-scanner
   - force-regenerate-thumbnails
   - query-monitor
-# - http://yeswework.com/_dev/plugins/yww-admin-tweaks.zip
+
+# Movefile (assumes production URL is as above)
+# ftp:
+#   host:
+#   user:
+#   pass:

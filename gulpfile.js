@@ -39,9 +39,9 @@ var projectSettings = require('./dev/src/package.json'),
 	localSettings = YAML.load('vagrant.yml');
 var projectSlug = projectSettings.name,
 	projectTitle = projectSettings.description,
-	projectHomepage = projectSettings.homepage,
+	projectUrl = projectSettings.url,
 	projectAuthor = projectSettings.author,
-	projectUrl = localSettings.hostname,
+	projectDevUrl = localSettings.dev_url,
 	projectSyncFolder = localSettings.sync_folder;
 
 // Paths for remapping
@@ -68,7 +68,7 @@ var path = {
 var dest = {
 	acf: 'acf-json',
 	includes: 'inc',
-	controllers: '', // need to go in the root theme folder
+	controllers: '', // Need to go in the root theme folder
 	views: 'views',
 	styles: 'css',
 	scripts: 'js',
@@ -108,21 +108,21 @@ function clean() {
 		});
 }
 
-// style.css: auto-create our theme's style.css using project info we already have
+// style.css: auto-create theme header file using project info we already have
 function styleCss(cb) {
 	var data = '/*\r\n'
 		+ 'Theme Name: ' + projectTitle + '\r\n'
-		+ 'Theme URI: http://' + projectHomepage + '\r\n'
+		+ 'Theme URI: http://' + projectUrl + '\r\n'
 		+ 'Author: ' + projectAuthor + '\r\n' + '*/';
 	fs.writeFileSync(base.theme + 'style.css', data);
-	cb(); // indicate completion
+	cb();
 }
 
-// Create a symlink to ACF JSON in theme folder so that the source and theme are always in sync
+// Acf: create a symlink to ACF JSON in theme folder so that the source and theme are always in sync
 function acf(cb) {
-	// symlink to absolute path in VM (it must be synced on the guest but not necessarily on the host)
+	// Symlink to absolute path in VM (it must be synced on the guest but not necessarily on the host)
 	fs.symlinkSync(base.guestSrc + dest.acf, base.theme + dest.acf);
-	cb(); // indicate completion
+	cb();
 }
 
 // Includes: copy internal PHP dependencies to an inc folder and auto-create functions.php with includes
@@ -220,7 +220,7 @@ gulp.task('build', gulp.series(clean, gulp.parallel(styleCss, acf, includes, con
 gulp.task('default', gulp.series('build', watch));
 function watch() {
 	browserSync.init({
-		proxy: projectUrl,
+		proxy: projectDevUrl,
 		open: false
 	});
 	gulp.watch(path.styles, gulp.series(styles));

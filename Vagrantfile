@@ -30,15 +30,15 @@ Vagrant.configure("2") do |config|
   end
 
   # setup VM
-  config.vm.define settings['hostname']
+  config.vm.define settings['dev_url']
 
   config.vm.box = ENV['wp_box'] || settings['wp_box']
   config.ssh.forward_agent = true
 
   config.vm.box_check_update = true
 
-  config.vm.hostname = settings['hostname']
-  config.vm.network :private_network, ip: settings['ip']
+  config.vm.hostname = settings['dev_url']
+  config.vm.network :private_network, ip: settings['dev_ip']
 
   config.vm.synced_folder ".", "/vagrant", :mount_options => ['dmode=755', 'fmode=755']
   config.vm.synced_folder settings['sync_folder'], settings['document_root'], :create => 'true', :mount_options => ['dmode=755', 'fmode=755']
@@ -58,7 +58,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.provider :virtualbox do |vb|
     vb.linked_clone = settings['linked_clone'] if Vagrant::VERSION =~ /^1.8/
-    vb.name = settings['hostname']
+    vb.name = settings['dev_url']
     vb.memory = settings['memory'].to_i
     vb.cpus = settings['cpus'].to_i
     if 1 < settings['cpus'].to_i
@@ -116,7 +116,7 @@ Vagrant.configure("2") do |config|
         :user                     => settings['user'],
         :group                    => settings['group'],
         :wp_version               => ENV['wp_version'] || settings['version'],
-        :wp_host                  => settings['hostname'],
+        :wp_host                  => settings['dev_url'],
         :wp_home                  => settings['home'],
         :wp_siteurl               => settings['siteurl'],
         :wp_docroot               => settings['document_root'],

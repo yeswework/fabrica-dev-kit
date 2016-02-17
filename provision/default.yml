@@ -23,8 +23,8 @@ group: vagrant
 use_ssl: false
 
 # Network
-hostname: kit.dev
-ip: 192.168.33.10
+dev_url: kit.dev
+dev_ip: 192.168.33.10
 sync_folder: 'www'
 
 # WordPress
