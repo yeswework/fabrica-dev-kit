@@ -3,8 +3,6 @@
 
 require 'shellwords'
 
-puts "~ use_ssl: #{node[:devkit][:use_ssl]} #{'it is true' if node[:devkit][:use_ssl]}"
-
 service 'iptables' do
   supports :status => true, :restart => true
   action [:disable, :stop]
@@ -231,6 +229,8 @@ template File.join(node[:nginx][:dir], 'sites-available/default') do
   group "root"
   mode "0644"
   variables(
+    :multisite  => node[:devkit][:is_multisite],
+    :host       => node[:devkit][:wp_host],
     :use_ssl    => node[:devkit][:use_ssl],
   )
 end

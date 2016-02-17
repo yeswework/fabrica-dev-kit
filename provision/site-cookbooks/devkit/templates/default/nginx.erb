@@ -1,3 +1,11 @@
+<% if @multisite %>
+map $http_host $blogid {
+    default 0;
+
+    <% @host %> 1;
+}
+<% end %>
+
 server {
     listen 80;
     server_name localhost;
@@ -7,31 +15,31 @@ server {
 }
 
 <% if @use_ssl %>
-    server {
-        # listens both on IPv4 and IPv6 on 443 and enables HTTPS and HTTP/2 support.
-        # HTTP/2 is available in nginx 1.9.5 and above.
-        listen *:443 ssl;
-        listen [::]:443 ssl;
+server {
+    # listens both on IPv4 and IPv6 on 443 and enables HTTPS and HTTP/2 support.
+    # HTTP/2 is available in nginx 1.9.5 and above.
+    listen *:443 ssl;
+    listen [::]:443 ssl;
 
-        # indicate locations of SSL key files.
-        ssl_certificate ssl/server.crt;
-        ssl_certificate_key ssl/server.key;
-        ssl_dhparam ssl/dhparam.pem;
+    # indicate locations of SSL key files.
+    ssl_certificate ssl/server.crt;
+    ssl_certificate_key ssl/server.key;
+    ssl_dhparam ssl/dhparam.pem;
 
-        # indicate the server name
-        server_name example.com *.example.com;
+    # indicate the server name
+    server_name example.com *.example.com;
 
-        # Enable HSTS. This forces SSL on clients that respect it, most modern browsers. The includeSubDomains flag is optional.
-        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
+    # Enable HSTS. This forces SSL on clients that respect it, most modern browsers. The includeSubDomains flag is optional.
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
 
-        # Set caches, protocols, and accepted ciphers. This config will merit an A+ SSL Labs score as of Sept 2015.
-        ssl_session_cache shared:SSL:20m;
-        ssl_session_timeout 10m;
-        ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
-        ssl_prefer_server_ciphers on;
-        ssl_ciphers 'ECDH+AESGCM:ECDH+AES256:ECDH+AES128:DH+3DES:!ADH:!AECDH:!MD5';
+    # Set caches, protocols, and accepted ciphers. This config will merit an A+ SSL Labs score as of Sept 2015.
+    ssl_session_cache shared:SSL:20m;
+    ssl_session_timeout 10m;
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    ssl_prefer_server_ciphers on;
+    ssl_ciphers 'ECDH+AESGCM:ECDH+AES256:ECDH+AES128:DH+3DES:!ADH:!AECDH:!MD5';
 
-        # Load common configuration
-        include global/wordpress.conf;
-    }
+    # Load common configuration
+    include global/wordpress.conf;
+}
 <% end %>
