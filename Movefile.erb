@@ -10,7 +10,11 @@ local:
 
 production:
   vhost: "<%= url %>"
+  <% if remote_path %>
+  wordpress_path: "<%= remote_path %>"
+  <% else %>
   wordpress_path: "server path" # use an absolute path here
+  <% end %>
 
   database:
     name: "server db name"

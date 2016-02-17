@@ -22,7 +22,8 @@ plugins:
   - force-regenerate-thumbnails
   - query-monitor
 
-# Movefile (assumes production URL is as above)
+# Production deployment quick set up
+# remote_path: /absolute/path/to/wordpress/
 # ftp:
 #   host:
 #   user:
