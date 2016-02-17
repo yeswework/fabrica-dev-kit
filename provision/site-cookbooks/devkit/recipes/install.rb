@@ -17,14 +17,22 @@ execute 'regenerate-locales' do
   command 'dpkg-reconfigure locales'
 end
 
-wp_site_home = File.join(node[:devkit][:wp_docroot], node[:devkit][:wp_home])
 wp_site_path = File.join(node[:devkit][:wp_docroot], node[:devkit][:wp_siteurl])
 wp_site_url = File.join(node[:devkit][:wp_host], node[:devkit][:wp_siteurl])
 # create site folder structure
-directory wp_site_home do
+directory File.join("/vagrant", node[:devkit][:wp_host_docroot], node[:devkit][:wp_home]) do
     recursive true
     owner node[:devkit][:user]
     group node[:devkit][:group]
+end
+
+# create symlink to WordPress folder
+link node[:devkit][:wp_docroot] do
+  to File.join("/vagrant", node[:devkit][:wp_host_docroot])
+  link_type :symbolic
+  owner "root"
+  group "root"
+  mode "0755"
 end
 
 # download WordPress
@@ -104,7 +112,7 @@ end
 
 # default index page
 unless node[:devkit][:wp_home] == node[:devkit][:wp_siteurl]
-  wp_site_home_index = File.join(wp_site_home, 'index.php')
+  wp_site_home_index = File.join(node[:devkit][:wp_docroot], node[:devkit][:wp_home], 'index.php')
   unless File.exist?(wp_site_home_index)
     template wp_site_home_index do
       source "index.php.erb"

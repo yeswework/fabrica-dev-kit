@@ -1,6 +1,6 @@
 local:
   vhost: "<%= dev_url %>"
-  wordpress_path: '<%= "#{Dir.pwd}/#{sync_folder}/" %>' # use an absolute path here
+  wordpress_path: '<%= "#{Dir.pwd}/#{host_document_root}/" %>' # use an absolute path here
 
   database:
     name: "wordpress"

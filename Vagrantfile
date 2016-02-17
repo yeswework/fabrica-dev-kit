@@ -41,7 +41,6 @@ Vagrant.configure("2") do |config|
   config.vm.network :private_network, ip: settings['dev_ip']
 
   config.vm.synced_folder ".", "/vagrant", :mount_options => ['dmode=755', 'fmode=755']
-  config.vm.synced_folder settings['sync_folder'], settings['document_root'], :create => 'true', :mount_options => ['dmode=755', 'fmode=755']
 
   if Vagrant.has_plugin?('vagrant-hostsupdater')
     if Vagrant::VERSION =~ /^1.8/
@@ -120,6 +119,7 @@ Vagrant.configure("2") do |config|
         :wp_home                  => settings['home'],
         :wp_siteurl               => settings['siteurl'],
         :wp_docroot               => settings['document_root'],
+        :wp_host_docroot          => settings['host_document_root'],
         :locale                   => ENV['wp_lang'] || settings['lang'],
         :admin_user               => settings['admin_user'],
         :admin_password           => settings['admin_pass'],

@@ -29,7 +29,7 @@ begin
 	end
 	settings.merge_settings!(File.join(ENV["HOME"], '.devkit/settings.yml'))
 	setup_settings = settings.merge_settings!(File.join(File.dirname(__FILE__), 'setup.yml'))
-	setup_settings['sync_folder'] = if setup_settings.has_key?('sync_folder') then setup_settings['sync_folder'] else settings['sync_folder'] end
+	setup_settings['host_document_root'] = if setup_settings.has_key?('host_document_root') then setup_settings['host_document_root'] else settings['host_document_root'] end
 rescue
 	abort('[setup.rb] Could not load "setup.yml". Please create this file based on "setup-example.yml".')
 end
@@ -70,7 +70,7 @@ system 'vagrant up'
 puts "[setup.rb] Building theme and activating in WordPress..."
 system 'gulp build'
 # create symlink to theme folder in dev for quick access
-FileUtils.ln_s "../#{settings['sync_folder']}/wp-content/themes/#{settings['slug']}/", 'dev/build'
+FileUtils.ln_s "../#{settings['host_document_root']}/wp-content/themes/#{settings['slug']}/", 'dev/build'
 system "vagrant ssh -c \"wp theme activate '#{settings['slug']}'\""
 
 # after which, the site will be ready to run and develop locally

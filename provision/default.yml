@@ -25,7 +25,7 @@ use_ssl: false
 # Network
 dev_url: kit.dev
 dev_ip: 192.168.33.10
-sync_folder: 'www'
+host_document_root: 'www'
 
 # WordPress
 version: latest

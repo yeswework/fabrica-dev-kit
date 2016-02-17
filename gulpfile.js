@@ -42,13 +42,13 @@ var projectSlug = projectSettings.name,
 	projectUrl = projectSettings.url,
 	projectAuthor = projectSettings.author,
 	projectDevUrl = localSettings.dev_url,
-	projectSyncFolder = localSettings.sync_folder;
+	projectDocRoot = localSettings.host_document_root;
 
 // Paths for remapping
 var base = {
 	src: './dev/src/',
-	guestSrc: '/vagrant/dev/src/',
-	theme: './' + projectSyncFolder + '/wp-content/themes/' + projectSlug + '/'
+	acfRelativeSrc: projectDocRoot.replace(/[^\/]+(\/|$)/, '../') + '../../../dev/src/',
+	theme: './' + projectDocRoot + '/wp-content/themes/' + projectSlug + '/'
 };
 
 // Globs for each file type
@@ -121,7 +121,7 @@ function styleCss(cb) {
 // Acf: create a symlink to ACF JSON in theme folder so that the source and theme are always in sync
 function acf(cb) {
 	// Symlink to absolute path in VM (it must be synced on the guest but not necessarily on the host)
-	fs.symlinkSync(base.guestSrc + dest.acf, base.theme + dest.acf);
+	fs.symlinkSync(base.acfRelativeSrc + dest.acf, base.theme + dest.acf);
 	cb();
 }
 
