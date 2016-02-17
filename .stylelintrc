@@ -5,6 +5,6 @@
 		"at-rule-empty-line-before": null,
 		"indentation": "tab",
 		"function-whitespace-after": null,
-		"selector-pseudo-element-colon-notation": null
+		"selector-pseudo-element-colon-notation": "single"
 	}
 }
