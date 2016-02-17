@@ -27,4 +27,4 @@ plugins:
 # ftp:
 #   host:
 #   user:
-#   pass:
+#   password:
