@@ -13,7 +13,9 @@ require 'yaml'
 require 'ostruct'
 
 # copy starter source folder: this will preserve changes if/when kit updated
-FileUtils.cp_r 'dev/src-starter', 'dev/src'
+if not Dir.exists? 'dev/src'
+	FileUtils.cp_r 'dev/src-starter', 'dev/src'
+end
 
 # load setup settings
 puts '[setup.rb] Reading settings...'
