@@ -19,7 +19,9 @@ template File.join(wpcli_config_path, "config.yml") do
   group node[:devkit][:group]
   mode "0644"
   variables(
-    :docroot => File.join(node[:devkit][:wp_docroot], node[:devkit][:wp_siteurl])
+    :docroot => File.join(node[:devkit][:wp_docroot], node[:devkit][:wp_siteurl]),
+    :skip_wp_default_plugins => node[:devkit][:skip_wp_default_plugins],
+    :skip_wp_default_themes => node[:devkit][:skip_wp_default_themes]
   )
 end
 

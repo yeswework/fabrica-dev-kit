@@ -3,7 +3,7 @@
 # Cookbook Name:: php
 # Recipe:: ini
 #
-# Copyright 2011-2014, Chef Software, Inc.
+# Copyright 2011-2015, Chef Software, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,5 +26,5 @@ template "#{node['php']['conf_dir']}/php.ini" do
     group node['root_group']
     mode '0644'
   end
-  variables(:directives => node['php']['directives'])
+  variables(directives: node['php']['directives'])
 end

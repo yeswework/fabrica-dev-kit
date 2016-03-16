@@ -2,7 +2,7 @@
 # Cookbook Name:: ohai
 # Attribute:: default
 #
-# Copyright 2010-2015, Chef Software, Inc
+# Copyright 2010-2016, Chef Software, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@
 # FHS location would be /var/lib/chef/ohai_plugins or similar.
 case node['platform_family']
 when 'windows'
-  default['ohai']['plugin_path'] = 'C:/chef/ohai_plugins'
-  default['ohai']['hints_path'] = 'C:/chef/ohai/hints'
+  default['ohai']['plugin_path'] = "#{ENV['systemdrive']}/chef/ohai_plugins"
+  default['ohai']['hints_path'] = "#{ENV['systemdrive']}/chef/ohai/hints"
 else
   default['ohai']['plugin_path'] = '/etc/chef/ohai_plugins'
   default['ohai']['hints_path'] = '/etc/chef/ohai/hints'

@@ -1,9 +1,9 @@
 #
-# Author:: Seth Chisamore <schisamo@getchef.com>
+# Author:: Seth Chisamore <schisamo@chef.io>
 # Cookbook Name:: php
 # Provider:: pear_package
 #
-# Copyright:: 2011, Opscode, Inc <legal@getchef.com>
+# Copyright:: 2011-2015, Chef Software, Inc <legal@chef.io>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ action :install do
       info_output = "Installing #{@new_resource}"
       info_output << " version #{install_version}" if install_version && !install_version.empty?
       Chef::Log.info(info_output)
-      status = install_package(@new_resource.package_name, install_version)
+      install_package(@new_resource.package_name, install_version)
     end
   end
 end
@@ -52,7 +52,7 @@ action :upgrade do
     description = "upgrade package #{@new_resource} version from #{orig_version} to #{candidate_version}"
     converge_by(description) do
       Chef::Log.info("Upgrading #{@new_resource} version from #{orig_version} to #{candidate_version}")
-      status = upgrade_package(@new_resource.package_name, candidate_version)
+      upgrade_package(@new_resource.package_name, candidate_version)
     end
   end
 end
@@ -202,7 +202,7 @@ def prefix_channel(channel)
   channel ? "#{channel}/" : ''
 end
 
-def get_extension_dir
+def extension_dir
   @extension_dir ||= begin
                        # Consider using "pecl config-get ext_dir". It is more cross-platform.
                        # p = shell_out("php-config --extension-dir")
@@ -223,7 +223,7 @@ def get_extension_files(name)
 end
 
 def manage_pecl_ini(name, action, directives, zend_extensions)
-  ext_prefix = get_extension_dir
+  ext_prefix = extension_dir
   ext_prefix << ::File::SEPARATOR if ext_prefix[-1].chr != ::File::SEPARATOR
 
   files = get_extension_files(name)
@@ -237,7 +237,7 @@ def manage_pecl_ini(name, action, directives, zend_extensions)
                end
   ]
 
-  directory "#{node['php']['ext_conf_dir']}" do
+  directory node['php']['ext_conf_dir'] do
     owner 'root'
     group 'root'
     mode '0755'
@@ -250,7 +250,7 @@ def manage_pecl_ini(name, action, directives, zend_extensions)
     owner 'root'
     group 'root'
     mode '0644'
-    variables(:name => name, :extensions => extensions, :directives => directives)
+    variables(name: name, extensions: extensions, directives: directives)
     action action
   end
 end
@@ -264,13 +264,13 @@ def grep_for_version(stdout, package)
     # Horde_Url -n/a-/(1.0.0beta1 beta)       Horde Url class
     # Horde_Url 1.0.0beta1 (beta) 1.0.0beta1 Horde Url class
     v = m.split(/\s+/)[1].strip
-    if v.split(/\//)[0] =~ /.\./
-      # 1.1.4/(1.1.4 stable)
-      v = v.split(/\//)[0]
-    else
-      # -n/a-/(1.0.0beta1 beta)
-      v = v.split(/(.*)\/\((.*)/).last.split(/\s/)[0]
-    end
+    v = if v.split(%r{/\//})[0] =~ /.\./
+          # 1.1.4/(1.1.4 stable)
+          v.split(%r{/\//})[0]
+        else
+          # -n/a-/(1.0.0beta1 beta)
+          v.split(%r{/(.*)\/\((.*)/}).last.split(/\s/)[0]
+        end
   end
   v
 end
@@ -288,7 +288,7 @@ def pecl?
       elsif grep_for_version(shell_out(node['php']['pecl'] + search_args).stdout, @new_resource.package_name)
         true
       else
-        fail "Package #{@new_resource.package_name} not found in either PEAR or PECL."
+        raise "Package #{@new_resource.package_name} not found in either PEAR or PECL."
       end
     end
 end

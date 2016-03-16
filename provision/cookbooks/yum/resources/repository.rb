@@ -56,6 +56,7 @@ attribute :password, kind_of: String, regex: /.*/, default: nil
 attribute :repo_gpgcheck, kind_of: [TrueClass, FalseClass], default: nil
 attribute :report_instanceid, kind_of: [TrueClass, FalseClass], default: nil
 attribute :repositoryid, kind_of: String, regex: /.*/, name_attribute: true
+attribute :sensitive, kind_of: [TrueClass, FalseClass], default: false
 attribute :skip_if_unavailable, kind_of: [TrueClass, FalseClass], default: nil
 attribute :source, kind_of: String, regex: /.*/, default: nil
 attribute :sslcacert, kind_of: String, regex: /.*/, default: nil

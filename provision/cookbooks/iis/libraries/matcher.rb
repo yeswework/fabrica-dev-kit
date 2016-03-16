@@ -18,7 +18,7 @@ if defined?(ChefSpec)
                    )
   end
 
-  [:add, :delete].each do |action|
+  [:add, :delete, :install, :uninstall].each do |action|
     self.class.send(:define_method, "#{action}_iis_module", proc do |module_name|
       ChefSpec::Matchers::ResourceMatcher.new(:iis_module, action, module_name)
     end

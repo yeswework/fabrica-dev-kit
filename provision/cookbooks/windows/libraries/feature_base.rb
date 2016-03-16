@@ -33,23 +33,23 @@ class Chef
         end
 
         def install_feature(_name)
-          fail Chef::Exceptions::UnsupportedAction, "#{self} does not support :install"
+          raise Chef::Exceptions::UnsupportedAction, "#{self} does not support :install"
         end
 
         def remove_feature(_name)
-          fail Chef::Exceptions::UnsupportedAction, "#{self} does not support :remove"
+          raise Chef::Exceptions::UnsupportedAction, "#{self} does not support :remove"
         end
 
         def delete_feature(_name)
-          fail Chef::Exceptions::UnsupportedAction, "#{self} does not support :delete"
+          raise Chef::Exceptions::UnsupportedAction, "#{self} does not support :delete"
         end
 
         def installed?
-          fail Chef::Exceptions::Override, "You must override installed? in #{self}"
+          raise Chef::Exceptions::Override, "You must override installed? in #{self}"
         end
 
         def available?
-          fail Chef::Exceptions::Override, "You must override available? in #{self}"
+          raise Chef::Exceptions::Override, "You must override available? in #{self}"
         end
       end
     end

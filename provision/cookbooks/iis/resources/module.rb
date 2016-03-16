@@ -18,11 +18,13 @@
 # limitations under the License.
 #
 
-actions :add, :delete
+actions :add, :delete, :install, :uninstall
 default_action :add
 
 attribute :module_name, kind_of: String, name_attribute: true
 attribute :type, kind_of: String, default: nil
+attribute :add, kind_of: [FalseClass, TrueClass], default: nil
+attribute :image, kind_of: String, default: nil
 attribute :precondition, kind_of: String, default: nil
 attribute :application, kind_of: String, default: nil
 

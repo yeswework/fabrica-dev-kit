@@ -3,6 +3,7 @@
 # Cookbook Name:: windows
 # Provider:: feature_powershell
 #
+use_inline_resources if defined?(use_inline_resources)
 
 include Chef::Provider::WindowsFeature::Base
 include Chef::Mixin::PowershellOut

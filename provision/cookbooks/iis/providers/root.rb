@@ -27,7 +27,7 @@ action :add do
   @was_updated = default_documents(new_resource.add_default_documents, new_resource.default_documents_enabled, true, false) | @was_updated
   @was_updated = mime_maps(new_resource.add_mime_maps, true, false) | @was_updated
 
-  if was_updated
+  if @was_updated
     new_resource.updated_by_last_action(true)
   else
     Chef::Log.debug("#{new_resource} - nothing to do")

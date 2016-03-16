@@ -71,6 +71,40 @@ action :delete do
   end
 end
 
+# appcmd syntax for installing native modules
+# appcmd install module /name:string /add:string(true|false) /image:string
+action :install do
+  if !@current_resource.exists
+    converge_by("install IIS module #{new_resource.module_name}") do
+      cmd = "#{appcmd(node)} install module /name:\"#{new_resource.module_name}\""
+      cmd << " /add:\"#{new_resource.add}\"" unless new_resource.add.nil?
+      cmd << " /image:\"#{new_resource.image}\"" if new_resource.image
+
+      shell_out!(cmd, returns: [0, 42])
+
+      Chef::Log.info("#{new_resource} installed module '#{new_resource.module_name}'")
+    end
+  else
+    Chef::Log.debug("#{new_resource} module already exists - nothing to do")
+  end
+end
+
+# appcmd syntax for uninstalling native modules
+# appcmd uninstall module <name>
+action :uninstall do
+  if @current_resource.exists
+    converge_by("uninstall IIS module #{new_resource.module_name}") do
+      cmd = "#{appcmd(node)} uninstall module \"#{new_resource.module_name}\""
+
+      shell_out!(cmd, returns: [0, 42])
+    end
+
+    Chef::Log.info("#{new_resource} uninstalled module '#{new_resource.module_name}'")
+  else
+    Chef::Log.debug("#{new_resource} module does not exists - nothing to do")
+  end
+end
+
 def load_current_resource
   @current_resource = Chef::Resource::IisModule.new(new_resource.name)
   @current_resource.module_name(new_resource.module_name)

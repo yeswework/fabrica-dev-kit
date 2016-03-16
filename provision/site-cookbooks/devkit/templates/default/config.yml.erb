@@ -1,1 +1,11 @@
 path: <%= @docroot %>
+<% if @skip_wp_default_plugins %>
+skip-plugins:
+  - akismet
+<% end %>
+<% if @skip_wp_default_themes %>
+skip-themes:
+  - twentysixteen
+  - twentyfifteen
+  - twentyfourteen
+<% end %>

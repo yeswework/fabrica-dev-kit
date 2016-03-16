@@ -7,9 +7,11 @@ require 'chef/mixin/shell_out'
 require 'chef/mixin/language'
 class Chef
   class Provider
-    class WindowsCookbookPackage < Chef::Provider::LWRPBase
+    class WindowsCookbookPackage < Chef::Provider::LWRPBase # ~FC058
       include Chef::Mixin::ShellOut
       include Windows::Helper
+
+      use_inline_resources if defined?(use_inline_resources)
 
       # the logic in all action methods mirror that of
       # the Chef::Provider::Package which will make
@@ -169,7 +171,7 @@ class Chef
                 if basename == 'setup.exe'
                   :installshield
                 else
-                  fail Chef::Exceptions::AttributeNotFound, 'installer_type could not be determined, please set manually'
+                  raise Chef::Exceptions::AttributeNotFound, 'installer_type could not be determined, please set manually'
                 end
               end
             end

@@ -1,6 +1,10 @@
 # yum Cookbook CHANGELOG
 This file is used to list changes made in each version of the yum cookbook.
 
+## v3.10.0 (2016-02-04)
+- Add a new sensitive attribute to the repository resource so prevent writing the diff of the config to Chef output / logs
+- Update testing dependencies and remove the Guardfile / Guard dependencies
+
 ## v3.9.0 (2016-01-14)
 - Added dnf_yum_compat recipe to ensure yum is installed on Fedora systems for Chef package resource compatibility. This will no longer be necessary when native dnf package support ships in chef-client.
 

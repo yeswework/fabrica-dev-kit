@@ -2,6 +2,13 @@ windows Cookbook CHANGELOG
 =======================
 This file is used to list changes made in each version of the windows cookbook.
 
+v1.39.2
+--------------------
+- [PR 329](https://github.com/chef-cookbooks/windows/pull/329) - Silence `compile_time` warning for `chef_gem`
+- [PR 338](https://github.com/chef-cookbooks/windows/pull/338) - ChefSpec matchers for `windows_certificate`
+- [PR 341](https://github.com/chef-cookbooks/windows/pull/341) - Updated rubocop and FoodCritic compliance
+- [PR 336](https://github.com/chef-cookbooks/windows/pull/336) - Fixed where clause compliance with PS v1/v2
+
 v1.39.1
 --------------------
 - [PR 325](https://github.com/chef-cookbooks/windows/pull/325) - Raise an error if a bogus feature is given to the powershell `windows_feature` provider

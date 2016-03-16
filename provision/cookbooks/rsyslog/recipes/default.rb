@@ -17,8 +17,6 @@
 # limitations under the License.
 #
 
-extend RsyslogCookbook::Helpers
-
 package 'rsyslog'
 package 'rsyslog-relp' if node['rsyslog']['use_relp']
 
@@ -86,4 +84,7 @@ if platform_family?('omnios')
   end
 end
 
-declare_rsyslog_service
+service node['rsyslog']['service_name'] do
+  supports restart: true, status: true
+  action [:enable, :start]
+end

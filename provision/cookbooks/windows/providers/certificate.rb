@@ -17,6 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+use_inline_resources if defined?(use_inline_resources)
 
 # See this for info on certutil
 # https://technet.microsoft.com/en-gb/library/cc732443.aspx
@@ -27,8 +28,6 @@ include Windows::Helper
 def whyrun_supported?
   true
 end
-
-use_inline_resources
 
 action :create do
   hash = '$cert.GetCertHashString()'
@@ -74,7 +73,7 @@ action :delete do
   # do we have a hash or a subject?
   # TODO: It's a bit annoying to know the thumbprint of a cert you want to remove when you already
   # have the file.  Support reading the hash directly from the file if provided.
-  if @new_resource.source.match(/^[a-fA-F0-9]{40}$/)
+  if @new_resource.source =~ /^[a-fA-F0-9]{40}$/
     search = "Thumbprint -eq '#{@new_resource.source}'"
   else
     search = "Subject -like '*#{@new_resource.source.sub(/\*/, '`*')}*'" # escape any * in the source
@@ -151,7 +150,7 @@ EOH
 end
 
 def acl_script(hash)
-  return '' if @new_resource.private_key_acl.nil? || @new_resource.private_key_acl.length == 0
+  return '' if @new_resource.private_key_acl.nil? || @new_resource.private_key_acl.empty?
   # this PS came from http://blogs.technet.com/b/operationsguy/archive/2010/11/29/provide-access-to-private-keys-commandline-vs-powershell.aspx
   # and from https://msdn.microsoft.com/en-us/library/windows/desktop/bb204778(v=vs.85).aspx
   set_acl_script = <<-EOH

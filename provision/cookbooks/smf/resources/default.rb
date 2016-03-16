@@ -36,7 +36,7 @@ attribute :duration, kind_of: String, default: 'contract', regex: '(contract|wai
 attribute :ignore, kind_of: [Array, NilClass], default: nil
 attribute :fmri, kind_of: String, default: nil
 
-attribute :stability, kind_of: String, equal_to: %(Standard Stable Evolving Unstable External Obsolete),
+attribute :stability, kind_of: String, equal_to: %w(Standard Stable Evolving Unstable External Obsolete),
                       default: 'Evolving'
 
 attribute :property_groups, kind_of: Hash, default: {}

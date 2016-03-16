@@ -7,7 +7,7 @@ wp_box: ubuntu/trusty64
 chef_cookbook_path: ./provision
 
 # Virtual machine
-memory: 512
+memory: 1024
 cpus: 1
 
 linked_clone: false
@@ -60,6 +60,10 @@ plugins:
 # WordPress Default Theme
 # Theme's slug or url to the theme's .zip.
 theme: ''
+
+# Skip WP CLI default themes and plugins install
+skip_wp_default_plugins: true
+skip_wp_default_themes: true
 
 # WordPress Options
 options:

@@ -26,3 +26,4 @@ default['yum']['epel-debuginfo']['failovermethod'] = 'priority'
 default['yum']['epel-debuginfo']['gpgcheck'] = true
 default['yum']['epel-debuginfo']['enabled'] = false
 default['yum']['epel-debuginfo']['managed'] = false
+default['yum']['epel-debuginfo']['make_cache'] = true

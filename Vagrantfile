@@ -126,6 +126,8 @@ Vagrant.configure("2") do |config|
         :admin_email              => settings['admin_email'],
         :default_plugins          => settings['plugins'],
         :default_theme            => settings['theme'],
+        :skip_wp_default_plugins  => settings['skip_wp_default_plugins'],
+        :skip_wp_default_themes   => settings['skip_wp_default_themes'],
         :title                    => settings['title'],
         :is_multisite             => settings['multisite'],
         :use_ssl                  => settings['use_ssl'],

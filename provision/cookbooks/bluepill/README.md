@@ -1,40 +1,30 @@
-bluepill Cookbook
-=================
-
-[![Build Status](https://travis-ci.org/chef-cookbooks/bluepill.svg?branch=master)](https://travis-ci.org/chef-cookbooks/bluepill)
-[![Cookbook Version](https://img.shields.io/cookbook/v/bluepill.svg)](https://supermarket.chef.io/cookbooks/bluepill)
+# bluepill Cookbook
+[![Build Status](https://travis-ci.org/chef-cookbooks/bluepill.svg?branch=master)](https://travis-ci.org/chef-cookbooks/bluepill) [![Cookbook Version](https://img.shields.io/cookbook/v/bluepill.svg)](https://supermarket.chef.io/cookbooks/bluepill)
 
 Installs bluepill Ruby Gem and configures it to manage services. Also includes a LWRP.
 
-
-Requirements
-------------
-#### Platforms
+## Requirements
+### Platforms
 Bluepill is a pure Ruby service management tool/library, so this cookbook should work on any system. The attributes do set up paths based on FHS locations, see below.
 
-#### Chef
+### Chef
 - Chef 11+
 
-#### Cookbooks
+### Cookbooks
 - none
 
-
-Attributes
-----------
+## Attributes
 Default locations for bluepill are in "FHS compliant" locations.
+- `node["bluepill"]["bin"]` - Path to bluepill program, default is 'bluepill' in the RubyGems binary directory.
+- `node["bluepill"]["logfile"]` - Location of the bluepill log file, default "/var/log/bluepill.log".
+- `node["bluepill"]["conf_dir"]` - Location of service config files (pills), default "/etc/bluepill".
+- `node["bluepill"]["pid_dir"]` - Location of pidfiles, default "/var/run/bluepill"
+- `node["bluepill"]["state_dir"]` - Location of state directory, default "/var/lib/bluepill"
+- `node["bluepill"]["init_dir"]` - Location of init script directory, default selected by platform.
+- `node["bluepill"]["version"]` - Version of bluepill to install, default is latest.
+- `node["bluepill"]["use_rsyslog"]` - Enable configuration and use of rsyslog for bluepill.
 
-* `node["bluepill"]["bin"]` - Path to bluepill program, default is 'bluepill' in the RubyGems binary directory.
-* `node["bluepill"]["logfile"]` - Location of the bluepill log file, default "/var/log/bluepill.log".
-* `node["bluepill"]["conf_dir"]` - Location of service config files (pills), default "/etc/bluepill".
-* `node["bluepill"]["pid_dir"]` - Location of pidfiles, default "/var/run/bluepill"
-* `node["bluepill"]["state_dir"]` - Location of state directory, default "/var/lib/bluepill"
-* `node["bluepill"]["init_dir"]` - Location of init script directory, default selected by platform.
-* `node["bluepill"]["version"]` - Version of bluepill to install, default is latest.
-* `node["bluepill"]["use_rsyslog"]` - Enable configuration and use of rsyslog for bluepill.
-
-
-Resources/Providers
--------------------
+# Custom Resources
 This cookbook contains an LWRP, `bluepill_service`. This can be used with the normal Chef service resource, by using the `provider` parameter, or by specifying the `bluepill_service` shortcut. These two resources are equivalent.
 
 ```ruby
@@ -52,9 +42,7 @@ The load action should probably always be specified, to ensure that if bluepill 
 
 The recipe using the service must contain a template resource for the pill and it must be named `my_app.pill.erb`, where `my_app` is the service name passed to the bluepill service resource.
 
-
-Usage
------
+## Usage
 Be sure to include the bluepill recipe in the run list to ensure that the gem and bluepill-related directories are created. This will also make the cookbook available on the system and other cookbooks won't need to explicitly depend on it in the metadata.
 
 If the default directory locations in the attributes/default.rb aren't what you want, change them by setting them either in the attributes file itself, or create attributes in a role applied to any systems that will use bluepill.
@@ -76,11 +64,8 @@ end
 
 See bluepill's documentation for more information on creating pill templates.
 
-
-License & Authors
------------------
-
-**Author:** Cookbook Engineering Team (<cookbooks@chef.io>)
+## License & Authors
+**Author:** Cookbook Engineering Team ([cookbooks@chef.io](mailto:cookbooks@chef.io))
 
 **Copyright:** 2010-2015, Chef Software, Inc.
 

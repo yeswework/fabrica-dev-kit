@@ -37,6 +37,7 @@ template "#{node['rsyslog']['config_prefix']}/rsyslog.d/35-server-per-host.conf"
   notifies :restart, "service[#{node['rsyslog']['service_name']}]"
 end
 
+# if we're a server we shouldn't be sending logs to a remote like a client
 file "#{node['rsyslog']['config_prefix']}/rsyslog.d/remote.conf" do
   action   :delete
   notifies :restart, "service[#{node['rsyslog']['service_name']}]"

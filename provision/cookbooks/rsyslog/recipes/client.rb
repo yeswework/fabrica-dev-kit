@@ -19,36 +19,18 @@
 
 # Do not run this recipe if the server attribute is set
 return if node['rsyslog']['server']
-
 include_recipe 'rsyslog::default'
 
-def chef_solo_search_installed?
-  klass = ::Search.const_get('Helper')
-  return klass.is_a?(Class)
-rescue NameError
-  return false
-end
-
-# On Chef Solo, we use the node['rsyslog']['server_ip'] attribute, and on
-# normal Chef, we leverage the search query.
-if Chef::Config[:solo] && !chef_solo_search_installed?
-  if node['rsyslog']['server_ip']
-    server_ips = Array(node['rsyslog']['server_ip'])
-  else
-    Chef::Application.fatal!("Chef Solo does not support search. You must set node['rsyslog']['server_ip'] or use the chef-solo-search cookbook!")
+results = search(:node, node['rsyslog']['server_search']).map do |server|
+  ipaddress = server['ipaddress']
+  # If both server and client are on the same cloud and local network, they may be
+  # instructed to communicate via the internal interface by enabling `use_local_ipv4`
+  if node['rsyslog']['use_local_ipv4'] && server.attribute?('cloud') && server['cloud']['local_ipv4']
+    ipaddress = server['cloud']['local_ipv4']
   end
-else
-  results = search(:node, node['rsyslog']['server_search']).map do |server|
-    ipaddress = server['ipaddress']
-    # If both server and client are on the same cloud and local network, they may be
-    # instructed to communicate via the internal interface by enabling `use_local_ipv4`
-    if node['rsyslog']['use_local_ipv4'] && server.attribute?('cloud') && server['cloud']['local_ipv4']
-      ipaddress = server['cloud']['local_ipv4']
-    end
-    ipaddress
-  end
-  server_ips = Array(node['rsyslog']['server_ip']) + Array(results)
+  ipaddress
 end
+server_ips = Array(node['rsyslog']['server_ip']) + Array(results)
 
 rsyslog_servers = []
 
@@ -66,19 +48,19 @@ unless node['rsyslog']['custom_remote'].first.empty?
 end
 
 if rsyslog_servers.empty?
-  Chef::Application.fatal!('The rsyslog::client recipe was unable to determine the remote syslog server. Checked both the server_ip attribute and search!')
-end
+  Chef::Log.warn('The rsyslog::client recipe was unable to determine the remote syslog server. Checked both the server_ip attribute and search! Not forwarding logs.')
+else
+  remote_type = node['rsyslog']['use_relp'] ? 'relp' : 'remote'
 
-remote_type = node['rsyslog']['use_relp'] ? 'relp' : 'remote'
-
-template "#{node['rsyslog']['config_prefix']}/rsyslog.d/49-remote.conf" do
-  source    "49-#{remote_type}.conf.erb"
-  owner     'root'
-  group     'root'
-  mode      '0644'
-  variables(servers: rsyslog_servers)
-  notifies  :restart, "service[#{node['rsyslog']['service_name']}]"
-  only_if   { node['rsyslog']['remote_logs'] }
+  template "#{node['rsyslog']['config_prefix']}/rsyslog.d/49-remote.conf" do
+    source    "49-#{remote_type}.conf.erb"
+    owner     'root'
+    group     'root'
+    mode      '0644'
+    variables(servers: rsyslog_servers)
+    notifies  :restart, "service[#{node['rsyslog']['service_name']}]"
+    only_if   { node['rsyslog']['remote_logs'] }
+  end
 end
 
 file "#{node['rsyslog']['config_prefix']}/rsyslog.d/server.conf" do

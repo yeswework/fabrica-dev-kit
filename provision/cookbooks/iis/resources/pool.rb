@@ -43,6 +43,7 @@ attribute :pool_password, kind_of: String
 attribute :logon_type, kind_of: Symbol, equal_to: [:LogonBatch, :LogonService], default: :LogonBatch
 attribute :manual_group_membership, kind_of: [TrueClass, FalseClass], default: false
 attribute :idle_timeout, kind_of: String, default: '00:20:00'
+attribute :idle_timeout_action, kind_of: Symbol, equal_to: [:Terminate, :Suspend], default: :Terminate
 attribute :shutdown_time_limit, kind_of: String, default: '00:01:30'
 attribute :startup_time_limit, kind_of: String, default: '00:01:30'
 attribute :pinging_enabled, kind_of: [TrueClass, FalseClass], default: true

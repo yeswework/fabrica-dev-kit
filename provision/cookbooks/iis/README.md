@@ -22,6 +22,7 @@ Contents
   * [Usage](#usage)
     * [default](#default) Default recipe
     * [mod\_\*](#mod_) Recipes for installing individual IIS modules (extensions).
+  * [Alternatives ](#alternatives)
   * [License and Author](#license-and-author)
 
 Requirements
@@ -301,6 +302,7 @@ Creates an application pool in IIS.
 - `logon_type` - Specifies the logon type for the process identity. (For additional information about [logon types](http://msdn.microsoft.com/en-us/library/aa378184%28VS.85%29.aspx), see the LogonUser Function topic on Microsoft's MSDN Web site.) - Available [:LogonBatch, :LogonService] - default is :LogonBatch - optional
 - `manual_group_membership` - Specifies whether the IIS_IUSRS group Security Identifier (SID) is added to the worker process token. When false, IIS automatically uses an application pool identity as though it were a member of the built-in IIS_IUSRS group, which has access to necessary file and system resources. When true, an application pool identity must be explicitly added to all resources that a worker process requires at runtime. - default is false - optional
 - `idle_timeout` - Specifies how long (in minutes) a worker process should run idle if no new requests are received and the worker process is not processing requests. After the allocated time passes, the worker process should request that it be shut down by the WWW service. - default is '00:20:00' - optional
+- `idle_timeout_action` - Specifies the option of suspending an idle worker process rather than terminating it. Valid values are :Terminate and :Suspend - optional
 - `shutdown_time_limit` - Specifies the time that the W3SVC service waits after it initiated a recycle. If the worker process does not shut down within the shutdownTimeLimit, it will be terminated by the W3SVC service. - default is '00:01:30' - optional
 - `startup_time_limit` - Specifies the time that IIS waits for an application pool to start. If the application pool does not startup within the startupTimeLimit, the worker process is terminated and the rapid-fail protection count is incremented. - default is '00:01:30' - optional
 - `pinging_enabled` - Specifies whether pinging is enabled for the worker process. - default is true - optional
@@ -353,6 +355,7 @@ Creates an application in IIS.
 
 - `:add` - add a new application pool
 - `:delete` - delete an existing application pool
+- `:config` - configures an existing application pool
 
 ### Attribute Parameters
 
@@ -503,6 +506,8 @@ Manages modules globally or on a per site basis.
 
 - `:add` - add a new module
 - `:delete` - delete a module
+- `:install` - install a native module from the filesystem (.dll)
+- `:uninstall` - uninstall a native module
 
 ### Attribute Parameters
 
@@ -510,6 +515,8 @@ Manages modules globally or on a per site basis.
 - `type` - The type of module
 - `precondition` - precondition for module
 - `application` - The application or site to add the module to
+- `add` - Whether the module you install has to be globally added
+- `image` - Location of the DLL of the module to install
 
 ### Example
 
@@ -555,6 +562,11 @@ This cookbook also contains recipes for installing individual IIS modules (exten
 * `mod_tracing` -  installs support for tracing ASP.NET applications and failed requests.
 
 Note: Not every possible IIS module has a corresponding recipe. The foregoing recipes are included for convenience, but users may also place additional IIS modules that are installable as Windows features into the ``node['iis']['components']`` array.
+
+Alternatives
+=====
+* [Powershell based IIS Cookbook (Pre-DSC)](https://github.com/ebsco/iisposh)
+* DSC Based- [CWebAdministration](https://github.com/PowerShellOrg/cWebAdministration) / [XWebadministration](https://github.com/PowerShell/xWebAdministration) Powershell Module(s)
 
 License and Author
 ==================

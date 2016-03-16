@@ -17,6 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+use_inline_resources if defined?(use_inline_resources)
 
 # See https://msdn.microsoft.com/en-us/library/windows/desktop/cc307236%28v=vs.85%29.aspx for netsh info
 
@@ -29,7 +30,7 @@ def whyrun_supported?
 end
 
 action :create do
-  fail 'No user property set' if @new_resource.user.nil? || @new_resource.user.empty?
+  raise 'No user property set' if @new_resource.user.nil? || @new_resource.user.empty?
 
   if @current_resource.exists
     needsChange = (@current_resource.user.casecmp(@new_resource.user) != 0)
@@ -74,7 +75,7 @@ def getCurrentAcl
   Chef::Log.debug "netsh reports: #{cmd.stdout}"
 
   m = cmd.stdout.scan(/User:\s*(.+)/)
-  if m.length == 0
+  if m.empty?
     @current_resource.exists = false
   else
     @current_resource.user(m[0][0].chomp)

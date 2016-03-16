@@ -2,7 +2,7 @@
 # Cookbook Name:: build-essential
 # Recipe:: solaris2
 #
-# Copyright 2013, Chef Software, Inc.
+# Copyright 2013-2016, Chef Software, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,5 +44,5 @@ when 5.11
     package 'ucb'
   end
 else
-  fail "Sorry, we don't support Solaris version #{node['platform_version']} at this juncture."
+  raise "Sorry, we don't support Solaris version #{node['platform_version']} at this juncture."
 end

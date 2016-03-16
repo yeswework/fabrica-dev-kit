@@ -81,6 +81,7 @@ end
 - `proxy_password` - password for this proxy
 - `report_instanceid` - Report instance ID when using Amazon Linux AMIs and repositories
 - `repositoryid` - Must be a unique name for each repository, one word. Defaults to name attribute.
+- `sensitive` - Optional, Default is `false`, if `true` then content of repository file is hidden from chef run output.
 - `source` - Use a custom template source instead of the default one in the yum cookbook
 - `sslcacert` - Path to the directory containing the databases of the certificate authorities yum should use to verify SSL certificates. Defaults to none - uses system default
 - `sslclientcert` - Path to the SSL client certificate yum should use to connect to repos/remote sites Defaults to none.
@@ -157,7 +158,7 @@ Put `depends 'yum'` in your metadata.rb to gain access to the yum_repository res
 
 ```text
 Copyright:: 2011 Eric G. Wolfe
-Copyright:: 2013-2015 Chef Software, Inc.
+Copyright:: 2013-2016 Chef Software, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

@@ -26,3 +26,4 @@ default['yum']['epel']['failovermethod'] = 'priority'
 default['yum']['epel']['gpgcheck'] = true
 default['yum']['epel']['enabled'] = true
 default['yum']['epel']['managed'] = true
+default['yum']['epel']['make_cache'] = true

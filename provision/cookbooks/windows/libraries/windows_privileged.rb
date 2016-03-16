@@ -34,7 +34,7 @@ class Chef
         elsif rc == ERROR_SHARING_VIOLATION
           return false
         else
-          fail get_last_error(rc)
+          raise get_last_error(rc)
         end
       end
     end
@@ -45,7 +45,7 @@ class Chef
 
       run(SE_BACKUP_NAME, SE_RESTORE_NAME) do
         rc = RegUnLoadKey(HKEY_USERS, name.to_s)
-        fail get_last_error(rc) if rc != ERROR_SUCCESS
+        raise get_last_error(rc) if rc != ERROR_SUCCESS
       end
     end
 
@@ -55,13 +55,13 @@ class Chef
       token = [0].pack('L')
 
       unless OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, token)
-        fail get_last_error
+        raise get_last_error
       end
       token = token.unpack('L')[0]
 
       privileges.each do |name|
         unless adjust_privilege(token, name, SE_PRIVILEGE_ENABLED)
-          fail get_last_error
+          raise get_last_error
         end
       end
 

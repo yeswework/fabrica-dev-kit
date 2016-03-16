@@ -17,6 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+use_inline_resources if defined?(use_inline_resources)
 
 include Chef::Provider::WindowsFeature::Base
 include Chef::Mixin::ShellOut
@@ -36,7 +37,7 @@ def delete_feature(_name)
   if win_version.major_version >= 6 && win_version.minor_version >= 2
     shell_out!("#{dism} /online /disable-feature /featurename:#{@new_resource.feature_name} /Remove /norestart", returns: [0, 42, 127, 3010])
   else
-    fail Chef::Exceptions::UnsupportedAction, "#{self} :delete action not support on #{win_version.sku}"
+    raise Chef::Exceptions::UnsupportedAction, "#{self} :delete action not support on #{win_version.sku}"
   end
 end
 

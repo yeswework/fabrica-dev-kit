@@ -17,6 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+use_inline_resources if defined?(use_inline_resources)
 
 # See https://msdn.microsoft.com/en-us/library/windows/desktop/cc307236%28v=vs.85%29.aspx for netsh info
 
@@ -80,8 +81,8 @@ def getCurrentHash
 
   if cmd.exitstatus == 0
     m = cmd.stdout.scan(/Certificate Hash\s+:\s?([A-Fa-f0-9]{40})/)
-    if m.length == 0
-      fail "Failed to extract hash from command output #{cmd.stdout}"
+    if m.empty?
+      raise "Failed to extract hash from command output #{cmd.stdout}"
     else
       @current_hash = m[0][0]
       @current_resource.exists = true
@@ -110,7 +111,7 @@ def checkHash(hash)
   p = powershell_out!("Test-Path \"cert:\\LocalMachine\\#{@current_resource.store_name}\\#{hash}\"")
 
   unless p.stderr.empty? && p.stdout =~ /True/i
-    fail "A Cert with hash of #{hash} doesn't exist in keystore LocalMachine\\#{@current_resource.store_name}"
+    raise "A Cert with hash of #{hash} doesn't exist in keystore LocalMachine\\#{@current_resource.store_name}"
   end
   nil
 end
@@ -118,15 +119,15 @@ end
 def getHashFromSubject
   # escape wildcard subject name (*.acme.com)
   subject = @current_resource.cert_name.sub(/\*/, '`*')
-  ps_script = "& { gci cert:\\localmachine\\#{@current_resource.store_name} | where subject -like '*#{subject}*' | select -first 1 -expandproperty Thumbprint }"
+  ps_script = "& { gci cert:\\localmachine\\#{@current_resource.store_name} | where { $_.subject -like '*#{subject}*' } | select -first 1 -expandproperty Thumbprint }"
 
   Chef::Log.debug "Running PS script #{ps_script}"
   p = powershell_out!(ps_script)
 
-  if !p.stderr.nil? && p.stderr.length > 0
-    fail "#{ps_script} failed with #{p.stderr}"
-  elsif p.stdout.nil? || p.stdout.length == 0
-    fail "Couldn't find thumbprint for subject #{@current_resource.cert_name}"
+  if !p.stderr.nil? && !p.stderr.empty?
+    raise "#{ps_script} failed with #{p.stderr}"
+  elsif p.stdout.nil? || p.stdout.empty?
+    raise "Couldn't find thumbprint for subject #{@current_resource.cert_name}"
   end
 
   p.stdout.strip

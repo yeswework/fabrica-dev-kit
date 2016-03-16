@@ -31,7 +31,7 @@ action :add do
   if !@current_resource.exists
     cmd = "#{appcmd(node)} add apppool /name:\"#{new_resource.pool_name}\""
     if new_resource.no_managed_code
-      cmd << " /managedRuntimeVersion:\"\""
+      cmd << ' /managedRuntimeVersion:'
     else
       cmd << " /managedRuntimeVersion:v#{new_resource.runtime_version}" if new_resource.runtime_version
     end
@@ -103,7 +103,7 @@ def load_current_resource
   Chef::Log.debug("#{new_resource} list apppool command output: #{cmd.stdout}")
   if cmd.stderr.empty?
     result = cmd.stdout.gsub(/\r\n?/, "\n") # ensure we have no carriage returns
-    result = result.match(/^APPPOOL\s\"(#{new_resource.pool_name})\"\s\(MgdVersion:(.*),MgdMode:(.*),state:(.*)\)$/)
+    result = result.match(/^APPPOOL\s\"(#{new_resource.pool_name})\"\s\(MgdVersion:(.*),MgdMode:(.*),state:(.*)\)$/i)
     Chef::Log.debug("#{new_resource} current_resource match output: #{result}")
     if result
       @current_resource.exists = true
@@ -163,6 +163,9 @@ def configure
     end
     is_new_manual_group_membership = new_value?(doc.root, 'APPPOOL/add/processModel/@manualGroupMembership', new_resource.manual_group_membership.to_s)
     is_new_idle_timeout = new_value?(doc.root, 'APPPOOL/add/processModel/@idleTimeout', new_resource.idle_timeout.to_s)
+    if iis_version >= '8.5'
+      is_new_idle_timeout_action = new_value?(doc.root, 'APPPOOL/add/processModel/@idleTimeoutAction', new_resource.idle_timeout_action)
+    end
     is_new_shutdown_time_limit = new_value?(doc.root, 'APPPOOL/add/processModel/@shutdownTimeLimit', new_resource.shutdown_time_limit.to_s)
     is_new_startup_time_limit = new_value?(doc.root, 'APPPOOL/add/processModel/@startupTimeLimit', new_resource.startup_time_limit.to_s)
     is_new_pinging_enabled = new_value?(doc.root, 'APPPOOL/add/processModel/@pingingEnabled', new_resource.pinging_enabled.to_s)
@@ -204,12 +207,12 @@ def configure
       configure_application_pool(is_new_auto_start, "autoStart:#{new_resource.auto_start}")
     end
 
-    if iis_version > '7.0'
+    if iis_version >= '7.5'
       configure_application_pool(is_new_start_mode, "startMode:#{new_resource.start_mode}")
     end
 
     if new_resource.no_managed_code
-      configure_application_pool(is_new_managed_runtime_version, "managedRuntimeVersion:\"\"")
+      configure_application_pool(is_new_managed_runtime_version, 'managedRuntimeVersion:')
     else
       configure_application_pool(new_resource.runtime_version && is_new_managed_runtime_version, "managedRuntimeVersion:v#{new_resource.runtime_version}")
     end
@@ -223,6 +226,9 @@ def configure
     configure_application_pool(is_new_logon_type, "processModel.logonType:#{new_resource.logon_type}")
     configure_application_pool(is_new_manual_group_membership, "processModel.manualGroupMembership:#{new_resource.manual_group_membership}")
     configure_application_pool(is_new_idle_timeout, "processModel.idleTimeout:#{new_resource.idle_timeout}")
+    if iis_version >= '8.5'
+      configure_application_pool(is_new_idle_timeout_action, "processModel.idleTimeoutAction:#{new_resource.idle_timeout_action}")
+    end
     configure_application_pool(is_new_shutdown_time_limit, "processModel.shutdownTimeLimit:#{new_resource.shutdown_time_limit}")
     configure_application_pool(is_new_startup_time_limit, "processModel.startupTimeLimit:#{new_resource.startup_time_limit}")
     configure_application_pool(is_new_pinging_enabled, "processModel.pingingEnabled:#{new_resource.pinging_enabled}")

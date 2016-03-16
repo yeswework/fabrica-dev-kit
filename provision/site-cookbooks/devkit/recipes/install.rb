@@ -213,7 +213,7 @@ if node[:devkit][:is_multisite] == true then
   end
 end
 
-# Nginx configurartion
+# Nginx configuration
 directory File.join(node[:nginx][:dir], 'global') do
     recursive true
     user "root"

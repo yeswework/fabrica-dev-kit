@@ -12,21 +12,37 @@
     "rbac": ">= 1.0.1"
   },
   "recommendations": {
+
   },
   "suggestions": {
     "resource-control": ">= 0.0.0"
   },
   "conflicting": {
+
   },
   "providing": {
+
   },
   "replacing": {
+
   },
   "attributes": {
+
   },
   "groupings": {
+
   },
   "recipes": {
+
   },
-  "version": "2.2.7"
+  "version": "2.2.8",
+  "source_url": "",
+  "issues_url": "",
+  "privacy": false,
+  "chef_versions": [
+
+  ],
+  "ohai_versions": [
+
+  ]
 }

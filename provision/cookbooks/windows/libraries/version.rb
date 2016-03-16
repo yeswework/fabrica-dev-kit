@@ -132,7 +132,7 @@ module Windows
 
     def initialize
       unless RUBY_PLATFORM =~ /mswin|mingw32|windows/
-        fail NotImplementedError, 'only valid on Windows platform'
+        raise NotImplementedError, 'only valid on Windows platform'
       end
       @version, @product_type, @product_suite, @sku, @service_pack_major_version, @service_pack_minor_version = get_os_info
       @major_version, @minor_version, @build_number = version.split('.').map(&:to_i)

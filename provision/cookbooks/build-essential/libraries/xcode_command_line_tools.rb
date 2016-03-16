@@ -112,7 +112,7 @@ class Chef
       when 10.8
         'http://devimages.apple.com/downloads/xcode/command_line_tools_for_xcode_os_x_mountain_lion_march_2014.dmg'
       else
-        fail "Unknown DMG download URL for OSX #{node['platform_version']}"
+        raise "Unknown DMG download URL for OSX #{node['platform_version']}"
       end
     end
 
