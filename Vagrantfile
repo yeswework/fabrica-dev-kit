@@ -44,7 +44,7 @@ Vagrant.configure("2") do |config|
 
   if Vagrant.has_plugin?('vagrant-hostsupdater')
     if Vagrant::VERSION =~ /^1.8/
-      # `vagrant resume` on v.1.8 runs provioning again so `vagrant up` has to be used instead and it doesn't set the host again so it's best not to remomve it on suspend
+      # `vagrant resume` on v.1.8 runs provioning again so `vagrant up` has to be used instead and it doesn't set the host again so it's best not to remove it on suspend
       config.hostsupdater.remove_on_suspend = false
     else
       config.hostsupdater.remove_on_suspend = true
@@ -75,6 +75,7 @@ Vagrant.configure("2") do |config|
 
   # run Chef cookbooks
   config.vm.provision :chef_solo do |chef|
+    chef.version = '12.10.24'
     chef.cookbooks_path = [
       File.join(chef_cookbooks_path, 'cookbooks'),
       File.join(chef_cookbooks_path, 'site-cookbooks')
