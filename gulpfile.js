@@ -30,7 +30,6 @@ var gulp = require('gulp'),
 	postcssReporter = require('postcss-reporter'),
 	postcssSimpleVars = require('postcss-simple-vars'),
 	stylelint = require('stylelint'),
-	shell = require('shelljs'),
 	webpack = require('webpack-stream'),
 	YAML = require('yamljs');
 
