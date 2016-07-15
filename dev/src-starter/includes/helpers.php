@@ -3,13 +3,15 @@
    Project-specific functions
    ========================================================================= */
 
-require_once('YWWProject.php');
+namespace yww\devkit;
 
-class YWWHelpers {
+require_once('project.php');
+
+class Helpers {
 
 	// public static variables and functions will be accessible anywhere
-	// using the project namespace, eg. yww:$myVar() or yww::myFunction()
+	// using the project namespace, eg. yww::$myVar or yww::myFunction()
 
 }
 
-class_alias('YWWHelpers', $ywwProject->projectNamespace);
+class_alias('yww\devkit\Helpers', 'yww\devkit\\' . Project::getInstance()->projectNamespace);

@@ -3,7 +3,9 @@
    Base class for YWW functions
    ========================================================================= */
 
-class YWWBase {
+namespace yww\devkit;
+
+class Base {
 
 	// Set Google Analytics ID
 	protected $googleAnalyticsId = '';
@@ -130,7 +132,7 @@ class YWWBase {
 	function timberMenus($context) {
 
 		foreach($this->menus as $slug => $name) {
-			$context['menus'][$slug] = new TimberMenu($slug);
+			$context['menus'][$slug] = new \TimberMenu($slug);
 		}
 		return $context;
 

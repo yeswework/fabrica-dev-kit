@@ -49,7 +49,7 @@ def renderSourceFile(filename, settingsostruct, keeptemplate = nil)
 	end
 end
 renderSourceFile('dev/src/package.json', settingsostruct)
-renderSourceFile('dev/src/includes/YWWProject.php', settingsostruct)
+renderSourceFile('dev/src/includes/project.php', settingsostruct)
 renderSourceFile('Movefile', settingsostruct, true)
 
 # rename/backup "setup.yml"
