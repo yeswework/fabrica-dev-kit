@@ -5,7 +5,7 @@
 
 namespace yww\devkit;
 
-require('project.php');
+require_once('project.php');
 
 class Ajax {
 
