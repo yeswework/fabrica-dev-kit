@@ -1,7 +1,9 @@
 <?php
 /* =========================================================================
-   Singleton pattern implementation.
+   Singleton pattern implementation
    ========================================================================= */
+
+namespace yww\devkit;
 
 class Singleton {
 

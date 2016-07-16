@@ -69,4 +69,4 @@ class Ajax extends Singleton {
 }
 
 // Create a singleton instance of Ajax
-Ajax::getInstance();
+Ajax::instance();
