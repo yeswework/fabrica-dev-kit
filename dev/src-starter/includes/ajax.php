@@ -7,27 +7,32 @@ namespace yww\devkit;
 
 require_once('project.php');
 
-class Ajax {
-
-	// Reference to singleton instance of this class
-	private static $instance;
+class Ajax extends Singleton {
 
 	function __construct() {
 		// Namespaced tags
 		$this->postNonce = Project::getInstance()->projectNamespace . '-post-nonce';
+		$this->varsTag = Project::getInstance()->projectNamespace . '_ajax_script_vars';
+
+		add_filter($this->varsTag, array($this, 'updateScriptVars'));
 
 		// AJAX handler functions as required
 		add_action('wp_ajax_nopriv_ajax-ACTION', array($this, 'ajaxHandler'));
 		add_action('wp_ajax_ajax-ACTION', array($this, 'ajaxHandler'));
 	}
 
-	// Returns the singleton instance of this class
-	public static function getInstance() {
-		if (null === self::$instance) {
-			self::$instance = new self();
-		}
+	// Send script variables to front end
+	function updateScriptVars($scriptVars = array()) {
 
-		return self::$instance;
+		// Non-destructively merge script variables according to page or query conditions
+		if (is_single()) {
+			$scriptVars = array_merge($scriptVars, array(
+				'ajaxUrl' => admin_url('admin-ajax.php'),
+				'postNonce' => wp_create_nonce($this->postNonce),
+			));
+		}
+		return $scriptVars;
+
 	}
 
 	// Handle AJAX requests
@@ -63,4 +68,5 @@ class Ajax {
 	}
 }
 
+// Create a singleton instance of Ajax
 Ajax::getInstance();

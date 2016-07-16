@@ -7,21 +7,6 @@ namespace yww\devkit;
 
 class Base {
 
-	// Set Google Analytics ID
-	protected $googleAnalyticsId = '';
-
-	// Project namespace to be set in child class
-	public $projectNamespace;
-
-	// Project scripts main handle
-	public $mainHandle;
-
-	// Project vars filter tag
-	public $varsTag;
-
-	// Menus array
-	public $menus;
-
 	function __construct() {
 
 		// Assets
@@ -48,24 +33,24 @@ class Base {
 
 		// Load third-party libraries and project code
 		wp_deregister_script('jquery');
-		wp_enqueue_script($this->mainHandle, get_stylesheet_directory_uri() . '/js/main' . $suffix . '.js', array(), filemtime(get_template_directory() . '/js/main' . $suffix . '.js'), true);
+		wp_enqueue_script(Project::$mainHandle, get_stylesheet_directory_uri() . '/js/main' . $suffix . '.js', array(), filemtime(get_template_directory() . '/js/main' . $suffix . '.js'), true);
 
 		// Pass variables to JavaScript at runtime
 		$scriptVars = array();
-		$scriptVars = apply_filters($this->varsTag, $scriptVars);
+		$scriptVars = apply_filters(Project::$varsTag, $scriptVars);
 		if (!empty($scriptVars)) {
-			wp_localize_script($this->mainHandle, $this->projectNamespace, $scriptVars);
+			wp_localize_script(Project::$mainHandle, Project::$projectNamespace, $scriptVars);
 		}
 
 		// Repeat for stylesheets, first libraries, then theme-specific
-		wp_register_style($this->mainHandle, get_stylesheet_directory_uri() . '/css/main' . $suffix . '.css', $dependencies = array(), filemtime(get_template_directory() . '/css/main' . $suffix . '.css'));
-		wp_enqueue_style($this->mainHandle);
+		wp_register_style(Project::$mainHandle, get_stylesheet_directory_uri() . '/css/main' . $suffix . '.css', $dependencies = array(), filemtime(get_template_directory() . '/css/main' . $suffix . '.css'));
+		wp_enqueue_style(Project::$mainHandle);
 
 	}
 
 	function injectAnalytics() {
 
-		$googleAnalyticsId = $this->googleAnalyticsId;
+		$googleAnalyticsId = Project::$googleAnalyticsId;
 		if(isset($googleAnalyticsId) && $googleAnalyticsId != '') {
 
 			?><script>
@@ -93,7 +78,7 @@ class Base {
 		add_theme_support('title-tag');
 
 		// Translation
-		load_theme_textdomain($this->projectNamespace, get_stylesheet_directory() . '/language');
+		load_theme_textdomain(Project::$projectNamespace, get_stylesheet_directory() . '/language');
 
 		// Clean up wp_head output() - based on https://scotch.io/quick-tips/removing-wordpress-header-junk
 		remove_action('wp_head', 'rsd_link');
@@ -121,8 +106,8 @@ class Base {
 	function menus() {
 
 		$locations = array();
-		foreach ($this->menus as $slug => $name) {
-			$locations[$slug] = __($name, $this->projectNamespace);
+		foreach (Project::$menus as $slug => $name) {
+			$locations[$slug] = __($name, Project::$projectNamespace);
 		}
 		register_nav_menus($locations);
 
@@ -131,7 +116,7 @@ class Base {
 	// Register menus with Timber
 	function timberMenus($context) {
 
-		foreach($this->menus as $slug => $name) {
+		foreach(Project::$menus as $slug => $name) {
 			$context['menus'][$slug] = new \TimberMenu($slug);
 		}
 		return $context;

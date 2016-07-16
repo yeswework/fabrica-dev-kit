@@ -5,66 +5,42 @@
 
 namespace yww\devkit;
 
-require_once('base.php');
+require_once('singleton.php');
 
 // Set content width value based on the theme's design
 if (!isset($content_width)) {
 	$content_width = 1440;
 }
 
-class Project extends Base {
+class Project extends Singleton {
 
-	// Reference to singleton instance of this class
-	private static $instance;
+	// public static variables and functions will be accessible anywhere
+	// using the project namespace, eg. yww::$myVar or yww::myFunction()
+
+	// Namespace for this project
+	public static $projectNamespace = '<%= slug %>';
+
+	// Project scripts main handle
+	public static $mainHandle = '<%= slug %>-main';
+
+	// Menus required
+	public static $menus = array('main' => 'Main menu');
+
+	// Google Analytics ID (injected by Base class)
+	protected static $googleAnalyticsId = '';
 
 	function __construct() {
 
-		// Namespace for this project
-		$this->projectNamespace = '<%= slug %>';
-
-		// Google Analytics ID (injected by parent class)
-		$this->googleAnalyticsId = '';
-
-		// Menus required
-		$this->menus = array('main' => 'Main menu');
-
-		// Namespaced handles and tags
-		$this->mainHandle = $this->projectNamespace . '-main';
-		$this->varsTag = $this->projectNamespace . '_script_vars';
-		$this->postNonce = $this->projectNamespace . '-post-nonce';
-
-		add_filter($this->varsTag, array($this, 'updateScriptVars'));
+		// Project-specific tags, hooks and initialisations
 
 		parent::__construct();
 
 	}
 
-	// Returns the singleton instance of this class
-	public static function getInstance() {
-		if (null === self::$instance) {
-			self::$instance = new self();
-		}
-
-		return self::$instance;
-	}
-
-	// Send script variables to front end
-	function updateScriptVars($scriptVars = array()) {
-
-		// Non-destructively merge script variables according to page or query conditions
-		if (is_single()) {
-			$scriptVars = array_merge($scriptVars, array(
-				'nameSpaced' => array(
-					'key1' => __('value one', $this->projectNamespace),
-					'key2' => __('value two', $this->projectNamespace)
-				)
-			));
-		}
-		return $scriptVars;
-
-	}
-
 }
 
-// Create a singleton instance of the Project
-Project::getInstance();
+// Class alias so Project can be accessed directly using project namespace (slug)
+class_alias('yww\devkit\Project', Project::$projectNamespace);
+
+// Create a singleton instance of Project
+Project::instance();
