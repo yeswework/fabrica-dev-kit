@@ -25,7 +25,7 @@ if (!class_exists('Timber')) {
 
 } else {
 
-	Timber::$dirname = array('views');
+	\Timber\Timber::$dirname = array('views');
 
 }
 

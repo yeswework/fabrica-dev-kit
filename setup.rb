@@ -66,8 +66,9 @@ system 'npm install'
 puts '[setup.rb] Installing front-end dependencies...'
 FileUtils.cd 'dev/src'
 system 'npm install'
+FileUtils.cd 'includes'
 system 'composer install'
-FileUtils.cd '../..'
+FileUtils.cd '../../..'
 
 # start vagrant
 puts '[setup.rb] Starting Vagrant VM...'

@@ -1,6 +1,6 @@
 <?php
 
-$data = Timber::get_context();
-$post = new TimberPost();
+$data = \Timber\Timber::get_context();
+$post = new \Timber\Post();
 $data['post'] = $post;
-Timber::render('page.twig', $data);
+\Timber\Timber::render('page.twig', $data);

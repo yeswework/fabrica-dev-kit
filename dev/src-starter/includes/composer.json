@@ -8,6 +8,6 @@
     ],
     "require": {
         "timber/timber":"1.*",
-        "Upstatement/routes": "*",
+        "Upstatement/routes": "*"
     }
 }

@@ -5,6 +5,7 @@
 
 namespace yww\devkit;
 
+require_once(__DIR__ . '/vendor/autoload.php');
 require_once('singleton.php');
 require_once('project.php');
 

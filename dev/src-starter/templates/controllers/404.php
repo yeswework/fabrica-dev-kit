@@ -1,4 +1,4 @@
 <?php
 
-$data = Timber::get_context();
-Timber::render('404.twig', $data);
+$data = \Timber\Timber::get_context();
+\Timber\Timber::render('404.twig', $data);
