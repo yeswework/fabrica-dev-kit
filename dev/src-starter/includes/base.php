@@ -13,6 +13,8 @@ class Base extends Singleton {
 
 	function __construct() {
 
+		\Timber\Timber::$dirname = array('views');
+
 		// Assets
 		add_action('wp_enqueue_scripts', array($this, 'enqueueScripts'));
 		add_action('wp_footer', array($this, 'injectAnalytics'));
