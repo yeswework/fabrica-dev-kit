@@ -17,7 +17,6 @@ rewrite_structure: /%postname%/
 multisite: false
 plugins:
   - advanced-custom-fields
-  - timber-library
   - sucuri-scanner
   - force-regenerate-thumbnails
   - query-monitor
