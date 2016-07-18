@@ -20,8 +20,6 @@ class Front extends Singleton {
 
 		add_filter($this->varsTag, array($this, 'updateScriptVars'));
 
-		parent::__construct();
-
 	}
 
 	// Send script variables to front end

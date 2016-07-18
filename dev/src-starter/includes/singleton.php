@@ -13,7 +13,7 @@ class Singleton {
 		static $instance;
 		if ($instance === null) {
 			// Late static binding (PHP 5.3+)
-			$instance = new self();
+			$instance = new static();
 		}
 
 		return $instance;

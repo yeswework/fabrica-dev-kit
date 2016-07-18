@@ -15,8 +15,6 @@ class Admin extends Singleton {
 			// Admin-specific tags, hooks and initialisations
 		}
 
-		parent::__construct();
-
 	}
 
 }

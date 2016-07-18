@@ -123,7 +123,7 @@ class Base extends Singleton {
 	function timberMenus($context) {
 
 		foreach(Project::$menus as $slug => $name) {
-			$context['menus'][$slug] = new \TimberMenu($slug);
+			$context['menus'][$slug] = new \Timber\Menu($slug);
 		}
 		return $context;
 
