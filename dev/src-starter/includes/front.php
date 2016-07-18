@@ -6,12 +6,21 @@
 namespace yww\devkit;
 
 require_once('singleton.php');
+require_once('project.php');
 
 class Front extends Singleton {
 
 	function __construct() {
 
-		// Front-end-specific tags, hooks and functions
+		// Front-end-specific tags, hooks and initialisations
+
+		// Namespaced handles and tags
+		$this->mainHandle = Project::$projectNamespace . '-main';
+		$this->varsTag = Project::$projectNamespace . '_script_vars';
+
+		add_filter($this->varsTag, array($this, 'updateScriptVars'));
+
+		parent::__construct();
 
 	}
 
@@ -22,8 +31,8 @@ class Front extends Singleton {
 		if (is_single()) {
 			$scriptVars = array_merge($scriptVars, array(
 				'nameSpaced' => array(
-					'key1' => __('value one', $this->projectNamespace),
-					'key2' => __('value two', $this->projectNamespace)
+					'key1' => __('value one', Project::$projectNamespace),
+					'key2' => __('value two', Project::$projectNamespace)
 				)
 			));
 		}

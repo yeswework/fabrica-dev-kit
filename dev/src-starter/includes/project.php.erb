@@ -39,8 +39,13 @@ class Project extends Singleton {
 
 }
 
-// Class alias so Project can be accessed directly using project namespace (slug)
-class_alias('yww\devkit\Project', Project::$projectNamespace);
+// Class alias so Project can be accessed directly using project slug
+if (!class_exists(Project::$projectNamespace)) {
+	class_alias('yww\devkit\Project', Project::$projectNamespace);
+} else {
+	// Class name is taken: namespace the class alias
+	class_alias('yww\devkit\Project', 'yww\devkit\\' . Project::$projectNamespace);
+}
 
 // Create a singleton instance of Project
 Project::instance();

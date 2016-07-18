@@ -5,7 +5,10 @@
 
 namespace yww\devkit;
 
-class Base {
+require_once('singleton.php');
+require_once('project.php');
+
+class Base extends Singleton {
 
 	function __construct() {
 
@@ -124,3 +127,6 @@ class Base {
 	}
 
 }
+
+// Create a singleton instance of Project
+Base::instance();
