@@ -13,14 +13,13 @@ class Ajax extends Singleton {
 
 		// Namespaced tags
 		$this->postNonce = Project::$projectNamespace . '-post-nonce';
-		$this->varsTag = Project::$projectNamespace . '_ajax_script_vars';
 
-		add_filter($this->varsTag, array($this, 'updateScriptVars'));
+		add_filter(Project::$varsTag, array($this, 'updateScriptVars'));
 
 		// AJAX handler functions as required
 		add_action('wp_ajax_nopriv_ajax-ACTION', array($this, 'ajaxHandler'));
 		add_action('wp_ajax_ajax-ACTION', array($this, 'ajaxHandler'));
-		
+
 	}
 
 	// Send script variables to front end

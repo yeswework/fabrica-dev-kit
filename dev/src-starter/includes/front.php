@@ -14,11 +14,7 @@ class Front extends Singleton {
 
 		// Front-end-specific tags, hooks and initialisations
 
-		// Namespaced handles and tags
-		$this->mainHandle = Project::$projectNamespace . '-main';
-		$this->varsTag = Project::$projectNamespace . '_script_vars';
-
-		add_filter($this->varsTag, array($this, 'updateScriptVars'));
+		add_filter(Project::$varsTag, array($this, 'updateScriptVars'));
 
 	}
 

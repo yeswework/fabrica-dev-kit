@@ -23,11 +23,14 @@ class Project extends Singleton {
 	// Project scripts main handle
 	public static $mainHandle = '<%= slug %>-main';
 
+	// Tag for sending variables to front-end's script
+	public static $varsTag = '<%= slug %>_script_vars';
+
 	// Menus required
 	public static $menus = array('main' => 'Main menu');
 
 	// Google Analytics ID (injected by Base class)
-	protected static $googleAnalyticsId = '';
+	static $googleAnalyticsId = '';
 
 	function __construct() {
 
