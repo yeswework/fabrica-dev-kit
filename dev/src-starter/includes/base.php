@@ -9,6 +9,8 @@ require_once(__DIR__ . '/vendor/autoload.php');
 require_once('singleton.php');
 require_once('project.php');
 
+$timber = new \Timber\Timber();
+
 class Base extends Singleton {
 
 	function __construct() {
