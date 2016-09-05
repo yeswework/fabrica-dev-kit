@@ -8,10 +8,11 @@ namespace yww\devkit;
 class Singleton {
 
 	// Returns the singleton instance of this class
-	public static function instance()
-	{
+	public static function instance() {
+
 		static $instance;
 		if ($instance === null) {
+
 			// Late static binding (PHP 5.3+)
 			$instance = new static();
 		}
@@ -19,7 +20,7 @@ class Singleton {
 		return $instance;
 	}
 
-	// Private constructor, so class can't be instaciated elsewhere
+	// Private constructor, so class can't be instantiated elsewhere
 	private function __construct() {}
 
 	// Private __clone method, so instance can't be cloned
