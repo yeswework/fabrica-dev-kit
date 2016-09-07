@@ -1,13 +1,13 @@
 {
-    "name": "root/prh",
-    "authors": [
-        {
-            "name": "Yes We Work",
-            "email": "info@yeswework.com"
-        }
-    ],
-    "require": {
-        "timber/timber":"1.*",
-        "Upstatement/routes": "*"
-    }
+	"name": "root/prh",
+	"authors": [
+		{
+			"name": "Yes We Work",
+			"email": "info@yeswework.com"
+		}
+	],
+	"require": {
+		"timber/timber":"1.*",
+		"Upstatement/routes": "*"
+	}
 }
