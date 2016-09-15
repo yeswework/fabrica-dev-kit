@@ -52,7 +52,7 @@ var base = {
 
 // Globs for each file type
 var path = {
-	includes: [base.src + 'includes/**/*.php', base.src + 'includes/.env'],
+	includes: [base.src + 'includes/**/*', base.src + 'includes/.env'],
 	controllers: base.src + 'templates/controllers/**/*.php',
 	views: base.src + 'templates/**/*.twig',
 	styles: base.src + 'assets/css/**/*.{css,pcss}',
