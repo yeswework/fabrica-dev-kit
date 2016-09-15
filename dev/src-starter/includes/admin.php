@@ -11,15 +11,13 @@ class Admin extends Singleton {
 
 	function __construct() {
 
-		if (is_admin() && !(defined('DOING_AJAX') && DOING_AJAX)) {
-			// Admin-specific tags, hooks and initialisations
-		}
+		if (!is_admin() || (defined('DOING_AJAX') && DOING_AJAX)) { return; }
+
+		// Admin-specific tags, hooks and initialisations
 
 	}
 
 }
 
-if (is_admin() && !(defined('DOING_AJAX') && DOING_AJAX)) {
-	// Create a singleton instance of Admin
-	Admin::instance();
-}
+// Create a singleton instance of Admin
+Admin::instance();
