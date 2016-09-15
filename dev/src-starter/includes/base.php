@@ -11,7 +11,7 @@ require_once('project.php');
 
 class Base extends Singleton {
 
-	function __construct() {
+	public function __construct() {
 
 		new \Timber\Timber();
 		\Timber\Timber::$dirname = array('views');
@@ -29,7 +29,7 @@ class Base extends Singleton {
 
 	}
 
-	function enqueueScripts() {
+	public function enqueueScripts() {
 
 		// Load uncompressed scripts when debug mode is on
 		if (WP_DEBUG === true) {
@@ -55,7 +55,7 @@ class Base extends Singleton {
 
 	}
 
-	function injectAnalytics() {
+	public function injectAnalytics() {
 
 		$googleAnalyticsId = Project::$googleAnalyticsId;
 		if(isset($googleAnalyticsId) && $googleAnalyticsId != '') {
@@ -73,7 +73,7 @@ class Base extends Singleton {
 
 	}
 
-	function themeFeatures()  {
+	public function themeFeatures()  {
 
 		// Featured images
 		add_theme_support('post-thumbnails');
@@ -110,7 +110,7 @@ class Base extends Singleton {
 	}
 
 	// Register menus with WP
-	function menus() {
+	public function menus() {
 
 		$locations = array();
 		foreach (Project::$menus as $slug => $name) {
@@ -121,7 +121,7 @@ class Base extends Singleton {
 	}
 
 	// Register menus with Timber
-	function timberMenus($context) {
+	public function timberMenus($context) {
 
 		foreach(Project::$menus as $slug => $name) {
 			$context['menus'][$slug] = new \Timber\Menu($slug);

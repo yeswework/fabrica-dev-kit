@@ -30,9 +30,9 @@ class Project extends Singleton {
 	public static $menus = array('main' => 'Main menu');
 
 	// Google Analytics ID (injected by Base class)
-	static $googleAnalyticsId = '';
+	public static $googleAnalyticsId = '';
 
-	function __construct() {
+	public function __construct() {
 
 		// Project-specific tags, hooks and initialisations
 

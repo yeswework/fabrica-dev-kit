@@ -9,7 +9,7 @@ require_once('singleton.php');
 
 class Admin extends Singleton {
 
-	function __construct() {
+	public function __construct() {
 
 		if (!is_admin() || (defined('DOING_AJAX') && DOING_AJAX)) { return; }
 

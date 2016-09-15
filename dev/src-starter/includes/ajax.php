@@ -9,7 +9,7 @@ require_once('project.php');
 
 class Ajax extends Singleton {
 
-	function __construct() {
+	public function __construct() {
 
 		// Namespaced tags
 		$this->postNonce = Project::$projectNamespace . '-post-nonce';
@@ -23,7 +23,7 @@ class Ajax extends Singleton {
 	}
 
 	// Send script variables to front end
-	function updateScriptVars($scriptVars = array()) {
+	public function updateScriptVars($scriptVars = array()) {
 
 		// Non-destructively merge script variables according to page or query conditions
 		if (is_single()) {
@@ -37,7 +37,7 @@ class Ajax extends Singleton {
 	}
 
 	// Handle AJAX requests
-	function ajaxHandler() {
+	public function ajaxHandler() {
 
 		if (isset($_POST['postNonce'])) {
 			$nonce = $_POST['postNonce'];
@@ -60,7 +60,7 @@ class Ajax extends Singleton {
 	}
 
 	// Send AJAX responses
-	function sendAjaxResponse($response) {
+	public function sendAjaxResponse($response) {
 
 		header('Content-Type: application/json');
 		echo json_encode($response);

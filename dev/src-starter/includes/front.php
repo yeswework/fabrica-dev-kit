@@ -10,7 +10,7 @@ require_once('project.php');
 
 class Front extends Singleton {
 
-	function __construct() {
+	public function __construct() {
 
 		// Front-end-specific tags, hooks and initialisations
 
@@ -19,7 +19,7 @@ class Front extends Singleton {
 	}
 
 	// Send script variables to front end
-	function updateScriptVars($scriptVars = array()) {
+	public function updateScriptVars($scriptVars = array()) {
 
 		// Non-destructively merge script variables according to page or query conditions
 		if (is_single()) {
