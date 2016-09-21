@@ -84,7 +84,11 @@ var options = {
 		postcssReporter({ clearMessages: true }),
 		postcssMixins,
 		postcssEach,
-		postcssSimpleVars,
+		postcssSimpleVars({
+			unknown: function (node, name, result) {
+				node.warn(result, 'Unknown variable ' + name);
+			}
+		}),
 		postcssNestedProps,
 		postcssNested,
 		postcssFontpath,
