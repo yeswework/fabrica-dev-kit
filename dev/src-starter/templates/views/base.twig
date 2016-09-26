@@ -16,12 +16,12 @@
 
 	<header block="siteHeader">
 		<a elem="logo" href="{{ site.url }}">{{ site.name }}</a>
-		<nav elem="menu" mix="block:mainMenu">
+		<nav elem="menu">
 			<h1 class="hidden">Main menu</h1>
-			<ul block="mainMenu" elem="list">
-				{% for item in menus.main.get_items %}
-					<li elem="item" class="{{ item.classes | join(' ') | trim }}"><a elem="link" href="{{ item.get_link }}">{{ item.title }}</a></li>
-				{% endfor %}
+			<ul elem="menuList">
+				{% for item in menus.main.get_items -%}
+					<li elem="menuItem" class="{{ item.classes | join(' ') | trim }}"><a elem="menuLink" href="{{ item.get_link }}">{{ item.title }}</a></li>
+				{% endfor -%}
 			</ul>
 		</nav>
 	</header>
