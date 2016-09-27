@@ -11,7 +11,7 @@ html {
 }
 
 h1, h2, h3, h4, h5, h6, p, ul, ol, dl, blockquote, figure, table {
-	margin: 0 0 1em 0;
+	margin: 0 0 1rem 0;
 }
 
 ul {
@@ -19,5 +19,5 @@ ul {
 }
 
 li {
-	margin: 0 0 0.25em 0;
+	margin: 0 0 0.25rem 0;
 }

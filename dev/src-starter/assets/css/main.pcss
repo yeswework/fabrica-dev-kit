@@ -7,37 +7,39 @@
 @import 'helpers.css';
 
 @lost flexbox flex;
-@lost gutter 1.5rem;
 
-/* media queries */
-$mobileOnly: (max-width: 540px);
+/* Media queries */
+
+$mobile: (max-width: 540px);
 $mobileTablet: (max-width: 960px);
-$tabletOnly: (min-width: 541px) and (max-width: 960px);
+$tablet: (min-width: 541px) and (max-width: 960px);
 $tabletDesktop: (min-width: 541px);
-$desktopOnly: (min-width: 961px);
+$desktop: (min-width: 961px);
 
-/* mixins */
-@define-mixin responsive $properties, $mobile, $tablet, $desktop {
-	@media $mobileOnly {
+/* Mixins */
+
+@define-mixin responsive $properties, $m, $t, $d {
+	@media $mobile {
 		@each $property in $(properties) {
-			$(property): $mobile;
+			$(property): $m;
 		}
 	}
-	@media $tabletOnly {
+	@media $tablet {
 		@each $property in $(properties) {
-			$(property): $tablet;
+			$(property): $t;
 		}
 	}
-	@media $desktopOnly {
+	@media $desktop {
 		@each $property in $(properties) {
-			$(property): $desktop;
+			$(property): $d;
 		}
 	}
 }
 
-/* spacing defaults */
+/* Spacing defaults */
+
 @define-mixin small-spacing $properties {
-	@mixin responsive $(properties), 0.5rem, 0.75rem, 0.875rem;
+	@mixin responsive $(properties), 0.5rem, 0.75rem, 1rem;
 }
 
 @define-mixin medium-spacing $properties {
@@ -45,5 +47,5 @@ $desktopOnly: (min-width: 961px);
 }
 
 @define-mixin large-spacing $properties {
-	@mixin responsive $(properties), 0.875rem, 1.5rem, 1.75rem;
+	@mixin responsive $(properties), 1rem, 1.5rem, 2rem;
 }
