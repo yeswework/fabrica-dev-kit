@@ -1,6 +1,6 @@
 <?php
 /* =========================================================================
-   Base class for YWW functions
+   Basic configuration for all projects
    ========================================================================= */
 
 namespace yww\devkit;
@@ -21,14 +21,15 @@ class Base extends Singleton {
 		add_action('wp_footer', array($this, 'injectAnalytics'));
 
 		// Features
-		add_action('after_setup_theme', array($this, 'themeFeatures'));
+		add_action('after_setup_theme', array($this, 'registerFeatures'));
 
 		// Menus
-		add_action('init', array($this, 'menus'));
-		add_filter('timber_context', array($this, 'timberMenus'));
+		add_action('init', array($this, 'registerMenus'));
+		add_filter('timber_context', array($this, 'exposeMenus'));
 
 	}
 
+	// Register front-end scripts
 	public function enqueueScripts() {
 
 		// Load uncompressed scripts when debug mode is on
@@ -55,6 +56,7 @@ class Base extends Singleton {
 
 	}
 
+	// Output Google Analytics tracking code
 	public function injectAnalytics() {
 
 		$googleAnalyticsId = Project::$googleAnalyticsId;
@@ -73,7 +75,8 @@ class Base extends Singleton {
 
 	}
 
-	public function themeFeatures()  {
+	// Register WP theme features and deregister some messy WP defaults
+	public function registerFeatures()  {
 
 		// Featured images
 		add_theme_support('post-thumbnails');
@@ -110,7 +113,7 @@ class Base extends Singleton {
 	}
 
 	// Register menus with WP
-	public function menus() {
+	public function registerMenus() {
 
 		$locations = array();
 		foreach (Project::$menus as $slug => $name) {
@@ -120,8 +123,8 @@ class Base extends Singleton {
 
 	}
 
-	// Register menus with Timber
-	public function timberMenus($context) {
+	// Expose menus globally via Timber context
+	public function exposeMenus($context) {
 
 		foreach(Project::$menus as $slug => $name) {
 			$context['menus'][$slug] = new \Timber\Menu($slug);
