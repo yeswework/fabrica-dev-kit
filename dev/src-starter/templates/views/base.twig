@@ -3,12 +3,9 @@
 <head>
 	<meta charset="{{ site.charset }}">
 	<meta http-equiv="x-ua-compatible" content="ie=edge">
-	<meta name="description" content="{{ site.description }}">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="author" content="Yes We Work - http://yeswework.com/">
-	<script>
-	    document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, 'js');
-	</script>
+	<script>document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, 'js');</script>
 	{{ function('wp_head') }}
 </head>
 
@@ -26,9 +23,9 @@
 		</nav>
 	</header>
 
-	{% block content %}
+	{% block content -%}
 
-	{% endblock %}
+	{% endblock -%}
 
 	<footer>
 	</footer>
