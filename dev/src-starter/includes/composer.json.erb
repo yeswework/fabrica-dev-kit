@@ -1,0 +1,33 @@
+{
+	"authors": [
+		{
+			"name": "Yes We Work",
+			"email": "info@yeswework.com"
+		}
+	],
+	"require": {
+		"timber/timber":"1.*",
+		"Upstatement/routes": "*"<%= acf_pro_key ? ",\n" : "\n" %>
+<% if acf_pro_key %>
+		"advanced-custom-fields/advanced-custom-fields-pro": "*"
+<% end %>
+	}<%= acf_pro_key ? ",\n" : "\n" %>
+<% if acf_pro_key %>
+	"repositories": [
+		{
+			"type": "package",
+			"package": {
+				"name": "advanced-custom-fields/advanced-custom-fields-pro",
+				"version": "5.4.4",
+				"dist": {
+					"type": "zip",
+					"url": "https://connect.advancedcustomfields.com/index.php?p=pro&a=download"
+				},
+				"require": {
+					"philippbaschke/acf-pro-installer": "^1.0"
+				}
+			}
+		}
+	]
+<% end %>
+}

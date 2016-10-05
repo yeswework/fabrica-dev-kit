@@ -6,6 +6,9 @@
 namespace yww\devkit;
 
 require_once('singleton.php');
+<% if acf_pro_key %>
+require_once(__DIR__ . '/vendor/advanced-custom-fields/advanced-custom-fields-pro/acf.php');
+<% end %>
 
 // Set content width value based on the theme's design
 if (!isset($content_width)) {
@@ -35,8 +38,23 @@ class Project extends Singleton {
 	public function __construct() {
 
 		// Project-specific tags, hooks and initialisations
+<% if acf_pro_key %>
+		add_filter('acf/settings/path', array($this, 'AcfSettingsPath'));
+		add_filter('acf/settings/dir', array($this, 'AcfSettingsDir'));
+<% end %>
 
 	}
+<% if acf_pro_key %>
+
+	// Set ACF paths
+	function AcfSettingsPath($dir) {
+		return get_stylesheet_directory() . '/inc/vendor/advanced-custom-fields/advanced-custom-fields-pro/';
+	}
+
+	function AcfSettingsDir($path) {
+		return get_stylesheet_directory_uri() . '/inc/vendor/advanced-custom-fields/advanced-custom-fields-pro/';
+	}
+<% end %>
 
 }
 

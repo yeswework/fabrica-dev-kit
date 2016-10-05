@@ -17,7 +17,7 @@
 			<h1 class="hidden">Main menu</h1>
 			<ul elem="menuList">
 				{% for item in menus.main.get_items -%}
-					<li elem="menuItem" class="{{ item.classes | join(' ') | trim }}"><a elem="menuLink" href="{{ item.get_link }}">{{ item.title }}</a></li>
+					<li elem="menuItem" class="{{ item.class }}"><a elem="menuLink" href="{{ item.get_link }}">{{ item.title }}</a></li>
 				{% endfor -%}
 			</ul>
 		</nav>

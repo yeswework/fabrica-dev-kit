@@ -41,7 +41,7 @@ settingsostruct = OpenStruct.new(settings)
 def renderSourceFile(filename, settingsostruct, keeptemplate = nil)
 	if File.exists?("#{filename}.erb")
 		template = File.read "#{filename}.erb"
-		file_data = ERB.new(template).result(settingsostruct.instance_eval { binding })
+		file_data = ERB.new(template, nil, ">").result(settingsostruct.instance_eval { binding })
 		File.open(filename, 'w') {|file| file.puts file_data }
 		FileUtils.rm "#{filename}.erb" unless keeptemplate
 	elsif not File.exists?("#{filename}")
@@ -49,6 +49,8 @@ def renderSourceFile(filename, settingsostruct, keeptemplate = nil)
 	end
 end
 renderSourceFile('dev/src/package.json', settingsostruct)
+renderSourceFile('dev/src/includes/.env', settingsostruct)
+renderSourceFile('dev/src/includes/composer.json', settingsostruct)
 renderSourceFile('dev/src/includes/project.php', settingsostruct)
 renderSourceFile('Movefile', settingsostruct, true)
 
@@ -57,6 +59,10 @@ FileUtils.mv 'setup.yml', 'setup.bak.yml'
 # create "vagrant.yml" file for Vagrant
 setup_settings.reject! {|key| ['slug', 'title', 'author', 'homepage'].include?(key) }
 File.open('vagrant.yml', 'w') {|file| file.write setup_settings.to_yaml }
+
+# create symlinks to files kept in src folder but used in root by dev kit
+FileUtils.ln_s 'dev/src/devkit-package.json', 'package.json'
+FileUtils.ln_s 'dev/src/devkit-gulpfile.js', 'gulpfile.js'
 
 # install build dependencies (Gulp + extensions)
 puts '[setup.rb] Installing build dependencies...'

@@ -34,7 +34,7 @@ var gulp = require('gulp'),
 	YAML = require('yamljs');
 
 // Load project and local settings from package.json and vagrant.yml
-var projectSettings = require('./dev/src/package.json'),
+var projectSettings = require('./package.json'),
 	localSettings = YAML.load('vagrant.yml');
 var projectSlug = projectSettings.name,
 	projectTitle = projectSettings.description,

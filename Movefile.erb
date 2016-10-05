@@ -1,6 +1,7 @@
 local:
   vhost: "<%= dev_url %>"
-  wordpress_path: '<%= "#{Dir.pwd}/#{host_document_root}/" %>' # use an absolute path here
+  # path to WordPress installation from FTP/SSH root folder
+  wordpress_path: '<%= "#{Dir.pwd}/#{host_document_root}/" %>'
 
   database:
     name: "wordpress"
@@ -10,11 +11,11 @@ local:
 
 production:
   vhost: "<%= url %>"
-  <% if remote_path %>
+<% if remote_path %>
   wordpress_path: "<%= remote_path %>"
-  <% else %>
+<% else %>
   wordpress_path: "server path" # use an absolute path here
-  <% end %>
+<% end %>
 
   database:
     name: "server db name"
@@ -34,42 +35,42 @@ production:
     - "wp-config.php"
     - "wp-content/*.sql"
 
-  <% if ftp %>
+<% if ftp %>
   ftp:
     host: "<%= ftp['host'] %>"
     user: "<%= ftp['user'] %>"
     password: "<%= ftp['password'] %>"
     passive: <%= if ftp.has_key?('passive') then ftp['passive'] else true end %>
-  <% else %>
+<% else %>
   # ftp:
   #   user: "user"
   #   password: "password"
   #   host: "host"
   #   passive: true
-  <% end %>
+<% end %>
 
-  <% if ssh %>
+<% if ssh %>
   ssh:
     host: "<%= ssh['host'] %>"
     user: "<%= ssh['user'] %>"
-    <% if ssh['password'] %>
+  <% if ssh['password'] %>
     password: "<%= ssh['password'] %>"
-    <% end %>
-    <% if ssh['port'] %>
+  <% end %>
+  <% if ssh['port'] %>
     port: <%= ssh['port'] %>
-    <% end %>
-    <% if ssh['rsync_options'] %>
+  <% end %>
+  <% if ssh['rsync_options'] %>
     rsync_options: "<%= ssh['rsync_options'] %>"
-    <% end %>
-    <% if ssh['gateway'] %>
+  <% end %>
+  <% if ssh['gateway'] %>
     gateway:
       host: "<%= ssh['gateway']['host'] %>"
       user: "<%= ssh['gateway']['user'] %>"
       <% if ssh['gateway']['password'] %>
       password: "<%= ssh['gateway']['password'] %>"
-      <% end %>
     <% end %>
-  <% else %>
+  <% end %>
+<% else %>
   # ssh:
   #   host: "host"
   #   user: "user"
@@ -80,4 +81,4 @@ production:
   #     host: "host"
   #     user: "user"
   #     password: "password" # password is optional, will use public keys if available.
-  <% end %>
+<% end %>
