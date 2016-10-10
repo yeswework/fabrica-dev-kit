@@ -46,8 +46,7 @@ Setting up a new project and getting the development environment ready to run is
 1. In the new folder, make a copy of `setup-example.yml` called `setup.yml`, and edit this file to set a few parameters for the development site.
 1. Run `./setup.rb`. This will set up your virtual machine and install everything required.
 
-### Active development
-How to use WP Atelier.
+### Development
 
 1. If you have just installed a project, its virtual machine will already be running. If you are returning later to a project, first run `vagrant up` from the project folder. Your project will then be accessible at the development domain you specified in the `setup.yml` folder.
 1. Before you start coding, run `gulp` from the project folder, then make your changes in the `dev/src` folder. While Gulp is running the site will also be accessible as a Browsersynx proxy usually at `localhost:3000`. You can escape Gulp (eg. when you have finished development for the time being) with `Ctrl` + `C`.
@@ -55,7 +54,7 @@ How to use WP Atelier.
 
 ### Deployment + version control
 
-## Working with WP Atelier
+## Structure and coding
 ### The WP Atelier theme structure
 What you need to know to develop with WP Atelier:
 
