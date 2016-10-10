@@ -7,33 +7,28 @@ Theme (and also plugin) developers who want to speed up and and improve their wo
 
 ##What exactly does it do?
 1. **Fully installs and configures an independent development environment for each project.**
-
- * Via [Vagrant](https://www.vagrantup.com/), installs and configures a virtual machine running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/), for super-fast local development. Each project has its own virtual machine: this makes WP Atelier much more reliable and secure than a one-size-fits-all solution like MAMP.
- * Maps the project's virtual machine to your chosen development domain (eg. `myproject.dev`) by automatically modifying the local `hosts` file, for straightforward browser access.
- * Automatically installs all the required software ready to start developing, including the latest version of WordPress and your plugins of choice (you just list them in the config file), as well as build, optimization and deployment tools.
-
+    * Via [Vagrant](https://www.vagrantup.com/), installs and configures a virtual machine running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/), for super-fast local development. Each project has its own virtual machine: this makes WP Atelier much more reliable and secure than a one-size-fits-all solution like MAMP.
+    * Maps the project's virtual machine to your chosen development domain (eg. `myproject.dev`) by automatically modifying the local `hosts` file, for straightforward browser access.
+    * Automatically installs all the required software ready to start developing, including the latest version of WordPress and your plugins of choice (you just list them in the config file), as well as build, optimization and deployment tools.
 1. **Allows you to write cleaner, more logical code (if you want to)...**
-
- * ... with templates written in [Twig](http://twig.sensiolabs.org/) rather than directly in PHP. Preinstalls the revolutionary [Timber](https://upstatement.com/timber/) to bring MVC-like separation of concerns to WP development, separating data processing and analytical logic from presentation, leading to more elegant and maintainable templates, eradicating `<?php``?>` tag-itis forever, and preserving your sanity. A genuine 'you'll never go back' improvement.
- * ... with [BEM syntax](http://csswizardry.com/2013/01/mindbemding-getting-your-head-round-bem-syntax/). Installs the [BEML](https://github.com/zenwalker/node-beml) preprocessor for HTML which allows you to write much less repetitive BEM markup (see below), and which in turn reflects our CSS structure more closely.
- * ... with [PostCSS](https://github.com/postcss/postcss) for variables, mixins and other CSS enhancements (it can compile your SASS or LESS). By default we preprocess, lints and minifies (with source maps) your stylesheets (again via Gulp).
- * ... with the [Lost Grid](https://github.com/peterramsing/lost) grid system /preprocessor, which allows you to build fluid, responsive, nested grids without using presentational classes, with or without [Flexbox](https://github.com/peterramsing/lost).
- * ... making use of the incredible [Advanced Custom Fields](https://www.advancedcustomfields.com/) plugin, which is supported by Timber (see above). Can even automatically install the Pro version if you supply your licence key at setup.
-
+    * ... with templates written in [Twig](http://twig.sensiolabs.org/) rather than directly in PHP. Preinstalls the revolutionary [Timber](https://upstatement.com/timber/) to bring MVC-like separation of concerns to WP development, separating data processing and analytical logic from presentation, leading to more elegant and maintainable templates, eradicating `<?php``?>` tag-itis forever, and preserving your sanity. A genuine 'you'll never go back' improvement.
+    * ... with [BEM syntax](http://csswizardry.com/2013/01/mindbemding-getting-your-head-round-bem-syntax/). Installs the [BEML](https://github.com/zenwalker/node-beml) preprocessor for HTML which allows you to write much less repetitive BEM markup (see below), and which in turn reflects our CSS structure more closely.
+    * ... with [PostCSS](https://github.com/postcss/postcss) for variables, mixins and other CSS enhancements (it can compile your SASS or LESS). By default we preprocess, lints and minifies (with source maps) your stylesheets (again via Gulp).
+    * ... with the [Lost Grid](https://github.com/peterramsing/lost) grid system /preprocessor, which allows you to build fluid, responsive, nested grids without using presentational classes, with or without [Flexbox](https://github.com/peterramsing/lost).
+    * ... making use of the incredible [Advanced Custom Fields](https://www.advancedcustomfields.com/) plugin, which is supported by Timber (see above). Can even automatically install the Pro version if you supply your licence key at setup.
 1. **Reduces friction in the development process:**
-
- * Includes a super-minimal object-orientated boilerplate theme (see below), specially constructed for bespoke theme development.
- * Keeps the development source folder outside the virtual machine for easy editing and version control.
- * Live-compiles and optimizes straight to the active theme folder inside the virtual machine as you develop, via a pre-configured [Gulp](http://gulpjs.com/) watch, which:
-     * Preprocesses, lints and minifies (with source maps) your stylesheets.
-     * Minifies your Javascript with sourcemaps.
-     * Optimizes / losslessly compresses image assets.
-     * Pipes changes directly to the browser, without requiring a page refresh, via [Browsersync](https://www.browsersync.io/), so you can finally give your clapped-out `F5` key a break (well, `Cmd` + `W`… no Windows version yet).
- * Allows simultaneous testing on multiple devices (with synchronised scrolling and keystrokes!), also using Browsersync.
- * Combines [NPM](https://www.npmjs.com/) support with [Webpack](https://webpack.github.io/) allowing super-fast installation and inclusion of front-end modules such as jQuery plugins / other JS libraries.
- * PHP [Composer](https://getcomposer.org/) support for super-fast installation and automatic inclusion of back-end extensions.
- * Allows push-button deployment (ie. with a single terminal command) to staging and/or production servers using [Wordmove](https://github.com/welaika/wordmove).
- * Automatically activates [ACF-JSON](https://www.advancedcustomfields.com/resources/local-json/) for ‘database’ version-control (tracks and synchronises field settings for the Advanced Custom Fields plugin across multiple environments).
+    * Includes a super-minimal object-orientated boilerplate theme (see below), specially constructed for bespoke theme development.
+    * Keeps the development source folder outside the virtual machine for easy editing and version control.
+    * Live-compiles and optimizes straight to the active theme folder inside the virtual machine as you develop, via a pre-configured [Gulp](http://gulpjs.com/) watch, which:
+        * Preprocesses, lints and minifies (with source maps) your stylesheets.
+        * Minifies your Javascript with sourcemaps.
+        * Optimizes / losslessly compresses image assets.
+        * Pipes changes directly to the browser, without requiring a page refresh, via [Browsersync](https://www.browsersync.io/), so you can finally give your clapped-out `F5` key a break (well, `Cmd` + `W`… no Windows version yet).
+    * Allows simultaneous testing on multiple devices (with synchronised scrolling and keystrokes!), also using Browsersync.
+    * Combines [NPM](https://www.npmjs.com/) support with [Webpack](https://webpack.github.io/) allowing super-fast installation and inclusion of front-end modules such as jQuery plugins / other JS libraries.
+    * PHP [Composer](https://getcomposer.org/) support for super-fast installation and automatic inclusion of back-end extensions.
+    * Allows push-button deployment (ie. with a single terminal command) to staging and/or production servers using [Wordmove](https://github.com/welaika/wordmove).
+    * Automatically activates [ACF-JSON](https://www.advancedcustomfields.com/resources/local-json/) for ‘database’ version-control (tracks and synchronises field settings for the Advanced Custom Fields plugin across multiple environments).
 
 ## Requirements
 WP Atelier runs on any recent version of Mac OS X. The setup procedure uses in-built Ruby, but we also require these tools to be installed first:
