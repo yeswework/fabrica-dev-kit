@@ -126,11 +126,11 @@ class MyPost extends \Timber\Post {
             foreach ($ms as &$m) {
                 if ($m['unit'] == 'cm') { // Centimetres
                     $m['imperialUnit'] = 'in';
-                    $m['imperialValue'] = $m['value'] / 2.54';
+                    $m['imperialValue'] = $m['value'] / 2.54;
                 }
                 if ($m['unit'] == 'm') { // Metres
                     $m['imperialUnit'] = 'ft';
-                    $m['imperialValue'] = $m['value'] * 3.28084';
+                    $m['imperialValue'] = $m['value'] * 3.28084;
                 }
             }
             $_extendedMeasurements = $ms;
