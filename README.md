@@ -1,61 +1,83 @@
-# YWW WP + Vagrant development kit #
+#WP Atelier
+##What is it?
+A self-installing virtual-machine based WordPress development environment which includes a starter theme, build script, and a small but very powerful set of default tools to make WordPress theme (or plugin) development more straightforward, agile and enjoyable than ever before.
 
-## Contents ##
+##Who is it for?
+Theme (and also plugin) developers who want to speed up and and improve their workflow. WP Atelier automates just about every part of the process – from set up, through development, to deployment – using best-in-class tools and and both following and encouraging all kinds of best practices. It is also readily customizable.
 
-* WP-tailored Vagrant virtual machine based on [VCCW](http://vccw.cc/)
-* Starter theme, ready for quick development (PHP, Twig, JS, CSS resources)
-* NPM and Bower package files, ready to install development dependencies
-* Gulp script to build, optimise, lint and sync browsers in development (see below for more details)
+##What exactly does it do?
+1. **Fully installs and configures an independent development environment for each project.**
+ * Via [Vagrant](https://www.vagrantup.com/), installs and configures a virtual machine running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/), for super-fast local development. Each project has its own virtual machine: this makes WP Atelier much more reliable and secure than a one-size-fits-all solution like MAMP.
+ * Maps the project's virtual machine to your chosen development domain (eg. `myproject.dev`) by automatically modifying the local `hosts` file, for straightforward browser access.
+ * Automatically installs all the required software ready to start developing, including the latest version of WordPress and your plugins of choice (you just list them in the config file), as well as build, optimization and deployment tools.
 
-## Requirements ##
+1. **Allows you to write cleaner, more logical code (if you want to)...**
+ * ... with templates written in [Twig](http://twig.sensiolabs.org/) rather than directly in PHP. Preinstalls the revolutionary [Timber](https://upstatement.com/timber/) to bring MVC-like separation of concerns to WP development, separating data processing and analytical logic from presentation, leading to more elegant and maintainable templates, eradicating `<?php``?>` tag-itis forever, and preserving your sanity. A genuine 'you'll never go back' improvement.
+ * ... with [BEM syntax](http://csswizardry.com/2013/01/mindbemding-getting-your-head-round-bem-syntax/). Installs the [BEML](https://github.com/zenwalker/node-beml) preprocessor for HTML which allows you to write much less repetitive BEM markup (see below), and which in turn reflects our CSS structure more closely.
+ * ... with [PostCSS](https://github.com/postcss/postcss) for variables, mixins and other CSS enhancements (it can compile your SASS or LESS). By default we preprocess, lints and minifies (with source maps) your stylesheets (again via Gulp).
+ * ... with the [Lost Grid](https://github.com/peterramsing/lost) grid system /preprocessor, which allows you to build fluid, responsive, nested grids without using presentational classes, with or without [Flexbox](https://github.com/peterramsing/lost).
+ * ... making use of the incredible [Advanced Custom Fields](https://www.advancedcustomfields.com/) plugin, which is supported by Timber (see above). Can even automatically install the Pro version if you supply your licence key at setup.
 
-* [Node.js and npm](http://blog.teamtreehouse.com/install-node-js-npm-mac)
-* Only tested on Mac OS X El Capitan, may or may not work on other versions / systems
+1. **Reduces friction in the development process:**
+ * Includes a super-minimal object-orientated boilerplate theme (see below), specially constructed for bespoke theme development.
+ * Keeps the development source folder outside the virtual machine for easy editing and version control.
+ * Live-compiles and optimizes straight to the active theme folder inside the virtual machine as you develop, via a pre-configured [Gulp](http://gulpjs.com/) watch, which:
+     * Preprocesses, lints and minifies (with source maps) your stylesheets.
+     * Minifies your Javascript with sourcemaps.
+     * Optimizes / losslessly compresses image assets.
+     * Pipes changes directly to the browser, without requiring a page refresh, via [Browsersync](https://www.browsersync.io/), so you can finally give your clapped-out `F5` key a break (well, `Cmd` + `W`… no Windows version yet).
+ * Allows simultaneous testing on multiple devices (with synchronised scrolling and keystrokes!), also using Browsersync.
+ * Combines [NPM](https://www.npmjs.com/) support with [Webpack](https://webpack.github.io/) allowing super-fast installation and inclusion of front-end modules such as jQuery plugins / other JS libraries.
+ * PHP [Composer](https://getcomposer.org/) support for super-fast installation and automatic inclusion of back-end extensions.
+ * Allows push-button deployment (ie. with a single terminal command) to staging and/or production servers using [Wordmove](https://github.com/welaika/wordmove).
+ * Automatically activates [ACF-JSON](https://www.advancedcustomfields.com/resources/local-json/) for ‘database’ version-control (tracks and synchronises field settings for the Advanced Custom Fields plugin across multiple environments).
 
-## Installation ##
+## Requirements
+WP Atelier runs on any recent version of Mac OS X. The setup procedure uses in-built Ruby, but we also require these tools to be installed first:
 
-1. Follow steps 1-4 (only) of the [VCCW](http://vccw.cc/) installation guide
-2. Clone this repository into a project folder, eg. `git clone https://.../yww-wp-vagrant-dev-kit.git project.dev`
-3. Copy `site-example.yml` to `site.yml` and edit it with basic site details (slug, domain, name, FTP details, etc)
-4. Run the `./setup.sh` shell script which will automatically:
-	* install all development and front-end dependencies via NPM and Bower
-    * provision and activate the Vagrant virtual machine
-    * add a line to the hosts file for local access to the site while Vagrant is up
-    * install WordPress and our selected plugins (ACF, Timber and some utilities) in the virtual machine
-    * compile the starter site ready for immediate viewing / editing
-    * activate the new theme in WordPress
+* Node.js
+* Gulp 4 (still in beta, but crucial for task sequencing in our build script)
+Walkthrough and code examples:
 
-NB. You will probably be asked for a password to modify the hosts file, but this should be the only user input needed during the set up.
+## Using WP Atelier
 
-## Then what? ##
+### Installation (config, setup)
+Setting up a new project and getting the development environment ready to run is very easy:
 
-The site will then be up and running and accessible locally on the domain you specified in `site.yml`, and development should be carried out in the `dev/src` folder.
+1. Clone the repo into a folder for your project: `git clone git@bitbucket.org:yeswework/yww-wp-vagrant-dev-kit.git mysite`
+1. In the new folder, make a copy of `setup-example.yml` called `setup.yml`, and edit this file to set a few parameters for the development site.
+1. Run `./setup.rb`. This will set up your virtual machine and install everything required.
 
-To launch the main task which will run an initial build and then watch for changes and push them live to browsers via Browsersync, just run `gulp`. The Browsersync proxy will be accessible at `localhost:3000` until gulp is halted with Ctrl-C.
+### Active development
+How to use WP Atelier.
 
-To shut down the Vagrant box temporarily (eg. to remove the hosts file entry), use `vagrant halt`; to resume it again `vagrant up`.
+1. If you have just installed a project, its virtual machine will already be running. If you are returning later to a project, first run `vagrant up` from the project folder. Your project will then be accessible at the development domain you specified in the `setup.yml` folder.
+1. Before you start coding, run `gulp` from the project folder, then make your changes in the `dev/src` folder. While Gulp is running the site will also be accessible as a Browsersynx proxy usually at `localhost:3000`. You can escape Gulp (eg. when you have finished development for the time being) with `Ctrl` + `C`.
+1. To shut down the project's virtual machine, run `vagrant suspend` from the project folder. (Restarting your computer will automatically shut the virtual machine down anyway.)
 
-To install a front-end dependency, use `bower install --save <package>` in the `dev/src` folder  (they will be automatically loaded into the theme).
+### Deployment + version control
 
-To install a back-end dependency use `composer require <package>` and then `composer install` in the `dev/src/includes` folder (they will be automatically loaded into the theme).
+## Working with WP Atelier
+### The WP Atelier theme structure
+What you need to know to develop with WP Atelier:
 
-## Further info ##
+* Custom functions: our super-minimal boilerplate makes no assumptions about your data or design, but it's structured to make it easy for you to hook WordPress actions and filters and add your own functions. There are several predefined files (all in the `includes` folder) to help keep your custom code well-organised:
+     * `project.php` for hooks that should affect front-end and admin requests, and for any other functions you may need to use which can't
+     * `front.php` for hooks that should only affect the front-end requests.
+     * `admin.php` for hooks that should only affect admin requests.
+     * `ajax.php` for AJAX calls (the corresponding front-end code can be added in `assets/main.js`)
+     * `models.php` for extensions to Timber objects (to give custom properties to Post and Term objects upon instantiation).
+* Templates:
+     * If you want to make use of Timber (and you would be insane not to), the PHP files live in `templates/controllers/` and the corresponding Twig views in `templates/views/`. See the Timber documentation for more information. If you don't / can't use it, just create your vanilla WP templates in `templates/controllers` and they'll work fine.
+* Assets:
+     * CSS goes in `assets/css/main.pcss`. If you prefer to split it into several files, you can include them with `@import` at the top.
+     * JS goes in `assets/js/main.js`. Additional JS files can be enqueued in the standard WordPress way, by adding a hook in the appropriate place (probably `includes/front.php` – see above).
+     * Images can go in `assets/img` and any local fonts in `assets/fonts`. These will be accessible from the stylesheet in `../img/` or `../fonts/`.
 
-The Gulp build routine (which is executed by `gulp build`, or `gulp` if you also want to live compile / sync changed files) runs the following optimisations:
+### MVC coding with Timber + ACF
 
-* Assembles all theme assets and code into a WordPress-compatible structure in a `build` folder
-* Creates a `style.css` containing a theme header and a `functions.php` which invokes all other relevant project scripts and styles
-* Concatenates third-party front-end libraries (Bower dependencies) into `lib.css` and `lib.js` (plus minified versions)
-* Preprocesses author CSS using the following PostCSS libraries:
-    * [postcss-simple-vars](https://github.com/postcss/postcss-simple-vars)
-    * [postcss-nested-props](https://github.com/jedmao/postcss-nested-props)
-    * [postcss-nested](https://github.com/postcss/postcss-nested)
-    * [postcss-fontpath](https://github.com/seaneking/postcss-fontpath)
-    * [lost grid](https://github.com/corysimmons/lost)
-    * [autoprefixer](https://github.com/postcss/autoprefixer)
-* Concatenates author CSS and JS into `main.js` and `main.css` (plus minified versions, with source mapping)
-* Optimises images
+### BEML + PostCSS
 
-## Additional notes ##
-
-The theme will load minified assets in the front end unless `WP_DEBUG` is set to `true` in `wp-config.php`.
+### Installing dependencies
+* Back-end: Composer
+* Front-end: NPM / Webpack
