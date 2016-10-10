@@ -63,7 +63,7 @@ What you need to know to develop with WP Atelier:
      * `project.php` for hooks that should affect front-end and admin requests, and for any other functions you may need to use which can't. As a convenient shortcut, we make the class in this file available to your templates via the project slug, so if your project slug at setup is `myproject` you can do `myproject::myFunction()`.
      * `front.php` for hooks that should only affect the front-end requests.
      * `admin.php` for hooks that should only affect admin requests.
-     * `ajax.php` for AJAX calls (the corresponding front-end code can be added in `assets/main.js`)
+     * `ajax.php` for AJAX calls (the corresponding front-end code can be added in `assets/main.js`).
      * `models.php` for extensions to Timber objects (to assign custom properties to Post and Term objects upon instantiation).
 * Templates:
      * If you want to make use of Timber (and you would be insane not to), the PHP files live in `templates/controllers/` and the corresponding Twig views in `templates/views/`. See the Timber documentation for more information.
