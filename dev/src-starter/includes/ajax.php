@@ -3,7 +3,7 @@
    Ajax calls and handlers
    ========================================================================= */
 
-namespace yww\devkit;
+namespace yww\fabrica;
 
 require_once('project.php');
 

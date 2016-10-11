@@ -1,4 +1,4 @@
-name 'devkit'
+name 'fabrica'
 
 depends 'mysql2_chef_gem'
 depends 'database'

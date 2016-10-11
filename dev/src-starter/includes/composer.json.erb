@@ -1,8 +1,13 @@
 {
 	"authors": [
 		{
-			"name": "Yes We Work",
-			"email": "info@yeswework.com"
+			"name": "<%= author['name'] %>"<%= author['email'] || author['url'] ? ",\n" : "\n" %>
+<% if author['email'] %>
+			"email": "<%= author['email'] %>"<%= author['url'] ? ",\n" : "\n" %>
+<% end %>
+<% if author['url'] %>
+			"homepage": "<%= author['url'] %>"
+<% end %>
 		}
 	],
 	"require": {

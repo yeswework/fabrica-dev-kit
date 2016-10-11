@@ -2,8 +2,7 @@
   "name": "<%= slug %>",
   "version": "0.1.0",
   "description": "<%= title %>",
-  "author": "<%= author %>",
-  "url": "<%= url %>",
+  "author": "<%= author['name'] %><%= author['email'] ? " <#{author['email']}>" : '' %><%= author['url'] ? " (#{author['url']})" : '' %>",
   "private": true,
   "dependencies": {
     "jquery": "^2.2.0",

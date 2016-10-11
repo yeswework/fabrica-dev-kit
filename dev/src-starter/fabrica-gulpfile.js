@@ -34,11 +34,10 @@ var gulp = require('gulp'),
 	YAML = require('yamljs');
 
 // Load project and local settings from package.json and vagrant.yml
-var projectSettings = require('./package.json'),
+var projectSettings = require('./dev/src/package.json'),
 	localSettings = YAML.load('vagrant.yml');
 var projectSlug = projectSettings.name,
 	projectTitle = projectSettings.description,
-	projectUrl = projectSettings.url,
 	projectAuthor = projectSettings.author,
 	projectDevUrl = localSettings.dev_url,
 	projectDocRoot = localSettings.host_document_root;
@@ -115,8 +114,8 @@ function clean() {
 function styleCss(cb) {
 	var data = '/*\r\n'
 		+ 'Theme Name: ' + projectTitle + '\r\n'
-		+ 'Theme URI: http://' + projectUrl + '\r\n'
-		+ 'Author: ' + projectAuthor + '\r\n' + '*/';
+		+ projectAuthor['url'] ? 'Theme URI: http://' + projectAuthor['url'] + '\r\n' : '' +
+		+ 'Author: ' + projectAuthor['name'] + '\r\n' + '*/';
 	fs.writeFileSync(base.theme + 'style.css', data);
 	cb();
 }

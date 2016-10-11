@@ -4,7 +4,7 @@
 	<meta charset="{{ site.charset }}">
 	<meta http-equiv="x-ua-compatible" content="ie=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="author" content="Yes We Work - http://yeswework.com/">
+	<meta name="author" content="<%= author['name'] %><%= author['email'] ? " <#{author['email']}>" : '' %><%= author['url'] ? " (#{author['url']})" : '' %>">
 	<script>document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, 'js');</script>
 	{{ function('wp_head') }}
 </head>

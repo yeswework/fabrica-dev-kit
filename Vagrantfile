@@ -16,7 +16,7 @@ Vagrant.configure("2") do |config|
       self.merge!(new_settings) if new_settings.is_a?(Hash)
     end
   end
-  settings.merge_settings!(File.join(ENV["HOME"], '.devkit/config.yml'))
+  settings.merge_settings!(File.join(ENV["HOME"], '.fabrica/config.yml'))
   settings.merge_settings!(File.join(File.dirname(__FILE__), 'vagrant.yml'))
 
   # get Chef cookbook path
@@ -112,7 +112,7 @@ Vagrant.configure("2") do |config|
         :user                     => settings['user'],
         :group                    => settings['group']
       },
-      :devkit => {
+      :fabrica => {
         :user                     => settings['user'],
         :group                    => settings['group'],
         :wp_version               => ENV['wp_version'] || settings['version'],
@@ -150,8 +150,8 @@ Vagrant.configure("2") do |config|
     chef.add_recipe 'nginx'
     chef.add_recipe 'wp-cli'
 
-    chef.add_recipe 'devkit'
-    chef.add_recipe 'devkit::install'
+    chef.add_recipe 'fabrica'
+    chef.add_recipe 'fabrica::install'
   end
 
   # run post-provision script if available

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # =============================================================================
-# YWW WP + Vagrant dev kit setup script
+# Fabrica setup script
 # =============================================================================
 # IMPORTANT: before running this script, rename setup-example.yml to setup.yml
 # and modify it with project info. see README.md for more info
@@ -29,7 +29,7 @@ begin
 			return new_settings
 		end
 	end
-	settings.merge_settings!(File.join(ENV['HOME'], '.devkit/settings.yml'))
+	settings.merge_settings!(File.join(ENV['HOME'], '.fabrica/settings.yml'))
 	setup_settings = settings.merge_settings!(File.join(File.dirname(__FILE__), 'setup.yml'))
 	setup_settings['host_document_root'] = if setup_settings.has_key?('host_document_root') then setup_settings['host_document_root'] else settings['host_document_root'] end
 rescue
@@ -52,6 +52,7 @@ renderSourceFile('dev/src/package.json', settingsostruct)
 renderSourceFile('dev/src/includes/.env', settingsostruct)
 renderSourceFile('dev/src/includes/composer.json', settingsostruct)
 renderSourceFile('dev/src/includes/project.php', settingsostruct)
+renderSourceFile('dev/src/templates/views/base.twig', settingsostruct)
 renderSourceFile('Movefile', settingsostruct, true)
 
 # rename/backup "setup.yml"
@@ -60,9 +61,9 @@ FileUtils.mv 'setup.yml', 'setup.bak.yml'
 setup_settings.reject! {|key| ['slug', 'title', 'author', 'homepage'].include?(key) }
 File.open('vagrant.yml', 'w') {|file| file.write setup_settings.to_yaml }
 
-# create symlinks to files kept in src folder but used in root by dev kit
-FileUtils.ln_s 'dev/src/devkit-package.json', 'package.json'
-FileUtils.ln_s 'dev/src/devkit-gulpfile.js', 'gulpfile.js'
+# create symlinks to files kept in src folder but used in root by Fabrica
+FileUtils.ln_s 'dev/src/fabrica-package.json', 'package.json'
+FileUtils.ln_s 'dev/src/fabrica-gulpfile.js', 'gulpfile.js'
 
 # install build dependencies (Gulp + extensions)
 puts '[setup.rb] Installing build dependencies...'

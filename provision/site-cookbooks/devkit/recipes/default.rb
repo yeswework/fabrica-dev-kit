@@ -4,29 +4,29 @@
 
 require 'shellwords'
 
-wpcli_config_path = File.join("/home/", Shellwords.shellescape(node[:devkit][:user]), "/.wp-cli")
+wpcli_config_path = File.join("/home/", Shellwords.shellescape(node[:fabrica][:user]), "/.wp-cli")
 [wpcli_config_path, File.join(wpcli_config_path, "commands")].each do |path|
   directory path do
     recursive true
-    owner node[:devkit][:user]
-    group node[:devkit][:group]
+    owner node[:fabrica][:user]
+    group node[:fabrica][:group]
   end
 end
 
 template File.join(wpcli_config_path, "config.yml") do
   source "config.yml.erb"
-  owner node[:devkit][:user]
-  group node[:devkit][:group]
+  owner node[:fabrica][:user]
+  group node[:fabrica][:group]
   mode "0644"
   variables(
-    :docroot => File.join(node[:devkit][:wp_docroot], node[:devkit][:wp_siteurl]),
-    :skip_wp_default_plugins => node[:devkit][:skip_wp_default_plugins],
-    :skip_wp_default_themes => node[:devkit][:skip_wp_default_themes]
+    :docroot => File.join(node[:fabrica][:wp_docroot], node[:fabrica][:wp_siteurl]),
+    :skip_wp_default_plugins => node[:fabrica][:skip_wp_default_plugins],
+    :skip_wp_default_themes => node[:fabrica][:skip_wp_default_themes]
   )
 end
 
 db_connection_info = {
-  host: node[:devkit][:dbhost],
+  host: node[:fabrica][:dbhost],
   username: 'root',
   password: node[:mysql][:server_root_password]
 }
@@ -46,14 +46,14 @@ mysql_service 'default' do
 end
 
 # create database
-mysql_database node[:devkit][:dbname] do
+mysql_database node[:fabrica][:dbname] do
   connection db_connection_info
   action :create
 end
 
-mysql_database_user node[:devkit][:dbuser] do
+mysql_database_user node[:fabrica][:dbuser] do
   connection db_connection_info
-  password node[:devkit][:dbpassword]
+  password node[:fabrica][:dbpassword]
   host '%'
   action [:create, :grant]
 end

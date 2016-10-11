@@ -3,7 +3,7 @@
    Project-specific configuration, scripts and handlers
    ========================================================================= */
 
-namespace yww\devkit;
+namespace yww\fabrica;
 
 require_once('singleton.php');
 <% if acf_pro_key %>
@@ -33,7 +33,7 @@ class Project extends Singleton {
 	public static $menus = array('main' => 'Main menu');
 
 	// Google Analytics ID (injected by Base class)
-	public static $googleAnalyticsId = '';
+	public static $googleAnalyticsId = '<%= google_analytics_id %>';
 
 	public function __construct() {
 
@@ -60,10 +60,10 @@ class Project extends Singleton {
 
 // Class alias so Project can be accessed directly using project slug
 if (!class_exists(Project::$projectNamespace)) {
-	class_alias('yww\devkit\Project', Project::$projectNamespace);
+	class_alias('yww\fabrica\Project', Project::$projectNamespace);
 } else {
 	// Class name is taken: namespace the class alias
-	class_alias('yww\devkit\Project', 'yww\devkit\\' . Project::$projectNamespace);
+	class_alias('yww\fabrica\Project', 'yww\fabrica\\' . Project::$projectNamespace);
 }
 
 // Create a singleton instance of Project

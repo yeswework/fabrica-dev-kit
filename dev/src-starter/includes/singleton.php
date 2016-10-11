@@ -3,7 +3,7 @@
    Singleton pattern implementation
    ========================================================================= */
 
-namespace yww\devkit;
+namespace yww\fabrica;
 
 class Singleton {
 

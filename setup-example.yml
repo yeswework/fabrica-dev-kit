@@ -1,11 +1,13 @@
-# Basics
-slug: yww-project
-title: YWW Project
-author: Yes We Work <info@yeswework> (http://yeswework.com)
-url: http://yeswework.com/
+# Project
+slug: fabricaproject # Lowercase letters only - used for theme folder and namespacing
+title: Fabrica Project
+author:
+  name: Fabrica Project Author
+  # email: # Optional
+  # url: # Optional
 
 # Vagrant
-dev_url: yww-project.dev
+dev_url: fabrica.dev
 dev_ip: 192.168.33.10
 
 # WordPress
@@ -18,6 +20,9 @@ multisite: false
 # acf_pro_key:
 plugins:
 #  - advanced-custom-fields
+
+# Google Analytics
+# google_analytics_id:
 
 # Production deployment quick set up
 # remote_path: /absolute/path/to/wordpress/

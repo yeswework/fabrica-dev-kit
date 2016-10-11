@@ -41,7 +41,7 @@ sudo $PHPENV_ROOT/bin/phpenv global $PHP_VERSION
 sudo $PHPENV_ROOT/bin/phpenv rehash
 
 # copy configuration files
-sudo cp /vagrant/provision/post/phpenv/devkit.ini $PHPENV_ROOT/versions/$PHP_VERSION/etc/conf.d/
+sudo cp /vagrant/provision/post/phpenv/fabrica.ini $PHPENV_ROOT/versions/$PHP_VERSION/etc/conf.d/
 sudo cp /vagrant/provision/post/phpenv/sudoers /etc/sudoers.d/phpenv
 
 # restart Nginx
