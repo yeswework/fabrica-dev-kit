@@ -18,7 +18,7 @@ if not Dir.exists? 'dev/src'
 end
 
 # load setup settings
-puts '[setup.rb] Reading settings...'
+puts '[Fabrica] Reading settings...'
 begin
 	# load default, user and project/site settings, in that order
 	settings = YAML.load_file(File.join(File.dirname(__FILE__), 'provision/default.yml'))
@@ -33,7 +33,7 @@ begin
 	setup_settings = settings.merge_settings!(File.join(File.dirname(__FILE__), 'setup.yml'))
 	setup_settings['host_document_root'] = if setup_settings.has_key?('host_document_root') then setup_settings['host_document_root'] else settings['host_document_root'] end
 rescue
-	abort '[setup.rb] Could not load "setup.yml". Please create this file based on "setup-example.yml".'
+	abort '[Fabrica] Could not load "setup.yml". Please create this file based on "setup-example.yml".'
 end
 
 # set configuration data in package.json, YWWProject.php and Wordmove files
@@ -45,7 +45,7 @@ def renderSourceFile(filename, settingsostruct, keeptemplate = nil)
 		File.open(filename, 'w') {|file| file.puts file_data }
 		FileUtils.rm "#{filename}.erb" unless keeptemplate
 	elsif not File.exists?("#{filename}")
-		abort "[setup.rb] could not find #{filename}.erb template or #{filename}."
+		abort "[Fabrica] could not find #{filename}.erb template or #{filename}."
 	end
 end
 renderSourceFile('dev/src/package.json', settingsostruct)
@@ -66,11 +66,11 @@ FileUtils.ln_s 'dev/src/fabrica-package.json', 'package.json'
 FileUtils.ln_s 'dev/src/fabrica-gulpfile.js', 'gulpfile.js'
 
 # install build dependencies (Gulp + extensions)
-puts '[setup.rb] Installing build dependencies...'
+puts '[Fabrica] Installing build dependencies...'
 system 'npm install'
 
 # install initial front-end dependencies
-puts '[setup.rb] Installing front-end dependencies...'
+puts '[Fabrica] Installing front-end dependencies...'
 FileUtils.cd 'dev/src'
 system 'npm install'
 FileUtils.cd 'includes'
@@ -78,13 +78,13 @@ system 'composer install'
 FileUtils.cd '../../..'
 
 # start vagrant
-puts '[setup.rb] Starting Vagrant VM...'
+puts '[Fabrica] Starting Vagrant VM...'
 if not system 'vagrant up'
-	abort '[setup.rb] Vagrant VM provisioning failed.'
+	abort '[Fabrica] Vagrant VM provisioning failed.'
 end
 
 # run our gulp build task and activate the theme in WordPress
-puts '[setup.rb] Building theme and activating in WordPress...'
+puts '[Fabrica] Building theme and activating in WordPress...'
 system 'gulp build'
 # create symlink to theme folder in dev for quick access
 FileUtils.ln_s "../#{settings['host_document_root']}/wp-content/themes/#{settings['slug']}/", 'dev/build'
@@ -92,4 +92,4 @@ system "vagrant ssh -c \"wp theme activate '#{settings['slug']}'\""
 
 # after which, the site will be ready to run and develop locally
 # just run gulp
-puts '[setup.rb] Setup complete. To run and develop locally just run \'gulp\'.'
+puts '[Fabrica] Setup complete. To run and develop locally just run \'gulp\'.'
