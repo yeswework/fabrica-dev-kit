@@ -1,14 +1,14 @@
-#WP Atelier
+#Fabrica for WordPress
 ##What is it?
 A self-installing virtual-machine based WordPress development environment which includes a starter theme, build script, and a small but very powerful set of default tools to make WordPress theme (or plugin) development more straightforward, agile and enjoyable than ever before.
 
 ##Who is it for?
-Theme (and also plugin) developers who want to speed up and and improve their workflow. WP Atelier automates just about every part of the process – from set up, through development, to deployment – using best-in-class tools and and both following and encouraging all kinds of best practices. It is also readily customizable.
+Theme (and also plugin) developers who want to speed up and and improve their workflow. Fabrica automates just about every part of the process – from set up, through development, to deployment – using best-in-class tools and and both following and encouraging all kinds of best practices. It is also readily customizable.
 
 ##What exactly does it do?
 * **Fully installs and configures an independent development environment for each project.**
     * Via [Vagrant](https://www.vagrantup.com/), installs and configures a virtual machine running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/), for super-fast local development. Each project has its own virtual machine: this is more efficient, reliable and secure than a one-size-fits-all setup like MAMP.
-    * Maps the project's virtual machine to your chosen development domain (eg. `myproject.dev`) by automatically modifying the local `hosts` file, for no-fuss browser access.
+    * Maps the project's virtual machine to your chosen development domain (eg. `fabrica.dev`) by automatically modifying the local `hosts` file, for no-fuss browser access.
     * Automatically installs all the required software ready to start developing, including the latest version of WordPress and your plugins of choice (you just list them in the config file), as well as build, optimization and deployment tools.
 * **Allows you to write cleaner, more logical and more beautiful code (if you want to)...**
     * ... with templates written in [Twig](http://twig.sensiolabs.org/) rather than directly in PHP. Preinstalls the revolutionary [Timber](https://upstatement.com/timber/) to bring MVC-like separation of concerns to WP development, separating data processing and analytical logic from presentation, leading to more elegant and maintainable templates, eradicating `<?php` `?>` tag-itis forever, and preserving your sanity. A genuine 'never go back' improvement.
@@ -31,14 +31,14 @@ Theme (and also plugin) developers who want to speed up and and improve their wo
     * Automatically activates [ACF-JSON](https://www.advancedcustomfields.com/resources/local-json/) for ‘database’ version-control (tracks and synchronises field settings for the Advanced Custom Fields plugin across multiple environments).
 
 ## Requirements
-WP Atelier runs on any recent version of Mac OS X. It requires:
+Fabrica runs on any recent version of Mac OS X. It requires:
 
 * Node.js
 * Gulp 4 (still in beta, but crucial for task sequencing in our build script)
 * ?? Vagrant
 * ?? Composer
 
-## How to use Atelier
+## How to use Fabrica
 
 ### Installation
 Setting up a new project and getting the development environment ready to run is very easy:
@@ -66,7 +66,7 @@ Setting up a new project and getting the development environment ready to run is
 * To begin version control on your project run `git init` in the `dev/src` folder, then sync with your favourite repo.
 
 ## Theme structure
-What goes where when developing with Atelier:
+What goes where when developing with Fabrica:
 
 * All editing should be done within the `src/` folder – while Gulp is running your changes will be live-compiled from here into the virtual machine's active theme folder. File paths below are within this folder.
 * Templates:
@@ -77,7 +77,7 @@ What goes where when developing with Atelier:
      * JS goes in `assets/js/main.js` (automatically included in the front-end). Additional JS files can be enqueued in the standard WordPress way (probably in `includes/front.php` – see below).
      * Images can go in `assets/img/` and any local fonts in `assets/fonts/`. These can be references from the stylesheet via `../img/` or `../fonts/`.
 * Hooks and custom functions: our super-minimal boilerplate makes no assumptions about your data or design, but it's structured to make it easy for you to hook WordPress actions and filters and add your own functions. There are several predefined files (all in the `includes/` folder) to help keep your custom code well-organised:
-     * `project.php` for hooks that should affect front-end and admin requests, and for any other functions which you might need to make available to your theme (as methods of the singleton `Project` class). As a convenient shortcut, we alias the class to your project slug, so if your project slug is `atelier` you can invoke a member function with `atelier::myFunction()`.
+     * `project.php` for hooks that should affect front-end and admin requests, and for any other functions which you might need to make available to your theme (as methods of the singleton `Project` class). As a convenient shortcut, we alias the class to your project slug, so if your project slug is `fabrica` you can invoke a member function with `fabrica::myFunction()`.
      * `front.php` for hooks that should only affect front-end requests.
      * `admin.php` for hooks that should only affect admin requests.
      * `ajax.php` for AJAX calls (the front-end calls can be added in `assets/main.js`).
@@ -86,11 +86,14 @@ What goes where when developing with Atelier:
      * PHP modules: you can install / require Composer modules from withn the `includes` folder.
      * Front-end JS libraries can be installed using `npm` and then either included (thanks to [Webpack](https://webpack.github.io/)) via `require` statements in `assets/js/main.js`,
      * Front-end CSS libraries can also be installed with `npm` and included via `@import` statements in `assets/css/main.pcss`. The PostCSS Import plugin automatically searches `node_modules` so a statement like `@import 'normalize.css'` doesn't require an explicit path.
-     * PostCSS plugins: use `npm install` from the main project folder (the parent folder of `src`), and modify the `gulpfile.js` accordingly to sequence them.
+     * PostCSS plugins: use `npm install` from the main project folder (the parent folder of `src`), and modify the `gulpfile.js` accordingly to sequence them. NB. This
 
 ## Coding in wonderland: examples
-### WordPress MVC with Timber + ACF
-The magic combination of Timber and Advanced Custom Fields means we can render even complex data in our templates without carry out any data retrieval or decision logic at all. Take for example this [Repeater field](https://www.advancedcustomfields.com/add-ons/repeater-field/) setup:
+### No-sweat hooks
+The
+
+### WordPress MVC via Timber + ACF
+The magic combination of Timber and Advanced Custom Fields means we can render even complex data in our templates without carrying out any data retrieval or decision logic at all. Take for example this [Repeater field](https://www.advancedcustomfields.com/add-ons/repeater-field/) setup:
 
 ![Repeater Field Example](acf-repeater.png)
 
@@ -114,7 +117,7 @@ We can either do this by preparing the data in the corresponding controller (eg.
 To do that we can add the following code to `models.php`:
 
 ```
-class MyPost extends \Timber\Post {
+class MeasurementsPost extends \Timber\Post {
     var $_extendedMeasurements; // For cacheing
 
     function extendedMeasurements() {
@@ -139,12 +142,12 @@ class MyPost extends \Timber\Post {
     }
 }
 ```
-The additional information will be automatically available to the template, as long as we make sure to load the correct post object (via the child class) with `$post = new MyPost();` in our `post.php`. Then we only have to add one more short piece of code to have this information displayed in our template:
+The additional information will be automatically available to the template, as long as we make sure to instantiate the enhanced post object with `$post = new MeasurementsPost();` in our `post.php`. Then we only have to add one more short piece of Twig code to have this information displayed in our template:
 
 ```
 {% if post.measurements %}
     <dl>
-        {% for measurement in post.get_field('measurements') %}
+        {% for measurement in post.extendedMeasurements %}
             <dt>{{ measurement.title.label }}</dt>
             <dd>{{ measurement.value }}{{ measurement.unit }}
             {% if measurement.imperialValue %}
@@ -156,4 +159,7 @@ The additional information will be automatically available to the template, as l
 {% endif %}
 ```
 
+Note how here we access `post.extendedMeasurements` directly, without needing the call to `post.get_field()` in Twig (which retrieves full ACF Repeater data), since we have already made that call when mapping the new property in `models.php`.
+
 ### BEM with BEML + PostCSS
+The BEM pattern has provided an extremely useful
