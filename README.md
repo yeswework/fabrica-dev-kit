@@ -65,7 +65,7 @@ Setting up a new project and getting the development environment ready to run is
 
 ### Deployment
 1. If you already filled in the FTP details in `setup.yml` skip straight to step 3.
-1. If you didn't, once you have a staging or production server set up, edit the `Movefile` with your FTP (or SSH details).
+1. If you didn't, once you have a staging or production server set up, edit the `Movefile.erb` with your FTP (or SSH details).
 1. To deploy your theme type `wordmove push --themes`. Wordmove will push your files to the server, working out which files are new each time.
 1. If you are using ACF, ACF-JSON will take care of synching your fields automatically, but it's a good idea to [synchronise the fields to the database on the remote site](https://www.advancedcustomfields.com/resources/synchronized-json/) once you have pushed changes.
 
@@ -97,8 +97,9 @@ What goes where when developing with Fabrica:
      * PostCSS plugins: use `npm install` from the main project folder (the grandparent folder of `dev/`), and modify the `gulpfile.js` accordingly to sequence them.
 
 ## Coding in wonderland: a few examples
+All of the methods below are optional in Fabrica and it is possible to use vanilla HTML, CSS, PHP – but we highly recommend making use of these time and sanity-saving enhancements.
 
-### WordPress MVC via Timber + ACF
+### Achieving MVC (Model-View-Controller) with Timber + ACF
 The magic combination of Timber and Advanced Custom Fields means we can render even complex data in our templates without carrying out any data retrieval or decision logic at all. Take for example this [Repeater field](https://www.advancedcustomfields.com/add-ons/repeater-field/) setup:
 
 ![Repeater Field Example](acf-repeater.png)
@@ -218,7 +219,7 @@ Second, some corresponding CSS:
 
 With BEML + PostCSS we can avoid repetition in both places, which makes the code easier to write, easier to read, and less prone to typos. Here are the equivalent versions:
 
-First, BEML – note how we use the attributes `block`, `elem` and `mod` instead of classes, but these are automatically rendered as classes in the final version.
+First, BEML – note how we use the attributes `block`, `elem` and `mod` instead of classes, but these are automatically rendered as classes in the compiled code.
 
 ```
 <dl block="measurements">
