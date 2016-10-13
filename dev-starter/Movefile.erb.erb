@@ -1,7 +1,7 @@
 local:
   vhost: "<%= dev_url %>"
   # path to WordPress installation from FTP/SSH root folder
-  wordpress_path: '<%= "#{Dir.pwd}/#{host_document_root}/" %>'
+  wordpress_path: '<%%= "#{Dir.pwd}/#{ENV['HOST_DOCUMENT_ROOT']}/" %>'
 
   database:
     name: "wordpress"

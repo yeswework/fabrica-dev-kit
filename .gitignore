@@ -1,10 +1,8 @@
 setup.yml
 setup.bak.yml
 vagrant.yml
-dev/src/
-dev/build
 node_modules/
 www/
 .vagrant/
 provision/tmp/
-Movefile
+dev/

@@ -1,5 +1,5 @@
 {
-  "name": "yww-wp-vagrant-dev-kit",
+  "name": "fabrica",
   "version": "0.5.0",
   "dependencies": {
     "dom-serializer": {

@@ -1,0 +1,7 @@
+build
+src-starter/
+src/.env
+src/composer.lock
+src/vendor/
+src/node_modules/
+Movefile

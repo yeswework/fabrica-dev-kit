@@ -1,0 +1,19 @@
+{
+  "name": "<%= slug %>",
+  "version": "0.1.0",
+  "description": "<%= title %>",
+  "author": {
+    "name": "<%= author['name'] %>"<%= author['email'] || author['url'] ? ",\n" : "\n" %>
+<% if author['email'] %>
+    "email": "<%= author['email'] %>"<%= author['url'] ? ",\n" : "\n" %>
+<% end %>
+<% if author['url'] %>
+    "url": "<%= author['url'] %>"
+<% end %>
+  },
+  "private": true,
+  "dependencies": {
+    "jquery": "^2.2.0",
+    "normalize.css": "^3.0.3"
+  }
+}

@@ -20,7 +20,7 @@ end
 wp_site_path = File.join(node[:fabrica][:wp_docroot], node[:fabrica][:wp_siteurl])
 wp_site_url = File.join(node[:fabrica][:wp_host], node[:fabrica][:wp_siteurl])
 # create site folder structure
-directory File.join("/vagrant", node[:fabrica][:wp_host_docroot], node[:fabrica][:wp_home]) do
+directory File.join("/vagrant/dev", node[:fabrica][:wp_host_docroot], node[:fabrica][:wp_home]) do
     recursive true
     owner node[:fabrica][:user]
     group node[:fabrica][:group]
@@ -28,7 +28,7 @@ end
 
 # create symlink to WordPress folder
 link node[:fabrica][:wp_docroot] do
-  to File.join("/vagrant", node[:fabrica][:wp_host_docroot])
+  to File.join("/vagrant/dev", node[:fabrica][:wp_host_docroot])
   link_type :symbolic
   owner "root"
   group "root"

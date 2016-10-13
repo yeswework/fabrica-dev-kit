@@ -31,11 +31,12 @@ var gulp = require('gulp'),
 	postcssSimpleVars = require('postcss-simple-vars'),
 	stylelint = require('stylelint'),
 	webpack = require('webpack-stream'),
-	YAML = require('yamljs');
+	exec = require('child_process').exec,
+	yaml = require('yamljs');
 
 // Load project and local settings from package.json and vagrant.yml
-var projectSettings = require('./package.json'),
-	localSettings = YAML.load('vagrant.yml');
+var projectSettings = require('./src/package.json'),
+	localSettings = yaml.load('../vagrant.yml');
 var projectSlug = projectSettings.name,
 	projectTitle = projectSettings.description,
 	projectAuthor = projectSettings.author,
@@ -44,8 +45,9 @@ var projectSlug = projectSettings.name,
 
 // Paths for remapping
 var base = {
-	src: './dev/src/',
-	acfRelativeSrc: projectDocRoot.replace(/[^\/]+(\/|$)/, '../') + '../../../dev/src/',
+	dev: './',
+	src: './src/',
+	acfRelativeSrc: projectDocRoot.replace(/[^\/]+(\/|$)/, '../') + '../../../src/',
 	theme: './' + projectDocRoot + '/wp-content/themes/' + projectSlug + '/'
 };
 
@@ -65,6 +67,7 @@ var path = {
 // Build folder slugs
 var dest = {
 	acf: 'acf-json',
+	movefile: 'movefile',
 	includes: 'inc',
 	controllers: '', // Need to go in the root theme folder
 	views: 'views',
@@ -114,8 +117,8 @@ function clean() {
 function styleCss(cb) {
 	var data = '/*\r\n'
 		+ 'Theme Name: ' + projectTitle + '\r\n'
-		+ projectAuthor['url'] ? 'Theme URI: http://' + projectAuthor['url'] + '\r\n' : '' +
 		+ 'Author: ' + projectAuthor['name'] + '\r\n' + '*/';
+		+ projectAuthor['url'] ? 'Author URI: http://' + projectAuthor['url'] + '\r\n' : '' +
 	fs.writeFileSync(base.theme + 'style.css', data);
 	cb();
 }
@@ -214,8 +217,18 @@ function fonts() {
 		.pipe(browserSync.stream());
 }
 
+// Wordmove: add full Wordpress path to the final Movefile with the almost complete template
+function wordmove(cb) {
+	exec('erb Movefile.erb > Movefile', {'env': {'HOST_DOCUMENT_ROOT': projectDocRoot}}, function (error, stdout, stderr) {
+		if (error) {
+			console.error('Error generating Movefile:', error);
+		}
+	});
+	cb();
+}
+
 // Build: sequences all the other tasks
-gulp.task('build', gulp.series(clean, gulp.parallel(styleCss, acf, includes, controllers, views, styles, scripts, images, fonts)));
+gulp.task('build', gulp.series(clean, gulp.parallel(styleCss, acf, includes, controllers, views, styles, scripts, images, fonts, wordmove)));
 
 // Watch: fire build, then watch for changes
 gulp.task('default', gulp.series('build', watch));

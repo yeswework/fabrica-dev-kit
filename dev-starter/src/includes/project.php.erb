@@ -3,7 +3,7 @@
    Project-specific configuration, scripts and handlers
    ========================================================================= */
 
-namespace yww\fabrica;
+namespace fabrica;
 
 require_once('singleton.php');
 <% if acf_pro_key %>
@@ -60,10 +60,10 @@ class Project extends Singleton {
 
 // Class alias so Project can be accessed directly using project slug
 if (!class_exists(Project::$projectNamespace)) {
-	class_alias('yww\fabrica\Project', Project::$projectNamespace);
+	class_alias('fabrica\Project', Project::$projectNamespace);
 } else {
 	// Class name is taken: namespace the class alias
-	class_alias('yww\fabrica\Project', 'yww\fabrica\\' . Project::$projectNamespace);
+	class_alias('fabrica\Project', 'fabrica\\' . Project::$projectNamespace);
 }
 
 // Create a singleton instance of Project

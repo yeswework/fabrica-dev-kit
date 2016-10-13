@@ -30,7 +30,7 @@ host_document_root: 'www'
 # WordPress
 version: latest
 lang: en_US
-title: Welcome to Fabrica
+# title:    # Project name if not set
 multisite: false
 rewrite_structure: /archives/%post_id%
 

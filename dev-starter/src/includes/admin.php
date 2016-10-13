@@ -3,7 +3,7 @@
    Admin-specific configuration, scripts and handlers
    ========================================================================= */
 
-namespace yww\fabrica;
+namespace fabrica;
 
 require_once('singleton.php');
 

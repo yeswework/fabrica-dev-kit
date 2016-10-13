@@ -3,7 +3,7 @@
    Basic configuration for all projects
    ========================================================================= */
 
-namespace yww\fabrica;
+namespace fabrica;
 
 require_once(__DIR__ . '/vendor/autoload.php');
 require_once('singleton.php');
