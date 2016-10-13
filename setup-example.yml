@@ -11,22 +11,22 @@ dev_url: fabrica.dev
 dev_ip: 192.168.33.10
 
 # WordPress
-admin_user: yeswework
-admin_pass: Sh0ve11!ng
-admin_email: info@yeswework.com
+admin_user: fabrica
+admin_pass: fabrica
+admin_email: admin@fabrica.dev
 lang: en_US
 rewrite_structure: /%postname%/
 multisite: false
-# acf_pro_key:
+# acf_pro_key: # Optional (will preinstall Advanced Custom Fields Pro via Composer)
 plugins:
-#  - advanced-custom-fields
+#  - advanced-custom-fields # Optional (use slugs from WP Codex, plugins will be preinstalled)
 
 # Google Analytics
-# google_analytics_id:
+# google_analytics_id: # Optional (will be preset in theme, can be added manually later)
 
-# Production deployment quick set up
-# remote_path: /absolute/path/to/wordpress/
+# Production deployment quick set up - optional (can be added later in dev/Movefile.erb)
 # ftp:
 #   host:
 #   user:
 #   password:
+# remote_path: /path/to/wordpress/from/ftp/root/
