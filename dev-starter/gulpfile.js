@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Yes We Work WordPress + Vagrant development kit
+   Fabric for WordPress
    ========================================================================== */
 
 var gulp = require('gulp'),
@@ -117,8 +117,9 @@ function clean() {
 function styleCss(cb) {
 	var data = '/*\r\n'
 		+ 'Theme Name: ' + projectTitle + '\r\n'
-		+ 'Author: ' + projectAuthor['name'] + '\r\n' + '*/';
-		+ projectAuthor['url'] ? 'Author URI: http://' + projectAuthor['url'] + '\r\n' : '' +
+		+ 'Author: ' + projectAuthor['name'] + '\r\n'
+		+ (projectAuthor['url'] ? 'Author URI: ' + projectAuthor['url'] + '\r\n' : '')
+		+ '*/';
 	fs.writeFileSync(base.theme + 'style.css', data);
 	cb();
 }
