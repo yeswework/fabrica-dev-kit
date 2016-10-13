@@ -3,7 +3,7 @@
 A self-installing virtual-machine based WordPress development environment which includes a starter theme, build script, and a small but very powerful set of default (but optional) tools to make WordPress theme (or plugin) development more straightforward, agile and enjoyable than ever before.
 
 ##Who is it for?
-Theme developers who want to speed up and improve their workflow – and enjoy it more. Fabrica automates and streamlines just about every part of the process – from set up, through development, to deployment – using best-in-class tools and and both following and encouraging all kinds of best practices. It is also readily customizable.
+Theme developers who want to speed up and improve their workflow – and enjoy it more. Fabrica automates and streamlines just about every part of the process – from set up, through development, to deployment – using best-in-class tools and and both following and encouraging all kinds of best practices. It is also readily customizable.
 
 ##What exactly does it do?
 * **Fully installs and configures an independent local development environment for each project.**
@@ -51,6 +51,7 @@ Setting up a new project and getting the development environment ready to run is
 1. Clone the repo into a folder for your project: `git clone https://github.com/yeswework/fabrica.git fabrica-project`
 1. In the new folder, make a copy of `setup-example.yml` called `setup.yml`, and edit this file to set the basic parameters for the development site.
 1. Run `./setup.rb`. This will set up your virtual machine and install everything required: the Nginx, PHP-FPM, WordPress, and your chosen plugins.
+1. **Important**: the installation procedure doesn't require any further intervention but you will need to enter your system password to modify the `hosts` file – so keep an eye out for the prompt, because the setup will not advance while it is waiting for this.
 
 ### Starting and stopping the virtual machine
 
@@ -263,3 +264,58 @@ Second, the PostCSS:
 ```
 
 ### Semantic grids with Lost Grid
+
+Here is some example markup from a popular layout framework:
+
+```
+<div class="row">
+    <div class="col-xs-12 col-sm-6 col-md-8">wide cell</div>
+    <div class="col-xs-6 col-md-4">normal cell</div>
+</div>
+<div class="row">
+    <div class="col-xs-6 col-sm-4">normal cell</div>
+    <div class="col-xs-6 col-sm-4">normal cell</div>
+    <div class="col-xs-6 col-sm-4">normal cell</div>
+</div>
+```
+
+:-/
+
+So many classes (and the CSS rules to target them are hundreds of lines long). So hard to read. And none of it semantic...
+
+With Lost Grid (PostCSS plugin included with Fabrica), we can move all the presentational rules where they belong – in our stylesheet – and make our classes semantic. We'll also make use of BEML for maximum conciseness (see above). For example:
+
+```
+<div block="row">
+    <div elem="cell" mod="featured">wide cell</div>
+    <div elem="cell">normal cell</div>
+</div>
+<div block="row">
+    <div elem="cell">normal cell</div>
+    <div elem="cell">normal cell</div>
+    <div elem="cell">normal cell</div>
+</div>
+```
+
+And our CSS will look something like this:
+
+```
+.row {
+    lost-flex-container: row;
+
+    &__cell {
+        @media (max-width: 540px) {
+            lost-column: 1;
+        }
+        @media (min-width: 541px) {
+            lost-column: 1/3 3;
+        }
+
+        &--featured {
+            lost-column: 2/3 2;
+        }
+    }
+}
+```
+
+And this is only the tip of the iceberg. For more information see the [Lost Grid](http://lostgrid.org/) website / documentation.
