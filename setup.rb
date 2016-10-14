@@ -47,21 +47,23 @@ end
 # set configuration data in source and Wordmove files
 settingsostruct = OpenStruct.new(settings)
 sourceTemplates = [
-	'dev/src/package.json',
-	'dev/src/includes/.env',
-	'dev/src/includes/composer.json',
-	'dev/src/includes/project.php',
-	'dev/src/templates/views/base.twig',
-	'dev/Movefile.erb'
+	'src/package.json',
+	'src/includes/.env',
+	'src/includes/composer.json',
+	'src/includes/project.php',
+	'src/templates/views/base.twig',
+	'Movefile.erb'
 ]
-for filename in sourceTemplates
-	if File.exists?("#{filename}.erb")
-		template = File.read "#{filename}.erb"
+for sourceTemplate in sourceTemplates
+	filename = "dev/#{sourceTemplate}"
+	filename = "#{filename}.erb" if not sourceTemplate.end_with? '.erb'
+	if File.exists? filename
+		template = File.read filename
 		file_data = ERB.new(template, nil, ">").result(settingsostruct.instance_eval { binding })
 		File.open(filename, 'w') {|file| file.puts file_data }
-		FileUtils.rm "#{filename}.erb"
-	elsif not File.exists?("#{filename}")
-		abort "[Fabrica] could not find #{filename}.erb template or #{filename}."
+		FileUtils.rm filename
+	else
+		abort "[Fabrica] could not find #{filename} template."
 	end
 end
 # rename/backup "setup.yml"
@@ -94,7 +96,7 @@ puts '[Fabrica] Building theme and activating in WordPress...'
 FileUtils.cd 'dev'
 system 'gulp build'
 # create symlink to theme folder in dev for quick access
-FileUtils.ln_s "../#{settings['host_document_root']}/wp-content/themes/#{settings['slug']}/", 'build'
+FileUtils.ln_s "#{settings['host_document_root']}/wp-content/themes/#{settings['slug']}/", 'build'
 system "vagrant ssh -c \"wp theme activate '#{settings['slug']}'\""
 
 # after which, the site will be ready to run and develop locally

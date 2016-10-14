@@ -11,9 +11,10 @@ dev_url: fabrica.dev
 dev_ip: 192.168.33.10
 
 # WordPress
-admin_user: fabrica
-admin_pass: fabrica
-admin_email: admin@fabrica.dev
+admin:
+  user: fabrica
+  pass: fabrica
+  email: admin@fabrica.dev
 lang: en_US
 rewrite_structure: /%postname%/
 multisite: false

@@ -40,9 +40,10 @@ siteurl: ''  # Path to the WP_SITEURL like "wp"
 home: ''     # Path to the WP_HOME like "wp"
 
 # Wordpress users
-admin_user: admin
-admin_pass: admin
-admin_email: fabrica@example.com
+admin:
+  user: admin
+  pass: admin
+  email: fabrica@example.com
 
 # WordPress Database
 db_prefix: wp_

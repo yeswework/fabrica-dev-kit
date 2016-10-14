@@ -19,9 +19,7 @@ template File.join(wpcli_config_path, "config.yml") do
   group node[:fabrica][:group]
   mode "0644"
   variables(
-    :docroot => File.join(node[:fabrica][:wp_docroot], node[:fabrica][:wp_siteurl]),
-    :skip_wp_default_plugins => node[:fabrica][:skip_wp_default_plugins],
-    :skip_wp_default_themes => node[:fabrica][:skip_wp_default_themes]
+    :docroot => File.join(node[:fabrica][:wp_docroot], node[:fabrica][:wp_siteurl])
   )
 end
 

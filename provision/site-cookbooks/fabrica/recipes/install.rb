@@ -21,9 +21,9 @@ wp_site_path = File.join(node[:fabrica][:wp_docroot], node[:fabrica][:wp_siteurl
 wp_site_url = File.join(node[:fabrica][:wp_host], node[:fabrica][:wp_siteurl])
 # create site folder structure
 directory File.join("/vagrant/dev", node[:fabrica][:wp_host_docroot], node[:fabrica][:wp_home]) do
-    recursive true
-    owner node[:fabrica][:user]
-    group node[:fabrica][:group]
+  recursive true
+  owner node[:fabrica][:user]
+  group node[:fabrica][:group]
 end
 
 # create symlink to WordPress folder
@@ -46,7 +46,9 @@ elsif node[:fabrica][:wp_version] == 'latest' then
     cwd wp_site_path
     args(
       :locale   => node[:fabrica][:locale],
-      :force    => ''
+      :force    => '',
+      'skip-plugins'  => node[:fabrica][:skip_wp_default_plugins] ? 'akismet' : '',
+      'skip-themes'   => node[:fabrica][:skip_wp_default_themes] ? 'twentyfourteen,twentyfifteen,twentysixteen' : ''
     )
   end
 else
@@ -56,7 +58,9 @@ else
     args(
       :locale   => node[:fabrica][:locale],
       :version  => node[:fabrica][:wp_version].to_s,
-      :force    => ''
+      :force    => '',
+      'skip-plugins'  => node[:fabrica][:skip_wp_default_plugins] ? 'akismet' : '',
+      'skip-themes'   => node[:fabrica][:skip_wp_default_themes] ? 'twentyfourteen,twentyfifteen,twentysixteen' : ''
     )
   end
 end
@@ -106,7 +110,9 @@ wp_cli_command 'core install' do
     :title          => node[:fabrica][:title],
     :admin_user     => node[:fabrica][:admin_user],
     :admin_password => node[:fabrica][:admin_password],
-    :admin_email    => node[:fabrica][:admin_email]
+    :admin_email    => node[:fabrica][:admin_email],
+    'skip-plugins'  => node[:fabrica][:skip_wp_default_plugins] ? 'akismet' : '',
+    'skip-themes'   => node[:fabrica][:skip_wp_default_themes] ? 'twentyfourteen,twentyfifteen,twentysixteen' : ''
   )
 end
 
