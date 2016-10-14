@@ -15,8 +15,8 @@ class Front extends Singleton {
 		add_filter(Project::$varsTag, array($this, 'updateScriptVars'));
 
 		// Front-end-specific tags, hooks and initialisations
-		// add_action('action_name', array($this, 'memberFunction'));
-		// add_filter('filter_name', array($this, 'memberFunction'));
+		// add_action('action_name', array($this, 'actionHandler'));
+		// add_filter('filter_name', array($this, 'filterHandler'));
 
 	}
 

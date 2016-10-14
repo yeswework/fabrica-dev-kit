@@ -17,8 +17,8 @@ class Ajax extends Singleton {
 		$this->postNonce = Project::$projectNamespace . '-post-nonce';
 
 		// AJAX handler functions as required
-		add_action('wp_ajax_nopriv_ajax-ACTION', array($this, 'ajaxHandler'));
-		add_action('wp_ajax_ajax-ACTION', array($this, 'ajaxHandler'));
+		add_action('wp_ajax_nopriv_AJAX-ACTION', array($this, 'ajaxHandler'));
+		add_action('wp_ajax_AJAX-ACTION', array($this, 'ajaxHandler'));
 
 	}
 
