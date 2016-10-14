@@ -75,7 +75,6 @@ Vagrant.configure("2") do |config|
 
   # run Chef cookbooks
   config.vm.provision :chef_solo do |chef|
-    chef.version = '12.10.24'
     chef.cookbooks_path = [
       File.join(chef_cookbooks_path, 'cookbooks'),
       File.join(chef_cookbooks_path, 'site-cookbooks')

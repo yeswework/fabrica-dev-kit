@@ -46,9 +46,7 @@ elsif node[:fabrica][:wp_version] == 'latest' then
     cwd wp_site_path
     args(
       :locale   => node[:fabrica][:locale],
-      :force    => '',
-      'skip-plugins'  => node[:fabrica][:skip_wp_default_plugins] ? 'akismet' : '',
-      'skip-themes'   => node[:fabrica][:skip_wp_default_themes] ? 'twentyfourteen,twentyfifteen,twentysixteen' : ''
+      :force    => ''
     )
   end
 else
@@ -58,9 +56,7 @@ else
     args(
       :locale   => node[:fabrica][:locale],
       :version  => node[:fabrica][:wp_version].to_s,
-      :force    => '',
-      'skip-plugins'  => node[:fabrica][:skip_wp_default_plugins] ? 'akismet' : '',
-      'skip-themes'   => node[:fabrica][:skip_wp_default_themes] ? 'twentyfourteen,twentyfifteen,twentysixteen' : ''
+      :force    => ''
     )
   end
 end
@@ -110,9 +106,7 @@ wp_cli_command 'core install' do
     :title          => node[:fabrica][:title],
     :admin_user     => node[:fabrica][:admin_user],
     :admin_password => node[:fabrica][:admin_password],
-    :admin_email    => node[:fabrica][:admin_email],
-    'skip-plugins'  => node[:fabrica][:skip_wp_default_plugins] ? 'akismet' : '',
-    'skip-themes'   => node[:fabrica][:skip_wp_default_themes] ? 'twentyfourteen,twentyfifteen,twentysixteen' : ''
+    :admin_email    => node[:fabrica][:admin_email]
   )
 end
 
@@ -159,6 +153,26 @@ if node[:fabrica][:default_theme] != '' then
     args(
       :activate => ''
     )
+  end
+end
+
+# remove default plugins
+if node[:fabrica][:skip_wp_default_plugins] then
+  ['hello', 'akismet'].each do |plugin|
+    wp_cli_command "plugin delete #{Shellwords.shellescape(plugin)}" do
+      user node[:fabrica][:user]
+      cwd wp_site_path
+    end
+  end
+end
+
+# remove default themes
+if node[:fabrica][:skip_wp_default_themes] then
+  ['twentysixteen', 'twentyfifteen', 'twentyfourteen'].each do |theme|
+    wp_cli_command "theme delete #{Shellwords.shellescape(theme)}" do
+      user node[:fabrica][:user]
+      cwd wp_site_path
+    end
   end
 end
 
