@@ -1,6 +1,6 @@
 <?php
 /* =========================================================================
-   Basic configuration for all projects
+   Basic configuration for all projects - you should not need to edit this
    ========================================================================= */
 
 namespace fabrica;

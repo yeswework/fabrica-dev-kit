@@ -36,12 +36,16 @@ class Project extends Singleton {
 	public static $googleAnalyticsId = '<%= google_analytics_id %>';
 
 	public function __construct() {
-
-		// Project-specific tags, hooks and initialisations
 <% if acf_pro_key %>
+
 		add_filter('acf/settings/path', array($this, 'AcfSettingsPath'));
 		add_filter('acf/settings/dir', array($this, 'AcfSettingsDir'));
 <% end %>
+		add_action('init', array($this, 'registerStructure'));
+
+		// Project-specific tags, hooks and initialisations
+		// add_action('action_name', array($this, 'memberFunction'));
+		// add_filter('filter_name', array($this, 'memberFunction'));
 
 	}
 <% if acf_pro_key %>
@@ -55,6 +59,13 @@ class Project extends Singleton {
 		return get_stylesheet_directory_uri() . '/inc/vendor/advanced-custom-fields/advanced-custom-fields-pro/';
 	}
 <% end %>
+
+	// Register Custom Post Types and Taxonomies
+	function registerStructure() {
+
+		// http://generatewp.com/ has a useful generator
+
+	}
 
 }
 

@@ -14,6 +14,8 @@ class Admin extends Singleton {
 		if (!is_admin() || (defined('DOING_AJAX') && DOING_AJAX)) { return; }
 
 		// Admin-specific tags, hooks and initialisations
+		// add_action('action_name', array($this, 'memberFunction'));
+		// add_filter('filter_name', array($this, 'memberFunction'));
 
 	}
 

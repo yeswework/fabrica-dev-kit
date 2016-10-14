@@ -12,9 +12,11 @@ class Front extends Singleton {
 
 	public function __construct() {
 
-		// Front-end-specific tags, hooks and initialisations
-
 		add_filter(Project::$varsTag, array($this, 'updateScriptVars'));
+
+		// Front-end-specific tags, hooks and initialisations
+		// add_action('action_name', array($this, 'memberFunction'));
+		// add_filter('filter_name', array($this, 'memberFunction'));
 
 	}
 
