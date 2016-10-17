@@ -12,6 +12,8 @@ class Front extends Singleton {
 
 	public function __construct() {
 
+		if (is_admin() || (defined('DOING_AJAX') && DOING_AJAX)) { return; }
+
 		add_filter(Project::$varsTag, array($this, 'updateScriptVars'));
 
 		// Front-end-specific tags, hooks and initialisations
