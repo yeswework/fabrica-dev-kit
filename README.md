@@ -9,7 +9,7 @@ Theme developers who want to speed up and improve their workflow – and enjoy i
 
 ###Fully installs and configures an independent local development environment for each project.
 
-* Using [Vagrant](https://www.vagrantup.com/) and [Chef](https://www.chef.io/chef/), installs and configures a virtual machine running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/), for super-fast local development. Each Fabrica project has its own virtual machine – creating a efficient, intuitive, reliable and secure setup than a one-size-fits-all model like MAMP.
+* Using [Vagrant](https://www.vagrantup.com/) and [Chef](https://www.chef.io/chef/), installs and configures a virtual machine running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/), for super-fast local development. Each Fabrica project has its own virtual machine – creating a more efficient, intuitive, reliable and secure setup than a one-size-fits-all model like MAMP.
 * Maps your project's virtual machine to your chosen development domain (eg. `fabrica.dev`) by automatically modifying the local `hosts` file, for no-fuss browser access.
 * Automatically installs all the software required to develop, including the latest version of WordPress and your plugins of choice (you just list them in the initial setup file), as well as build, optimization and deployment tools.
 
@@ -116,7 +116,7 @@ All of the techniques below are optional in Fabrica and vanilla HTML / CSS / PHP
 ### Achieving a [Model-View-Controller](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller) (MVC) paradigm with Timber + ACF
 The magic combination of Timber and Advanced Custom Fields means we can render even complex data in our templates without carrying out any data retrieval or decision logic at all. Take for example this [Repeater field](https://www.advancedcustomfields.com/add-ons/repeater-field/) setup:
 
-![Repeater Field Example](acf-repeater.png)
+![Repeater Field Example](http://assets.yeswework.com/acf-repeater-example.png)
 
 With Twig (via Timber) we can display this data in a template as follows, without having to write any PHP.
 
