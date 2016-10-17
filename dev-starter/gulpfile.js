@@ -35,8 +35,18 @@ var gulp = require('gulp'),
 	yaml = require('yamljs');
 
 // Load project and local settings from package.json and vagrant.yml
-var projectSettings = require('./src/package.json'),
+var projectSettings, localSettings;
+try {
+	projectSettings = require('./src/package.json'),
+} catch (ex) {
+	console.error('Error loading source `package.json` file.', ex);
+	return;
+}
+try {
 	localSettings = yaml.load('../vagrant.yml');
+} catch (ex) {
+	localSettings = { host_document_root: 'www' };// Default value
+}
 var projectSlug = projectSettings.name,
 	projectTitle = projectSettings.description,
 	projectAuthor = projectSettings.author,
@@ -67,7 +77,6 @@ var path = {
 // Build folder slugs
 var dest = {
 	acf: 'acf-json',
-	movefile: 'movefile',
 	includes: 'inc',
 	controllers: '', // Need to go in the root theme folder
 	views: 'views',
@@ -234,10 +243,12 @@ gulp.task('build', gulp.series(clean, gulp.parallel(styleCss, acf, includes, con
 // Watch: fire build, then watch for changes
 gulp.task('default', gulp.series('build', watch));
 function watch() {
-	browserSync.init({
-		proxy: projectDevUrl,
-		open: false
-	});
+	if (projectDevUrl) {
+		browserSync.init({
+			proxy: projectDevUrl,
+			open: false
+		});
+	}
 	gulp.watch(path.styles, gulp.series(styles));
 	gulp.watch(path.includes, gulp.series(includes));
 	gulp.watch(path.controllers, gulp.series(controllers));

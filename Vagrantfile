@@ -44,7 +44,7 @@ Vagrant.configure("2") do |config|
 
   if Vagrant.has_plugin?('vagrant-hostsupdater')
     if Vagrant::VERSION =~ /^1.8/
-      # `vagrant resume` on v.1.8 runs provioning again so `vagrant up` has to be used instead and it doesn't set the host again so it's best not to remove it on suspend
+      # `vagrant resume` on v.1.8 runs provisioning again. `vagrant up` should be used instead and it doesn't set the host again so it's best not to remove it on suspend
       config.hostsupdater.remove_on_suspend = false
     else
       config.hostsupdater.remove_on_suspend = true
