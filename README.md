@@ -24,10 +24,10 @@ Theme developers who want to speed up and improve their workflow – and enjoy i
 * Keeps the development source folder outside the virtual machine for easy editing and version control.
 * Includes a super-minimal object-orientated boilerplate theme (see below), specially constructed for bespoke theme development.
 * Live-compiles and optimizes straight to the active theme folder inside the virtual machine as you develop, via a pre-configured [Gulp](http://gulpjs.com/) watch, which:
-    * Preprocesses, [Autoprefixes](https://github.com/postcss/autoprefixer), lints and minifies (with source maps) your stylesheets.
-    * Minifies your Javascript with sourcemaps.
-    * Optimizes / losslessly compresses image assets.
-    * Pipes all changes (to CSS or templates) directly to the browser, without requiring a page refresh, using [Browsersync](https://www.browsersync.io/), so you can finally give your clapped-out `F5` key a break (OK, `Cmd` + `R`… no Windows version yet).
+	* Preprocesses, [Autoprefixes](https://github.com/postcss/autoprefixer), lints and minifies (with source maps) your stylesheets.
+	* Minifies your Javascript with sourcemaps.
+	* Optimizes / losslessly compresses image assets.
+	* Pipes all changes (to CSS or templates) directly to the browser, without requiring a page refresh, using [Browsersync](https://www.browsersync.io/), so you can finally give your clapped-out `F5` key a break (OK, `Cmd` + `R`… no Windows version yet).
 * Allows simultaneous testing on multiple devices (with synchronized scrolling and keystrokes!), also via Browsersync.
 * Combines [NPM](https://www.npmjs.com/) support with [Webpack](https://webpack.github.io/) allowing super-fast installation and inclusion of front-end modules such as jQuery plugins / other JS libraries. (We include [jQuery](https://jquery.com/) and [normalize.css](https://necolas.github.io/normalize.css/) by default.)
 * Includes PHP [Composer](https://getcomposer.org/) support in the starter theme for super-fast installation and automatic inclusion of back-end extensions.
@@ -52,7 +52,7 @@ We have prepared [installation guidelines for all the dependencies](./docs/depen
 ## Installing and running Fabrica
 
 ### Installation
-First make sure you have all the required dependencies (see above): 
+First make sure you have all the required dependencies (see above):
 
 Setting up a new project and getting the development environment ready to run is very easy:
 
@@ -63,8 +63,8 @@ Setting up a new project and getting the development environment ready to run is
 
 ### Starting and stopping the virtual machine
 
-1. If you have just installed a project, its virtual machine will already be running. If you are returning later to a project, first run `vagrant up` from the project folder. Your project will then be accessible at the development domain you specified in the `setup.yml` file before installation.
-1. To shut down the virtual machine, run `vagrant suspend` from the project folder. (Restarting your computer will also shut down the virtual machine.)
+* If you have just installed a project, its virtual machine will already be running. If you are returning later to a project, first run `vagrant up` from the project folder. Your project will then be accessible at the development domain you specified in the `setup.yml` file before installation.
+* To shut down the virtual machine, run `vagrant suspend` from the project folder. (Restarting your computer will also shut down the virtual machine.)
 
 ### Running the build script + watch during active development
 * During development, keep a Gulp watch running by running `gulp` from the `dev/` folder. It'll watch your files for changes and live-compile and optimize them into the virtual machine's active theme folder.
@@ -84,7 +84,9 @@ Setting up a new project and getting the development environment ready to run is
 
 ## Theme development with Fabrica
 
-All editing should be done within the `dev/src/` folder – while Gulp is running your changes will be live-compiled from here into the virtual machine's active theme folder (in `dev/www/wp-content/`). The `dev/build/` folder is a shortcut symlink to the active theme folder: no editing should be done here, but it may occasionally be useful for debugging compiled code. File paths below refer to the `src/` folder.
+All editing should be done within the `dev/src/` folder – while Gulp is running your changes will be live-compiled from here into the virtual machine's active theme folder (in `dev/www/wp-content/`). The `dev/build/` folder is a shortcut symlink to the active theme folder: no editing should be done here, but it may occasionally be useful for checking compiled code in case of problems. 
+
+File paths in this section refer to the `src/` folder.
 
 ###Templates
 * If you want to make use of Timber (and you would be insane not to), the PHP files live in `templates/controllers/` and the corresponding Twig views in `templates/views/`. See the [Timber documentation](http://timber.github.io/timber/) and the MVC section of code examples below for more information.
@@ -92,15 +94,17 @@ All editing should be done within the `dev/src/` folder – while Gulp is runnin
 
 ###Assets
 * CSS goes in `assets/css/main.pcss` (automatically included in the front-end). If you prefer to split it into several files, you can include the additional files with `@import` at the top. Vanilla CSS works fine but any PostCSS is processed automatically (see below).
-* Write Javascript / jQuery code in `assets/js/main.js` (automatically included in the front-end). Additional JS files can be enqueued in the standard WordPress way (probably in `includes/front.php` – see below).
+* Javascript / jQuery code goes in `assets/js/main.js` (automatically included in the front-end), or additional JS files can be enqueued in the standard WordPress way by [hooking](https://codex.wordpress.org/Plugin_API/Action_Reference/wp_enqueue_scripts) `wp_enqueue_scripts` according to where you want the assets to load (most likely in `includes/front.php` – see next section).
 * Images can go in `assets/img/` and any local fonts in `assets/fonts/`. These can be referenced from the stylesheet via `../img/` or `../fonts/`.
 
 ###Hooks and custom functions
-Fabrica's super-minimal boilerplate makes no assumptions about your data or design, but it's structured to make it easy for you to hook WordPress actions and filters and add your own functions. There are several predefined files (all in the `includes/` folder) to help keep your custom code well-organized. (We would advise keeping all project code within the object-oriented namespaced structure provided by these files, but any other `.php` file you create in the `includes/` folder will be automatically included and run in the active theme: there is no need to manually `require()` or `include()` it.)
+Fabrica's super-minimal boilerplate makes no assumptions about your data or design, but it's structured to make it easy for you to hook WordPress actions and filters and add your own functions. 
 
-* `project.php` for hooks that should affect both front-end and admin requests, and for any other functions which you might need to make available to your theme (as methods of the singleton `Project` class). As a convenient shortcut, we alias this class to your project slug, so if your project slug is `fabrica` you can call a member function with `fabrica::myFunction()` anywhere in your code.
+There are several predefined files (all in the `includes/` folder) to help keep your custom code well-organized. We recommend keeping all project code within the object-oriented namespaced structure provided by these files, but any other `.php` file you create in the `includes/` folder will be automatically included and run in the active theme: there is no need to manually `require()` or `include()` it.
+
+* `project.php` for hooks that should affect both front-end and admin requests, and for any other functions which you might need to make available to your theme (as methods of the singleton `Project` class). As a convenient shortcut, we alias this class to your project slug, so if your project slug is `fabrica` you can call a member function from anywhere with `fabrica::myFunction()`.
 * `front.php` for hooks that should only affect front-end requests.
-* `admin.php` for hooks that should only affect admin requests.
+* `admin.php` for hooks that should only affect admin requests (the constructor includes these conditions).
 * `ajax.php` for AJAX requests (the front-end calls can be added in `assets/main.js`).
 * `models.php` is where to extend Post / Term / User objects by assigning extra properties to them when instantiated: see MVC section in code examples below.
 
@@ -124,7 +128,7 @@ With Twig (via Timber) we can display this data in a template as follows, withou
 {% if post.measurements %}
 	{% for measurement in post.get_field('measurements') %}
 		<div>
-			{{ measurement.title.label }}: 
+			{{ measurement.title.label }}:
 			{{ measurement.value }}{{ measurement.unit }}
 		</div>
 	{% endfor %}
@@ -140,7 +144,7 @@ To achieve this we add the following child class in `models.php`:
 ```
 class PostWithMeasurements extends \Timber\Post {
 	var $_allMeasurements; // Used to cache the values for each instance
-	
+
 	function allMeasurements() {
 		if (!$_allMeasurements) {
 			$ms = $this->get_field('measurements');
@@ -169,7 +173,7 @@ The additional information will be automatically available to the template, as l
 {% if post.measurements %}
 	{% for measurement in post.allMeasurements %}
 		<div>
-			{{ measurement.title.label }}: 
+			{{ measurement.title.label }}:
 			{{ measurement.value }}{{ measurement.unit }}
 			{% if measurement.imperialValue %}
 				({{ measurement.imperialValue }}{{ measurement.imperialUnit }})
@@ -211,16 +215,16 @@ Second, some corresponding CSS (fairly basic, but targets several of the member 
 
 ```
 .measurements {
-    font-family: monospace;
+	font-family: monospace;
 }
 .measurements__entry--highlight {
-    color: #f00;
+	color: #f00;
 }
 .measurements__label {
-    color: #777;
+	color: #777;
 }
 .measurements__number {
-    font-weight: bold;
+	font-weight: bold;
 }
 .measurements__unit {
 	color: #aaa;
@@ -252,20 +256,20 @@ Second, the PostCSS, where we can make use of the `&` token both to nest element
 
 ```
 .measurements {
-    font-family: monospace;
+	font-family: monospace;
 
 	&__entry { /* Element */
 		&--highlight { /* Modifier of the element */
-	    	color: #f00;
-	    }
+			color: #f00;
+		}
 	}
 
 	&__label {
-	    color: #777;
+		color: #777;
 	}
 
 	&__number {
-	    font-weight: bold;
+		font-weight: bold;
 	}
 
 	&__unit {
@@ -280,29 +284,29 @@ The following markup is representative of how many layout frameworks implement a
 
 ```
 <div class="row">
-    <div class="col-xs-12 col-sm-6 col-md-8">wide cell</div>
-    <div class="col-xs-6 col-md-4">normal cell</div>
+	<div class="col-xs-12 col-sm-6 col-md-8">wide cell</div>
+	<div class="col-xs-6 col-md-4">normal cell</div>
 </div>
 <div class="row">
-    <div class="col-xs-6 col-sm-4">normal cell</div>
-    <div class="col-xs-6 col-sm-4">normal cell</div>
-    <div class="col-xs-6 col-sm-4">normal cell</div>
+	<div class="col-xs-6 col-sm-4">normal cell</div>
+	<div class="col-xs-6 col-sm-4">normal cell</div>
+	<div class="col-xs-6 col-sm-4">normal cell</div>
 </div>
 ```
 
-The multiple classes are to specify size / styles at different breakpoints via media queries, but they make the code bloated and hard to read – and the CSS rules to target all the options across all the different breakpoints are hundreds of lines long. And none of the styles are semantic...
+The multiple classes are to specify size / styles at different breakpoints via media queries, but they make the code bloated and hard to read – and the CSS rules to target all the options across all the different breakpoints are hundreds of lines long. And none of the styles are semantic...
 
 With Lost Grid (a PostCSS plugin included with Fabrica), we can move all the presentational rules where they belong – in our stylesheet – and make our classes semantic. We'll also make use of BEML for maximum conciseness (see above). Here's a quick example for comparison:
 
 ```
 <div block="row">
-    <div elem="cell" mod="featured">wide cell</div>
-    <div elem="cell">normal cell</div>
+	<div elem="cell" mod="featured">wide cell</div>
+	<div elem="cell">normal cell</div>
 </div>
 <div block="row">
-    <div elem="cell">normal cell</div>
-    <div elem="cell">normal cell</div>
-    <div elem="cell">normal cell</div>
+	<div elem="cell">normal cell</div>
+	<div elem="cell">normal cell</div>
+	<div elem="cell">normal cell</div>
 </div>
 ```
 
@@ -310,20 +314,20 @@ And our CSS will look something like this:
 
 ```
 .row {
-    lost-flex-container: row;
+	lost-flex-container: row;
 
-    &__cell {
-        @media (max-width: 540px) {
-            lost-column: 1;
-        }
-        @media (min-width: 541px) {
-            lost-column: 1/3 3;
-        }
+	&__cell {
+		@media (max-width: 540px) {
+			lost-column: 1;
+		}
+		@media (min-width: 541px) {
+			lost-column: 1/3 3;
+		}
 
-        &--featured {
-            lost-column: 2/3 2;
-        }
-    }
+		&--featured {
+			lost-column: 2/3 2;
+		}
+	}
 }
 ```
 
