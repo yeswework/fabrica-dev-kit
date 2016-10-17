@@ -113,8 +113,8 @@ function clean() {
 		});
 }
 
-// style.css: auto-create theme header file using project info we already have
-function styleCss(cb) {
+// Header: auto-create style.css using project info we already have
+function header(cb) {
 	var data = '/*\r\n'
 		+ 'Theme Name: ' + projectTitle + '\r\n'
 		+ 'Author: ' + projectAuthor['name'] + '\r\n'
@@ -229,7 +229,7 @@ function wordmove(cb) {
 }
 
 // Build: sequences all the other tasks
-gulp.task('build', gulp.series(clean, gulp.parallel(styleCss, acf, includes, controllers, views, styles, scripts, images, fonts, wordmove)));
+gulp.task('build', gulp.series(clean, gulp.parallel(header, acf, includes, controllers, views, styles, scripts, images, fonts, wordmove)));
 
 // Watch: fire build, then watch for changes
 gulp.task('default', gulp.series('build', watch));
