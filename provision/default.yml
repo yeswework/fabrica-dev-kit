@@ -52,11 +52,7 @@ db_host: localhost
 # Default Plugins
 # Plugin's slug or url to the plugin's slug.
 plugins:
-- advanced-custom-fields
-- timber-library
-- sucuri-scanner
-- force-regenerate-thumbnails
-- query-monitor
+# - advanced-custom-fields
 
 # WordPress Default Theme
 # Theme's slug or url to the theme's .zip.
