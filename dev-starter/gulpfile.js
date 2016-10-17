@@ -1,7 +1,3 @@
-/* ==========================================================================
-   Fabrica for WordPress
-   ========================================================================== */
-
 var gulp = require('gulp'),
 	autoprefixer = require('autoprefixer'),
 	browserSync = require('browser-sync').create(),
@@ -45,7 +41,7 @@ try {
 try {
 	localSettings = yaml.load('../vagrant.yml');
 } catch (ex) {
-	localSettings = { host_document_root: 'www' };// Default value
+	localSettings = {host_document_root: 'www'}; // Fallback default
 }
 var projectSlug = projectSettings.name,
 	projectTitle = projectSettings.description,
@@ -78,7 +74,7 @@ var path = {
 var dest = {
 	acf: 'acf-json',
 	includes: 'inc',
-	controllers: '', // Need to go in the root theme folder
+	controllers: '', // Templates go in the theme's root folder
 	views: 'views',
 	styles: 'css',
 	scripts: 'js',
@@ -92,7 +88,7 @@ var options = {
 	imagemin: {optimizationLevel: 7, progressive: true, interlaced: true, multipass: true},
 	postcss: [
 		stylelint(),
-		postcssReporter({ clearMessages: true }),
+		postcssReporter({clearMessages: true}),
 		postcssMixins,
 		postcssEach,
 		postcssSimpleVars({
@@ -174,7 +170,7 @@ function views() {
 		.pipe(browserSync.stream());
 }
 
-// Styles (CSS): lint, concatenate into one file, write source map, postcss, save full and minified versions, then copy
+// Styles (CSS): lint, concatenate into one file, write source map, preprocess, save full and minified versions, then copy
 function styles() {
 	return gulp.src(path.styleMain)
 		.pipe(postcss(options.postcss))
@@ -193,12 +189,11 @@ function styles() {
 
 // Scripts (JS): get third-party dependencies, concatenate all scripts into one file, save full and minified versions, then copy
 function scripts(done) {
-	// create stream
 	return gulp.src(path.scriptMain)
 		.pipe(jshint())
 		.pipe(jshint.reporter())
 		.pipe(changed(base.theme + dest.scripts))
-		.pipe(webpack({ output: { filename: 'main.js' } }))
+		.pipe(webpack({output: {filename: 'main.js'}}))
 		.pipe(sourcemaps.init({loadMaps: true}))
 		.pipe(gulp.dest(base.theme + dest.scripts))
 		.pipe(browserSync.stream())
