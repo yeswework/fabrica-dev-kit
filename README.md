@@ -25,7 +25,7 @@ Theme developers who want to speed up and improve their workflow – and enjoy i
 * Includes a super-minimal object-orientated boilerplate theme (see below), specially constructed for bespoke theme development.
 * Live-compiles and optimizes straight to the active theme folder inside the virtual machine as you develop, via a pre-configured [Gulp](http://gulpjs.com/) watch, which:
 	* Preprocesses, [Autoprefixes](https://github.com/postcss/autoprefixer), lints and minifies (with source maps) your stylesheets.
-	* Minifies your Javascript with sourcemaps.
+	* Minifies (with sourcemaps) and lints your Javascript.
 	* Optimizes / losslessly compresses image assets.
 	* Pipes all changes (to CSS or templates) directly to the browser, without requiring a page refresh, using [Browsersync](https://www.browsersync.io/), so you can finally give your clapped-out `F5` key a break (OK, `Cmd` + `R`… no Windows version yet).
 * Allows simultaneous testing on multiple devices (with synchronized scrolling and keystrokes!), also via Browsersync.
@@ -190,7 +190,7 @@ The BEM methodology provides a conceptual framework which makes it easy to build
 
 The inclusion of BEML, an HTML preprocessor, and PostCSS plugins, in Fabrica make the process of actually writing BEM markup and styles quicker, easier and less error-prone.
 
-As an example, let's take some vanilla BEM markup and styles. We're using `__` notation for elements and `--` notation for modifiers. (Other sources use slightly different syntaxes.)
+As an example, let's take some vanilla BEM markup and styles. We're using `__` notation for elements and `--` notation for modifiers. (If you prefer an alternative notation, you can configure it in `dev/gulpfile.js` by modifying the `beml` property of the `options` hash.)
 
 #### Before...
 
