@@ -33,7 +33,7 @@ var gulp = require('gulp'),
 // Load project and local settings from package.json and vagrant.yml
 var projectSettings, localSettings;
 try {
-	projectSettings = require('./src/package.json'),
+	projectSettings = require('./src/package.json');
 } catch (ex) {
 	console.error('Error loading source `package.json` file.', ex);
 	return;
