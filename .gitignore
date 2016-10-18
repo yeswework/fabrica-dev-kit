@@ -1,8 +1,6 @@
 setup.yml
 setup.bak.yml
 vagrant.yml
-node_modules/
-www/
 .vagrant/
-provision/tmp/
 dev/
+provision/tmp/
