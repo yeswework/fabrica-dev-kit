@@ -176,7 +176,12 @@ function views() {
 // Styles (CSS): lint, concatenate into one file, write source map, preprocess, save full and minified versions, then copy
 function styles() {
 	return gulp.src(path.styleMain)
-		.pipe(postcss(options.postcss))
+		.pipe(postcss(options.postcss)
+			on('error', function(error) {
+				console.error(error.message);
+				this.emit('end');
+			})
+		)
 		.pipe(concat('main.css'))
 		.pipe(sourcemaps.init())
 		.pipe(changed(base.theme + dest.styles))
