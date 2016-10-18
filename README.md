@@ -9,7 +9,7 @@ Theme developers who want to speed up and improve their workflow – and enjoy i
 
 ###Fully installs and configures an independent local development environment for each project.
 
-* Using [Vagrant](https://www.vagrantup.com/) and [Chef](https://www.chef.io/chef/), installs and configures a virtual machine running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/), for super-fast local development. Each Fabrica project has its own virtual machine – creating a more efficient, intuitive, reliable and secure setup than a one-size-fits-all model like MAMP.
+* Using [Vagrant](https://www.vagrantup.com/) and [Chef](https://www.chef.io/chef/) and with a single Terminal command, installs and fully configures a virtual machine for your project running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/), for super-fast local development. Each Fabrica project has a separate virtual machine – creating a more efficient, intuitive, reliable and secure setup than a one-size-fits-all model like MAMP.
 * Maps your project's virtual machine to your chosen development domain (eg. `fabrica.dev`) by automatically modifying the local `hosts` file, for no-fuss browser access.
 * Automatically installs all the software required to develop, including the latest version of WordPress and your plugins of choice (you just list them in the initial setup file), as well as build, optimization and deployment tools.
 
