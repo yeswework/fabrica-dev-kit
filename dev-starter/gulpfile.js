@@ -6,7 +6,6 @@ var gulp = require('gulp'),
 	concat = require('gulp-concat'),
 	changed = require('gulp-changed'),
 	cssnano = require('gulp-cssnano'),
-	gulpFilter = require('gulp-filter'),
 	flatten = require('gulp-flatten'),
 	imagemin = require('gulp-imagemin'),
 	jshint = require('gulp-jshint'),
@@ -59,6 +58,7 @@ var base = {
 
 // Globs for each file type
 var path = {
+	functions: base.src + 'includes/*.php',
 	includes: [base.src + 'includes/**/*', base.src + 'includes/.env'],
 	controllers: base.src + 'templates/controllers/**/*.php',
 	views: base.src + 'templates/**/*.twig',
@@ -136,16 +136,19 @@ function acf(cb) {
 	cb();
 }
 
-// Includes: copy internal PHP dependencies to an inc folder and auto-create functions.php with includes
-function includes() {
+// Functions: auto-create functions.php with root level PHP includes
+function functions(cb) {
 	fs.writeFileSync(base.theme + 'functions.php', '<?php\r\n');
-	var nonVendorFilter = gulpFilter('*.php', {restore: true}); // only require top-level files in functions.php
-	return gulp.src(path.includes)
-		.pipe(nonVendorFilter)
-		.pipe(tap(function(file, t) {// write an include for this file to our functions.php automatically
+	return gulp.src(path.functions)
+		.pipe(tap(function(file) {
 			fs.appendFileSync(base.theme + 'functions.php', "require_once(get_stylesheet_directory() . '/" + dest.includes + '/' + file.path.replace(file.base, '') + "');\r\n");
-		}))
-		.pipe(nonVendorFilter.restore)
+		}));
+	cb();
+}
+
+// Includes: copy all project and vendor includes
+function includes() {
+	return gulp.src(path.includes)
 		.pipe(changed(base.theme + dest.includes))
 		.pipe(gulp.dest(base.theme + dest.includes))
 		.pipe(browserSync.stream());
@@ -233,7 +236,7 @@ function wordmove(cb) {
 }
 
 // Build: sequences all the other tasks
-gulp.task('build', gulp.series(clean, gulp.parallel(header, acf, includes, controllers, views, styles, scripts, images, fonts, wordmove)));
+gulp.task('build', gulp.series(clean, gulp.parallel(header, acf, functions, includes, controllers, views, styles, scripts, images, fonts, wordmove)));
 
 // Watch: fire build, then watch for changes
 gulp.task('default', gulp.series('build', watch));
@@ -244,10 +247,11 @@ function watch() {
 			open: false
 		});
 	}
-	gulp.watch(path.styles, gulp.series(styles));
+	gulp.watch(path.functions, gulp.series(functions));
 	gulp.watch(path.includes, gulp.series(includes));
 	gulp.watch(path.controllers, gulp.series(controllers));
 	gulp.watch(path.views, gulp.series(views));
+	gulp.watch(path.styles, gulp.series(styles));
 	gulp.watch(path.scripts, gulp.series(scripts));
 	gulp.watch(path.images, gulp.series(images));
 	gulp.watch(path.fonts, gulp.series(fonts));
