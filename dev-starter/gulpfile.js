@@ -177,7 +177,7 @@ function views() {
 function styles() {
 	return gulp.src(path.styleMain)
 		.pipe(postcss(options.postcss)
-			on('error', function(error) {
+			.on('error', function(error) {
 				console.error(error.message);
 				this.emit('end');
 			})
