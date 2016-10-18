@@ -1,10 +1,14 @@
 {
 	"extends": "stylelint-config-standard",
 	"rules": {
-		"string-quotes": null,
 		"at-rule-empty-line-before": null,
-		"indentation": "tab",
+		"declaration-empty-line-before": null,
 		"function-whitespace-after": null,
-		"selector-pseudo-element-colon-notation": "single"
+		"indentation": "tab",
+		"property-no-unknown": [true, {
+			"ignoreProperties": ["/^lost-/"]
+		}],
+		"selector-pseudo-element-colon-notation": "single",
+		"string-quotes": null
 	}
 }
