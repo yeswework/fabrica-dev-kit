@@ -1,17 +1,17 @@
 #Fabrica for WordPress
-##What is it?
-A self-installing virtual-machine based WordPress development environment which includes a starter theme, build script, and a small but very powerful set of default (but optional) tools to make WordPress theme (or plugin) development more straightforward, agile and enjoyable than ever before.
+Fabrica provides an environment and tools to streamline every part of the WordPress development process. Its main features are:
 
-The name – from the Spanish and Portuguese word for factory (*fábrica*) – refers to providing a working environment full of automated machinery to facilitate your work. It's also a deliberate nod to Iberia where the project was envisaged and developed (in Barcelona and Porto).
+* Instant set-up of fast local development server for each project
+* Tools for writing better templates using Twig, PostCSS and BEM
+* Build script to lint and optimize assets
+* Live, synchronized browser/device testing
+* Instant deployment
 
-##Who is it for?
-Theme developers who want to speed up and improve their workflow – and enjoy it more. Fabrica automates and streamlines just about every part of the process – from set up, through development, to deployment – using best-in-class tools and both following and encouraging all kinds of best practices. It is also readily customizable.
+##List of all features
 
-##What exactly does it do?
+###Installs and configures an independent local development environment for each project.
 
-###Fully installs and configures an independent local development environment for each project.
-
-* Using [Vagrant](https://www.vagrantup.com/) and [Chef](https://www.chef.io/chef/) and with a single Terminal command, installs and fully configures a virtual machine for your project running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/), for super-fast local development. Each Fabrica project has a separate virtual machine – creating a more efficient, intuitive, reliable and secure setup than a one-size-fits-all model like MAMP.
+* Using [Vagrant](https://www.vagrantup.com/) and [Chef](https://www.chef.io/chef/) and with a single Terminal command, installs and fully configures a virtual machine for your project running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/), for super-fast local development. Each Fabrica project has a separate virtual machine (and therefore IP / development domain) – creating a more efficient, intuitive, reliable and secure setup than a one-size-fits-all model like MAMP.
 * Maps your project's virtual machine to your chosen development domain (eg. `fabrica.dev`) by automatically modifying the local `hosts` file, for no-fuss browser access.
 * Automatically installs all the software required to develop, including the latest version of WordPress and your plugins of choice (you just list them in the initial setup file), as well as build, optimization and deployment tools.
 
@@ -45,22 +45,22 @@ Fabrica runs on any recent version of Mac OS X. It has a few dependencies:
 1. **Gulp command line tools** – once Node.js is installed, run `npm install gulpjs/gulp-cli -g` from the command line.
 1. **Composer** – follow the Global installation instructions in the [Composer installation guide](https://getcomposer.org/doc/00-intro.md#globally).
 
-Optional but recommended:
+Optional but strongly recommended:
 
-* Vagrant hostsupdater plugin (to map your chosen development domain to a project's virtual machine) – run `vagrant plugin install vagrant-hostsupdater` from the command line.
-* Wordmove (for fast command-line deployment) – run `gem install wordmove` from the command line.
+* **Vagrant hostsupdater plugin** (to map a chosen development domain to the virtual machine's local IP) – run `vagrant plugin install vagrant-hostsupdater` from the command line.
+* **Wordmove** (for fast command-line deployment) – run `gem install wordmove` from the command line.
 
 We have prepared [installation guidelines for all the dependencies](./docs/dependencies.md) in case you don't already have them.
 
-##Installing and running Fabrica
+##Getting started
 
 ###Installation
 First make sure you have all the required dependencies (see above):
 
 Setting up a new project and getting the development environment ready to run is very easy:
 
-1. Clone the repo into a folder for your project: `git clone https://github.com/yeswework/fabrica.git fabrica-project`
-1. In the new folder, make a copy of `setup-example.yml` called `setup.yml`, and edit this file to set the basic parameters for the development site.
+1. Clone the repo into a folder for your project, eg. `git clone https://github.com/yeswework/fabrica.git fabrica-project` (replace `fabrica-project` with a project-specific name or slug).
+1. In the new folder, make a copy of `setup-example.yml` called `setup.yml`, and edit this file to set the basic parameters for the development site. Any plugins you want to be automatically installed can be listed here.
 1. Run `./setup.rb`. This will set up your virtual machine and install everything required: Nginx, PHP-FPM, WordPress, your chosen plugins and our suite of build tools.
 1. **Important**: the installation procedure doesn't require any further intervention but if you are using the Vagrant hostsupdater plugin for custom development domains, you will need to enter your system password to modify the `hosts` file – so keep an eye out for the prompt, because the setup will not advance while it is waiting for this.
 
@@ -88,7 +88,7 @@ Setting up a new project and getting the development environment ready to run is
 ###Local database access
 For direct MySQL access to the development database, we recommend using [Sequel Pro](https://www.sequelpro.com/) to access it while the development machine is up. Use the development IP address you chose in `setup.yml` before installation, and the username and password are both `wordpress`.
 
-##Theme structure
+##Active development
 
 All editing should be done within the `dev/src/` folder – while Gulp is running your changes will be live-compiled from here into the virtual machine's active theme folder (in `dev/www/wp-content/`). The `dev/build/` folder is a shortcut symlink to the active theme folder: no editing should be done here, but it may occasionally be useful for checking compiled code in case of problems.
 
@@ -120,7 +120,7 @@ There are several predefined files (all in the `includes/` folder) to help keep 
 * Front-end CSS libraries can also be installed with `npm` and included via `@import` statements in `assets/css/main.pcss`. The PostCSS Import plugin automatically searches `node_modules` so a statement like `@import 'library.css'` doesn't require an explicit path.
 * PostCSS plugins: use `npm install` in the `/dev` folder (parent of `src`), and modify the `gulpfile.js` accordingly to sequence them.
 
-##Theming in wonderland: a few examples
+##Dream theming: a few examples
 All of the techniques below are optional in Fabrica and vanilla HTML / CSS / PHP / WordPress API functions will all work fine – but we highly recommend making full use of these time- and sanity-conserving enhancements.
 
 ###Achieving a [Model-View-Controller](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller) (MVC) paradigm with Timber + ACF
