@@ -34,24 +34,25 @@ Theme developers who want to speed up and improve their workflow – and enjoy i
 * Allows push-button deployment (ie. with a single terminal command) to staging or production servers using [Wordmove](https://github.com/welaika/wordmove).
 * Automatically activates [ACF-JSON](https://www.advancedcustomfields.com/resources/local-json/) for ‘database’ version-control (tracks and synchronizes field settings for the Advanced Custom Fields plugin across multiple environments).
 
-## Requirements + dependencies
+##Requirements + dependencies
 Fabrica runs on any recent version of Mac OS X. It has a few dependencies:
 
-* Vagrant
-* Node.js
-* Gulp 4
-* Composer
+1. **VirtualBox** – download and run the installer, by following the link to the plaform package for Mac OS X hosts from the [VirtualBox downloads page](https://www.virtualbox.org/wiki/Downloads).
+1. **Vagrant** – download and run the installer by following the link for Mac OS X from the [Vagrant downloads page](https://www.vagrantup.com/downloads.html).
+1. **Node.js** – download and run the installer by following the link to the Recommended Version from the [Node.js homepage](https://nodejs.org/en/).
+1. **Gulp command line tools** – once Node.js is installed, run `npm install gulpjs/gulp-cli -g` from the command line.
+1. **Composer** – follow the Global installation instructions in the [Composer installation guide](https://getcomposer.org/doc/00-intro.md#globally).
 
 Optional but recommended:
 
-* Vagrant hostsupdater plugin (to map your chosen development domain to a project's vritual machine)
-* Wordmove (for fast command-line deployment)
+* Vagrant hostsupdater plugin (to map your chosen development domain to a project's virtual machine) – run `vagrant plugin install vagrant-hostsupdater` from the command line.
+* Wordmove (for fast command-line deployment) – run `gem install wordmove` from the command line.
 
 We have prepared [installation guidelines for all the dependencies](./docs/dependencies.md) in case you don't already have them.
 
-## Installing and running Fabrica
+##Installing and running Fabrica
 
-### Installation
+###Installation
 First make sure you have all the required dependencies (see above):
 
 Setting up a new project and getting the development environment ready to run is very easy:
@@ -61,28 +62,31 @@ Setting up a new project and getting the development environment ready to run is
 1. Run `./setup.rb`. This will set up your virtual machine and install everything required: Nginx, PHP-FPM, WordPress, your chosen plugins and our suite of build tools.
 1. **Important**: the installation procedure doesn't require any further intervention but if you are using the Vagrant hostsupdater plugin for custom development domains, you will need to enter your system password to modify the `hosts` file – so keep an eye out for the prompt, because the setup will not advance while it is waiting for this.
 
-### Starting and stopping the virtual machine
+###Starting and stopping the virtual machine
 
 * If you have just installed a project, its virtual machine will already be running. If you are returning later to a project, first run `vagrant up` from the project folder. Your project will then be accessible at the development domain you specified in the `setup.yml` file before installation.
 * To shut down the virtual machine, run `vagrant suspend` from the project folder. (Restarting your computer will also shut down the virtual machine.)
 
-### Running the build script + watch during active development
+###Running the build script + watch during active development
 * During development, keep a Gulp watch running by running `gulp` from the `dev/` folder. It'll watch your files for changes and live-compile and optimize them into the virtual machine's active theme folder.
 * Make all changes in the `dev/src/` folder (full info about what goes where below).
 * While Gulp is running the site will also be accessible as a Browsersync proxy – by default at `http://localhost:3000/`.
 * You can escape Gulp with `Ctrl` + `C`. While Gulp is not running, changes to source files will not be reflected in the active theme.
 * You can also run `gulp build` to compile the current source code into the active theme folder without starting a watch.
 
-### Deployment
+###Deployment
 1. If you already filled in FTP details in `setup.yml` skip straight to step 3.
 1. If you didn't, once you have a staging or production server set up, edit the `dev/Movefile.erb` with your FTP (or SSH details).
 1. To deploy your theme, make sure the latest source code is compiled (if a watch isn't running, do a `gulp build`), then type `wordmove push --themes`. Wordmove will push the new / modified files to the server.
 1. If you are using ACF (whether normal or Pro), ACF-JSON will take care of synching your fields automatically, but it's a good idea to [synchronize the fields to the database on the remote site](https://www.advancedcustomfields.com/resources/synchronized-json/) once you have pushed changes, so that the new fields are recorded in the production or staging site's database.
 
-### Version control
+###Version control
 * To begin version control on your project run `git init` in the `dev/` folder. This will track not only your source code but also the corresponding build script and names of the modules needed to compile it into an active theme. (It's important to maintain a copy because because the default build script is subject to change in future versions of Fabrica, which could lead to problems if restoring a project from a backup.)
 
-## Theme development with Fabrica
+###Local database access
+For direct MySQL access to the development database, we recommend using [Sequel Pro](https://www.sequelpro.com/) to access it while the development machine is up. Use the development IP address you chose in `setup.yml` before installation, and the username and password are both `wordpress`.
+
+##Theme structure
 
 All editing should be done within the `dev/src/` folder – while Gulp is running your changes will be live-compiled from here into the virtual machine's active theme folder (in `dev/www/wp-content/`). The `dev/build/` folder is a shortcut symlink to the active theme folder: no editing should be done here, but it may occasionally be useful for checking compiled code in case of problems.
 
@@ -114,10 +118,10 @@ There are several predefined files (all in the `includes/` folder) to help keep 
 * Front-end CSS libraries can also be installed with `npm` and included via `@import` statements in `assets/css/main.pcss`. The PostCSS Import plugin automatically searches `node_modules` so a statement like `@import 'library.css'` doesn't require an explicit path.
 * PostCSS plugins: use `npm install` in the `/dev` folder (parent of `src`), and modify the `gulpfile.js` accordingly to sequence them.
 
-## Coding in wonderland: a few examples
+##Theming in wonderland: a few examples
 All of the techniques below are optional in Fabrica and vanilla HTML / CSS / PHP / WordPress API functions will all work fine – but we highly recommend making full use of these time- and sanity-conserving enhancements.
 
-### Achieving a [Model-View-Controller](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller) (MVC) paradigm with Timber + ACF
+###Achieving a [Model-View-Controller](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller) (MVC) paradigm with Timber + ACF
 The magic combination of Timber and Advanced Custom Fields means we can render even complex data in our templates without carrying out any data retrieval or decision logic at all. Take for example this [Repeater field](https://www.advancedcustomfields.com/add-ons/repeater-field/) setup:
 
 ![Repeater Field Example](http://assets.yeswework.com/acf-repeater-example.png)
@@ -185,14 +189,14 @@ The additional information will be automatically available to the template, as l
 
 Note how here we access `post.allMeasurements` directly, without needing the call to `post.get_field()` in Twig (which is normally essential to receive full ACF Repeater data), since we have already made that call when mapping the new property in `models.php`.
 
-### BEM with BEML + PostCSS
+###BEM with BEML + PostCSS
 The BEM methodology provides a conceptual framework which makes it easy to build blocks (groups of design and content elements) to be reused across a site without having to worry about either duplicated or conflicting rules. The methodology is simple but promotes logical, disciplined thinking and efficient, modular code. You can read more about the principles of BEM online, for example on [CSS Wizardry](http://csswizardry.com/2013/01/mindbemding-getting-your-head-round-bem-syntax/).
 
 The inclusion of BEML, an HTML preprocessor, and PostCSS plugins, in Fabrica make the process of actually writing BEM markup and styles quicker, easier and less error-prone.
 
 As an example, let's take some vanilla BEM markup and styles. We're using `__` notation for elements and `--` notation for modifiers. (If you prefer an alternative notation, you can configure it in `dev/gulpfile.js` by modifying the `beml` property of the `options` hash.)
 
-#### Before...
+####Before...
 
 First, the HTML:
 
@@ -231,7 +235,7 @@ Second, some corresponding CSS (fairly basic, but targets several of the member 
 }
 ```
 
-#### ...and after:
+####...and after:
 
 With BEML + PostCSS we can avoid repetition in both places, which makes the code easier to write, easier to read, and less prone to typos. Here are the equivalent versions:
 
@@ -278,7 +282,7 @@ Second, the PostCSS, where we can make use of the `&` token both to nest element
 }
 ```
 
-### Semantic grids with LostGrid
+###Semantic grids with LostGrid
 
 The following markup is representative of how many layout frameworks implement a responsive design:
 
