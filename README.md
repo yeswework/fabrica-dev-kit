@@ -2,6 +2,8 @@
 ##What is it?
 A self-installing virtual-machine based WordPress development environment which includes a starter theme, build script, and a small but very powerful set of default (but optional) tools to make WordPress theme (or plugin) development more straightforward, agile and enjoyable than ever before.
 
+The name – from the Spanish and Portuguese word for factory (*fábrica*) – refers to providing a working environment full of automated machinery to facilitate your work. It's also a deliberate nod to Iberia where the project was envisaged and developed (in Barcelona and Porto).
+
 ##Who is it for?
 Theme developers who want to speed up and improve their workflow – and enjoy it more. Fabrica automates and streamlines just about every part of the process – from set up, through development, to deployment – using best-in-class tools and both following and encouraging all kinds of best practices. It is also readily customizable.
 
