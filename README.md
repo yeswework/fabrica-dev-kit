@@ -1,7 +1,7 @@
 #Fabrica for WordPress
 Fabrica provides an environment and tools to streamline every part of the WordPress development process. Its main features are:
 
-* Instant set-up of fast local development server (one per project)
+* Instant set-up of fast local development server (one for each project)
 * Tools for coding better themes using Twig, PostCSS, MVC and BEM
 * Build script to preprocess, lint and optimize assets
 * Live browser testing, synchronized across devices
