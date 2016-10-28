@@ -1,23 +1,23 @@
 #Fabrica for WordPress
 Fabrica provides an environment and tools to streamline every part of the WordPress development process. Its main features are:
 
-* Instant set-up of fast local development server
+* Instant set-up of fast local development server (one per project)
 * Tools for coding better themes using Twig, PostCSS, MVC and BEM
 * Build script to preprocess, lint and optimize assets
 * Live browser testing, synchronized across devices
 * Version control for custom fields
 * Instant deployment
 
-##All features
+##Complete feature list
 
 ###Installs and configures an independent local development environment for each project.
 
-* Using [Vagrant](https://www.vagrantup.com/) and [Chef](https://www.chef.io/chef/) and with a single Terminal command, installs and fully configures a virtual machine for your project running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/), for super-fast local development. Each Fabrica project has a separate virtual machine (and therefore IP / development domain) – creating a more efficient, intuitive, reliable and secure setup than a one-size-fits-all model like MAMP.
-* Maps your project's virtual machine to your chosen development domain (eg. `fabrica.dev`) by automatically modifying the local `hosts` file, for no-fuss browser access.
+* Using [Vagrant](https://www.vagrantup.com/) and [Chef](https://www.chef.io/chef/) (and via a single Terminal command), installs and fully configures a virtual machine for your project running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/), for super-fast local development. Each Fabrica project has a separate virtual machine (and therefore IP / development domain). This gives a more efficient, intuitive, reliable and secure setup than a one-size-fits-all model like MAMP.
+* Maps your chosen development domain (eg. `fabrica.dev`) to the virtual machine by automatically modifying the local `hosts` file, for no-fuss browser access.
 * Automatically installs all the software required to develop, including the latest version of WordPress and your plugins of choice (you just list them in the initial setup file), as well as build, optimization and deployment tools.
 
 ###Allows you to write cleaner, more logical and more beautiful code (if you want to)...
-* ... with templates written in [Twig](http://twig.sensiolabs.org/) rather than directly in PHP. Installs the revolutionary [Timber](https://upstatement.com/timber/) to bring MVC-like separation of concerns to WP development, separating data processing and analytical logic from presentation, allowing you to write more elegant, legible and maintainable templates, eradicating `<?php` `?>` tag-itis forever. A genuine 'never go back' improvement. See the MVC section in code examples below for more.
+* ... with templates written in [Twig](http://twig.sensiolabs.org/) rather than directly in PHP. Installs the revolutionary [Timber](https://upstatement.com/timber/) to bring MVC-like separation of concerns to WordPress development, separating data processing and analytical logic from presentation, allowing you to write more elegant, legible and maintainable templates, eradicating `<?php` `?>` tag-itis forever. A genuine 'never go back' improvement. See the MVC section in code examples below for more.
 * ... with [BEM syntax](http://csswizardry.com/2013/01/mindbemding-getting-your-head-round-bem-syntax/). Installs the [BEML](https://github.com/zenwalker/node-beml) preprocessor for HTML which allows you to write much less repetitive BEM markup (see code examples below), and which in turn reflects your (Post)CSS structure more closely.
 * ... with [PostCSS](https://github.com/postcss/postcss) for variables, mixins and other CSS preprocessing enhancements (it can compile your SASS or LESS code no problem).
 * ... with the [LostGrid](https://github.com/peterramsing/lost) grid system / preprocessor, which allows you to build fluid, responsive, nested grids without using presentational classes, with or without [Flexbox](https://github.com/peterramsing/lost).
@@ -97,7 +97,7 @@ File paths in this section refer to the `src/` folder.
 
 ###Templates
 * If you want to make use of Timber (and you would be insane not to), the PHP files live in `templates/controllers/` and the corresponding Twig views in `templates/views/`. See the [Timber documentation](http://timber.github.io/timber/) and the MVC section of code examples below for more information.
-* If you don't or can't use Timber, just create your vanilla WP templates in `templates/controllers/` as you usually would and they'll work fine.
+* If you don't or can't use Timber, just create your vanilla WordPress templates in `templates/controllers/` as you usually would and they'll work fine.
 
 ###Assets
 * CSS goes in `assets/css/main.pcss` (automatically included in the front-end). If you prefer to split it into several files, you can include the additional files with `@import` at the top. Vanilla CSS works fine but any PostCSS is processed automatically (see below).
@@ -109,7 +109,7 @@ Fabrica's super-minimal boilerplate makes no assumptions about your data or desi
 
 There are several predefined files (all in the `includes/` folder) to help keep your custom code well-organized. We recommend keeping all project code within the object-oriented namespaced structure provided by these files, but any other `.php` file you create in the `includes/` folder will be automatically included and run in the active theme: there is no need to manually `require()` or `include()` it.
 
-* `project.php` for hooks that should affect both front-end and admin requests, and for any other functions which you might need to make available to your theme (as methods of the singleton `Project` class). As a convenient shortcut, we alias this class to your project slug, so if your project slug is `fabrica` you can call a member function from anywhere with `fabrica::myFunction()`.
+* `project.php` for hooks that should affect both front-end and admin requests, and for any other functions which you might need to make available to your theme (as methods of the singleton `Project` class). As a convenient shortcut, we alias this class to your project slug, so if your project slug is `fabrica` you can call a static member function from anywhere with `fabrica::myFunction()`.
 * `front.php` for hooks that should only affect front-end requests.
 * `admin.php` for hooks that should only affect admin requests (the constructor includes these conditions).
 * `ajax.php` for AJAX requests (the front-end calls can be added in `assets/main.js`).
@@ -121,8 +121,8 @@ There are several predefined files (all in the `includes/` folder) to help keep 
 * Front-end CSS libraries can also be installed with `npm` and included via `@import` statements in `assets/css/main.pcss`. The PostCSS Import plugin automatically searches `node_modules` so a statement like `@import 'library.css'` doesn't require an explicit path.
 * PostCSS plugins: use `npm install` in the `/dev` folder (parent of `src`), and modify the `gulpfile.js` accordingly to sequence them.
 
-##Dream theming: a few examples
-All of the techniques below are optional in Fabrica and vanilla HTML / CSS / PHP / WordPress API functions will all work fine – but we highly recommend making full use of these time- and sanity-conserving enhancements.
+##Code examples
+All of the techniques below are optional in Fabrica and vanilla HTML / CSS / PHP / WordPress API functions will all work fine – but we highly recommend making full use of these time- and sanity-saving enhancements.
 
 ###Achieving a [Model-View-Controller](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller) (MVC) paradigm with Timber + ACF
 The magic combination of Timber and Advanced Custom Fields means we can render even complex data in our templates without carrying out any data retrieval or decision logic at all. Take for example this [Repeater field](https://www.advancedcustomfields.com/add-ons/repeater-field/) setup:
