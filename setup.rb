@@ -55,8 +55,8 @@ templateFilenames = [
 	'Movefile.erb'
 ]
 for templateFilename in templateFilenames
-	destFilename = srcFilename = "dev/#{templateFilename}"
-	srcFilename = "#{destFilename}.erb" if not destFilename.end_with? '.erb'
+	destFilename = "dev/#{templateFilename}"
+	srcFilename = "#{destFilename}.erb"
 	if File.exists? srcFilename
 		template = File.read srcFilename
 		file_data = ERB.new(template, nil, ">").result(settingsostruct.instance_eval { binding })
