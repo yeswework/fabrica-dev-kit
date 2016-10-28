@@ -51,8 +51,6 @@ Optional but strongly recommended:
 * **Vagrant hostsupdater plugin** (to map a chosen development domain to the virtual machine's local IP) – run `vagrant plugin install vagrant-hostsupdater` from the command line.
 * **Wordmove** (for fast command-line deployment) – run `gem install wordmove` from the command line.
 
-We have prepared [installation guidelines for all the dependencies](./docs/dependencies.md) in case you don't already have them.
-
 ##Getting started
 
 ###Installation
