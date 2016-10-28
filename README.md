@@ -1,13 +1,14 @@
 #Fabrica for WordPress
 Fabrica provides an environment and tools to streamline every part of the WordPress development process. Its main features are:
 
-* Instant set-up of fast local development server for each project
-* Tools for writing better templates using Twig, PostCSS and BEM
-* Build script to lint and optimize assets
-* Live, synchronized browser/device testing
+* Instant set-up of fast local development server
+* Tools for coding better themes using Twig, PostCSS, MVC and BEM
+* Build script to preprocess, lint and optimize assets
+* Live browser testing, synchronized across devices
+* Version control for custom fields
 * Instant deployment
 
-##List of all features
+##All features
 
 ###Installs and configures an independent local development environment for each project.
 
@@ -23,7 +24,7 @@ Fabrica provides an environment and tools to streamline every part of the WordPr
 * ... making use of the fantastic [Advanced Custom Fields](https://www.advancedcustomfields.com/) plugin, which is deeply supported by Timber (see above). Fabrica can automatically install ACF Pro via Composer if you supply your licence key at setup.
 
 ###Reduces friction in the development process:
-* Keeps the development source folder outside the virtual machine for easy editing and version control.
+* Keeps the development source folder outside the virtual machine for easy editing and version control. (You don't have to log into the virtual machine to build / develop: it just acts as a fast server.)
 * Includes a super-minimal object-orientated boilerplate theme (see below), specially constructed for bespoke theme development.
 * Live-compiles and optimizes straight to the active theme folder inside the virtual machine as you develop, via a pre-configured [Gulp](http://gulpjs.com/) watch, which:
 	* Preprocesses, [Autoprefixes](https://github.com/postcss/autoprefixer), lints and minifies (with source maps) your stylesheets.
@@ -80,10 +81,10 @@ Setting up a new project and getting the development environment ready to run is
 1. If you already filled in FTP details in `setup.yml` skip straight to step 3.
 1. If you didn't, once you have a staging or production server set up, edit the `dev/Movefile.erb` with your FTP (or SSH details).
 1. To deploy your theme, make sure the latest source code is compiled (if a watch isn't running, do a `gulp build`), then type `wordmove push --themes`. Wordmove will push the new / modified files to the server.
-1. If you are using ACF (whether normal or Pro), ACF-JSON will take care of synching your fields automatically, but it's a good idea to [synchronize the fields to the database on the remote site](https://www.advancedcustomfields.com/resources/synchronized-json/) once you have pushed changes, so that the new fields are recorded in the production or staging site's database.
+1. If you are using ACF (whether normal or Pro), ACF-JSON will take care of synching your fields automatically, but it's a good idea to [synchronize the fields on the remote site](https://www.advancedcustomfields.com/resources/synchronized-json/) once you have deployed changes, so that the new fields are saved (from the files in the `acf-json` folder) into the production database.
 
 ###Version control
-* To begin version control on your project run `git init` in the `dev/` folder. This will track not only your source code but also the corresponding build script and names of the modules needed to compile it into an active theme. (It's important to maintain a copy because because the default build script is subject to change in future versions of Fabrica, which could lead to problems if restoring a project from a backup.)
+To begin version control on your project run `git init` in the `dev/` folder. This will track not only your source code but also the corresponding build script and names of the modules needed to compile it into an active theme. (It's important to maintain a copy because because the default build script is subject to change in future versions of Fabrica, which could lead to problems if restoring a project from a backup.)
 
 ###Local database access
 For direct MySQL access to the development database, we recommend using [Sequel Pro](https://www.sequelpro.com/) to access it while the development machine is up. Use the development IP address you chose in `setup.yml` before installation, and the username and password are both `wordpress`.
