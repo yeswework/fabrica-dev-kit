@@ -102,4 +102,4 @@ system "vagrant ssh -c \"wp theme activate '#{settings['slug']}'\""
 
 # after which, the site will be ready to run and develop locally
 # just run gulp
-puts '[Fabrica] Setup complete. To run and develop locally just run \'gulp\'.'
+puts '[Fabrica] Setup complete. To develop locally, \'cd dev\' then run \'gulp\'.'
