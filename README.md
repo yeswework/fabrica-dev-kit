@@ -1,7 +1,7 @@
 #Fabrica for WordPress
-Fabrica provides an environment and tools to streamline every part of the WordPress development process. Its main features are:
+Fabrica provides an environment and tools to streamline every part of the WordPress development process. It is aimed at from-scratch theme developers with CMS-type requirements. Its main features are:
 
-* Instant set-up of fast local development server (one for each project)
+* Instant set-up of project-specific fast local development server
 * Tools for coding better themes using Twig, PostCSS, MVC and BEM
 * Build script to preprocess, lint and optimize assets
 * Live browser testing, synchronized across devices
@@ -54,9 +54,7 @@ Optional but strongly recommended:
 ##Getting started
 
 ###Installation
-First make sure you have all the required dependencies (see above):
-
-Setting up a new project and getting the development environment ready to run is very easy:
+First make sure you have all the required dependencies (see above). Then:
 
 1. Clone the repo into a folder for your project, eg. `git clone https://github.com/yeswework/fabrica.git fabrica-project` (replace `fabrica-project` with a project-specific name or slug).
 1. In the new folder, make a copy of `setup-example.yml` called `setup.yml`, and edit this file to set the basic parameters for the development site. Any plugins you want to be automatically installed can be listed here.
