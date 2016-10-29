@@ -1,5 +1,5 @@
 #Fabrica for WordPress
-Fabrica provides an environment and tools to streamline every part of the WordPress development process. It is ideal for bespoke theme developers with CMS-type requirements. Its main features are:
+Fabrica provides an environment and tools to streamline every part of the WordPress development process. It is ideal for bespoke theme developers and/or those with CMS-type requirements. Its main features are:
 
 * Instant setup of project-specific fast local development server
 * Tools for coding better themes using Twig, PostCSS, MVC and BEM
