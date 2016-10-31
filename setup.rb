@@ -46,7 +46,7 @@ end
 
 # set configuration data in source and Wordmove files
 settingsostruct = OpenStruct.new(settings)
-sourceTemplates = [
+templateFilenames = [
 	'src/package.json',
 	'src/includes/.env',
 	'src/includes/composer.json',
@@ -54,18 +54,19 @@ sourceTemplates = [
 	'src/templates/views/base.twig',
 	'Movefile.erb'
 ]
-for sourceTemplate in sourceTemplates
-	filename = "dev/#{sourceTemplate}"
-	filename = "#{filename}.erb" if not sourceTemplate.end_with? '.erb'
-	if File.exists? filename
-		template = File.read filename
+for templateFilename in templateFilenames
+	destFilename = "dev/#{templateFilename}"
+	srcFilename = "#{destFilename}.erb"
+	if File.exists? srcFilename
+		template = File.read srcFilename
 		file_data = ERB.new(template, nil, ">").result(settingsostruct.instance_eval { binding })
-		File.open(filename, 'w') {|file| file.puts file_data }
-		FileUtils.rm filename
+		File.open(destFilename, 'w') {|file| file.puts file_data }
+		FileUtils.rm srcFilename
 	else
-		abort "[Fabrica] could not find #{filename} template."
+		abort "[Fabrica] could not find #{srcFilename} template."
 	end
 end
+
 # rename/backup "setup.yml"
 FileUtils.mv 'setup.yml', 'setup.bak.yml'
 # create "vagrant.yml" file for Vagrant
@@ -101,4 +102,4 @@ system "vagrant ssh -c \"wp theme activate '#{settings['slug']}'\""
 
 # after which, the site will be ready to run and develop locally
 # just run gulp
-puts '[Fabrica] Setup complete. To run and develop locally just run \'gulp\'.'
+puts '[Fabrica] Setup complete. To develop locally, \'cd dev\' then run \'gulp\'.'

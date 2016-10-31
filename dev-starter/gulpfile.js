@@ -29,7 +29,7 @@ var gulp = require('gulp'),
 	exec = require('child_process').exec,
 	yaml = require('yamljs');
 
-// Load project and local settings from package.json and vagrant.yml
+// Load project and local settings
 var projectSettings, localSettings;
 try {
 	projectSettings = require('./src/package.json');

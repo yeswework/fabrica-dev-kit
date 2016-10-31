@@ -1,7 +1,7 @@
 #Fabrica for WordPress
-Fabrica provides an environment and tools to streamline every part of the WordPress development process. Its main features are:
+Fabrica provides an environment and tools to streamline every part of the WordPress development process. It is ideal for bespoke theme developers and/or those with CMS-type requirements. Its main features are:
 
-* Instant set-up of fast local development server (one per project)
+* Instant setup of project-specific fast local development server
 * Tools for coding better themes using Twig, PostCSS, MVC and BEM
 * Build script to preprocess, lint and optimize assets
 * Live browser testing, synchronized across devices
@@ -10,7 +10,7 @@ Fabrica provides an environment and tools to streamline every part of the WordPr
 
 ##Complete feature list
 
-###Installs and configures an independent local development environment for each project.
+###Installs and configures an independent local development environment for each project
 
 * Using [Vagrant](https://www.vagrantup.com/) and [Chef](https://www.chef.io/chef/) (and via a single Terminal command), installs and fully configures a virtual machine for your project running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/), for super-fast local development. Each Fabrica project has a separate virtual machine (and therefore IP / development domain). This gives a more efficient, intuitive, reliable and secure setup than a one-size-fits-all model like MAMP.
 * Maps your chosen development domain (eg. `fabrica.dev`) to the virtual machine by automatically modifying the local `hosts` file, for no-fuss browser access.
@@ -23,7 +23,7 @@ Fabrica provides an environment and tools to streamline every part of the WordPr
 * ... with the [LostGrid](https://github.com/peterramsing/lost) grid system / preprocessor, which allows you to build fluid, responsive, nested grids without using presentational classes, with or without [Flexbox](https://github.com/peterramsing/lost).
 * ... making use of the fantastic [Advanced Custom Fields](https://www.advancedcustomfields.com/) plugin, which is deeply supported by Timber (see above). Fabrica can automatically install ACF Pro via Composer if you supply your licence key at setup.
 
-###Reduces friction in the development process:
+###Reduces friction in the development process
 * Keeps the development source folder outside the virtual machine for easy editing and version control. (You don't have to log into the virtual machine to build / develop: it just acts as a fast server.)
 * Includes a super-minimal object-orientated boilerplate theme (see below), specially constructed for bespoke theme development.
 * Live-compiles and optimizes straight to the active theme folder inside the virtual machine as you develop, via a pre-configured [Gulp](http://gulpjs.com/) watch, which:
@@ -51,14 +51,10 @@ Optional but strongly recommended:
 * **Vagrant hostsupdater plugin** (to map a chosen development domain to the virtual machine's local IP) – run `vagrant plugin install vagrant-hostsupdater` from the command line.
 * **Wordmove** (for fast command-line deployment) – run `gem install wordmove` from the command line.
 
-We have prepared [installation guidelines for all the dependencies](./docs/dependencies.md) in case you don't already have them.
-
 ##Getting started
 
 ###Installation
-First make sure you have all the required dependencies (see above):
-
-Setting up a new project and getting the development environment ready to run is very easy:
+First make sure you have all the required dependencies (see above). Then:
 
 1. Clone the repo into a folder for your project, eg. `git clone https://github.com/yeswework/fabrica.git fabrica-project` (replace `fabrica-project` with a project-specific name or slug).
 1. In the new folder, make a copy of `setup-example.yml` called `setup.yml`, and edit this file to set the basic parameters for the development site. Any plugins you want to be automatically installed can be listed here.
