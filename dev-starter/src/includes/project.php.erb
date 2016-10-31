@@ -38,8 +38,8 @@ class Project extends Singleton {
 	public function __construct() {
 <% if acf_pro_key %>
 
-		add_filter('acf/settings/path', array($this, 'AcfSettingsPath'));
-		add_filter('acf/settings/dir', array($this, 'AcfSettingsDir'));
+		add_filter('acf/settings/path', array($this, 'acfSettingsPath'));
+		add_filter('acf/settings/dir', array($this, 'acfSettingsDir'));
 <% end %>
 		add_action('init', array($this, 'registerStructure'));
 
@@ -51,11 +51,11 @@ class Project extends Singleton {
 <% if acf_pro_key %>
 
 	// Set ACF paths
-	function AcfSettingsPath($dir) {
+	function acfSettingsPath($dir) {
 		return get_stylesheet_directory() . '/inc/vendor/advanced-custom-fields/advanced-custom-fields-pro/';
 	}
 
-	function AcfSettingsDir($path) {
+	function acfSettingsDir($path) {
 		return get_stylesheet_directory_uri() . '/inc/vendor/advanced-custom-fields/advanced-custom-fields-pro/';
 	}
 <% end %>
