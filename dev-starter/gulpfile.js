@@ -2,7 +2,6 @@ var gulp = require('gulp'),
 	autoprefixer = require('autoprefixer'),
 	browserSync = require('browser-sync').create(),
 	del = require('del'),
-	beml = require('gulp-beml'),
 	concat = require('gulp-concat'),
 	changed = require('gulp-changed'),
 	cssnano = require('gulp-cssnano'),
@@ -21,9 +20,11 @@ var gulp = require('gulp'),
 	postcssEach = require('postcss-each'),
 	postcssMixins = require('postcss-mixins'),
 	postcssNested = require('postcss-nested'),
-	postcssNestedProps = require('postcss-nested-props'),
+	postcssNestedProps = require('postcss-nested-props').default,
 	postcssReporter = require('postcss-reporter'),
 	postcssSimpleVars = require('postcss-simple-vars'),
+	posthtml = require('gulp-posthtml'),
+	posthtmlBem = require('posthtml-bem'),
 	stylelint = require('stylelint'),
 	webpack = require('webpack-stream'),
 	exec = require('child_process').exec,
@@ -103,7 +104,7 @@ var options = {
 		lost,
 		autoprefixer({browsers: ['last 3 versions']})
 	],
-	beml: {
+	posthtmlBem: {
 		elemPrefix: '__',
 		modPrefix: '--',
 		modDlmtr: '-'
@@ -168,7 +169,7 @@ function views() {
 	return gulp.src(path.views)
 		.pipe(flatten())
 		.pipe(changed(base.theme + dest.views))
-		.pipe(beml(options.beml))
+		.pipe(posthtml([posthtmlBem(options.posthtmlBem)]))
 		.pipe(gulp.dest(base.theme + dest.views))
 		.pipe(browserSync.stream());
 }
