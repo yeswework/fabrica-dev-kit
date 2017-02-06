@@ -40,7 +40,8 @@ try {
 }
 var projectSlug = projectSettings.name,
 	projectTitle = projectSettings.description,
-	projectAuthor = projectSettings.author;
+	projectAuthor = projectSettings.author,
+	projectDevPort = projectSettings.config.port;
 
 // Paths for remapping
 var base = {
@@ -230,14 +231,10 @@ gulp.task('build', gulp.series(clean, gulp.parallel(header, acf, functions, incl
 // Watch: fire build, then watch for changes
 gulp.task('default', gulp.series('build', watch));
 function watch() {
-	/* [TODO] BrowserSync support https://github.com/ustwo/docker-browser-sync //
-	if (projectDevUrl) {
-		browserSync.init({
-			proxy: projectDevUrl,
-			open: false
-		});
-	}
-	// */
+	browserSync.init({
+		proxy: 'localhost:' + projectDevPort,
+		open: false
+	});
 	gulp.watch(path.functions, gulp.series(functions));
 	gulp.watch(path.includes, gulp.series(includes));
 	gulp.watch(path.controllers, gulp.series(controllers));

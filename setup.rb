@@ -74,6 +74,9 @@ if not File.exists?(setup_settings_filename)
 end
 settings.merge_settings!(setup_settings_filename)
 
+# rename/backup "setup.yml"
+FileUtils.mv 'setup.yml', 'setup.bak.yml'
+
 # copy starter dev folder: this will preserve changes if/when kit updated
 if not Dir.exists? 'dev'
 	FileUtils.cp_r 'dev-starter', 'dev'
@@ -102,9 +105,6 @@ for templateFilename in templateFilenames
 		halt "Could not find #{srcFilename} template."
 	end
 end
-
-# rename/backup "setup.yml"
-FileUtils.mv 'setup.yml', 'setup.bak.yml'
 
 # install build dependencies (Gulp + extensions)
 FileUtils.cd 'dev'

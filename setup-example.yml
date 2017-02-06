@@ -6,8 +6,9 @@ author:
   # email: # Optional
   # url: # Optional
 
-# Docker
-dev_port: 8880
+# Web server
+web:
+  dev_port: 8880
 
 # WordPress
 wp:
