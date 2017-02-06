@@ -9,6 +9,7 @@
 
 require 'erb'
 require 'fileutils'
+require 'json'
 require 'yaml'
 require 'ostruct'
 require 'net/http'
@@ -77,37 +78,51 @@ settings.merge_settings!(setup_settings_filename)
 # rename/backup "setup.yml"
 FileUtils.mv 'setup.yml', 'setup.bak.yml'
 
-# copy starter dev folder: this will preserve changes if/when kit updated
-if not Dir.exists? 'dev'
+if Dir.exists? 'dev'
+	# working on an existing project
+	FileUtils.cd 'dev'
+	if not File.exists? 'src/package.json'
+		halt 'Folder \'dev/\' already exists but no \'package.json\' found there.'
+	end
+	project_settings = JSON.parse(File.read('src/package.json'))
+	echo 'Existing project \'dev/src/package.json\' found. Overriding the following settings in \'setup.yml\' with those in this file  (old \'setup.rb\' value → new value):'
+	{'name' => 'slug', 'description' => 'title', 'author' => 'author'}.each do |project_key, setting_key|
+		echo " ◦ #{setting_key} / #{project_key}: '#{settings[setting_key]}' → '#{project_settings[project_key]}'"
+		settings[setting_key] = project_settings[project_key]
+	end
+	echo " ◦ web.dev_port / config.port: '#{settings['web']['dev_port']}' → '#{project_settings['config']['port']}'"
+	settings['web']['dev_port'] = project_settings['config']['port']
+else
+	# new project: copy starter dev folder (this will preserve changes if/when kit updated)
 	FileUtils.cp_r 'dev-starter', 'dev'
-end
+	FileUtils.cd 'dev'
 
-# set configuration data in source and Wordmove files
-settingsostruct = OpenStruct.new(settings)
-templateFilenames = [
-	'src/package.json',
-	'src/includes/.env',
-	'src/includes/composer.json',
-	'src/includes/project.php',
-	'src/templates/views/base.twig',
-	'Movefile',
-	'docker-compose.yml'
-]
-for templateFilename in templateFilenames
-	destFilename = "dev/#{templateFilename}"
-	srcFilename = "#{destFilename}.erb"
-	if File.exists?(srcFilename)
-		template = File.read srcFilename
-		file_data = ERB.new(template, nil, ">").result(settingsostruct.instance_eval { binding })
-		File.open(destFilename, 'w') {|file| file.puts file_data }
-		FileUtils.rm srcFilename
-	else
-		halt "Could not find #{srcFilename} template."
+	# set configuration data in source and Wordmove files
+	settingsostruct = OpenStruct.new(settings)
+	templateFilenames = [
+		'src/package.json',
+		'src/includes/.env',
+		'src/includes/composer.json',
+		'src/includes/project.php',
+		'src/templates/views/base.twig',
+		'Movefile',
+		'docker-compose.yml'
+	]
+	for templateFilename in templateFilenames
+		destFilename = "dev/#{templateFilename}"
+		srcFilename = "#{destFilename}.erb"
+		if File.exists?(srcFilename)
+			template = File.read srcFilename
+			file_data = ERB.new(template, nil, ">").result(settingsostruct.instance_eval { binding })
+			File.open(destFilename, 'w') {|file| file.puts file_data }
+			FileUtils.rm srcFilename
+		else
+			halt "Could not find #{srcFilename} template."
+		end
 	end
 end
 
 # install build dependencies (Gulp + extensions)
-FileUtils.cd 'dev'
 echo 'Installing build dependencies...'
 system "#{package_manager} install"
 
@@ -132,7 +147,7 @@ sleep 10
 (WAIT_WP_CONTAINER_TIMEOUT - 10).times do
 	Net::HTTP.start('localhost', settings['web']['dev_port']) {|http| response = http.head('/wp-admin/install.php').code } rescue nil
 	break if response == '200'
-	print '.'; sleep 1
+	print '•'; sleep 1
 end
 puts ''
 if response != '200'
