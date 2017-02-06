@@ -6,7 +6,7 @@
 namespace fabrica;
 
 require_once('singleton.php');
-<% if acf_pro_key %>
+<% if defined?(acf_pro_key) %>
 require_once(__DIR__ . '/vendor/advanced-custom-fields/advanced-custom-fields-pro/acf.php');
 <% end %>
 
@@ -36,7 +36,7 @@ class Project extends Singleton {
 	public static $googleAnalyticsId = '<%= google_analytics_id %>';
 
 	public function __construct() {
-<% if acf_pro_key %>
+<% if defined?(acf_pro_key) %>
 
 		add_filter('acf/settings/path', array($this, 'acfSettingsPath'));
 		add_filter('acf/settings/dir', array($this, 'acfSettingsDir'));
@@ -48,7 +48,7 @@ class Project extends Singleton {
 		// add_filter('filter_name', array($this, 'filterHandler'));
 
 	}
-<% if acf_pro_key %>
+<% if defined?(acf_pro_key) %>
 
 	// Set ACF paths
 	function acfSettingsPath($dir) {

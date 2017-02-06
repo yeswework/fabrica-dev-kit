@@ -1,0 +1,52 @@
+version: '2'
+
+services:
+    web:
+      image: nginx:latest
+      container_name: <%= slug %>_web
+      restart: always
+      volumes:
+        - ./www:/var/www/html
+        - ../provision/web/wordpress-fpm.conf:/etc/nginx/conf.d/default.conf
+        - ../provision/web/global:/etc/nginx/global
+      ports:
+        - <%= web['dev_port'] %>:80
+      networks:
+        - front
+    db:
+      image: mysql:5.7
+      container_name: <%= slug %>_db
+      volumes:
+        - db-data:/var/lib/mysql
+      restart: always
+      environment:
+        MYSQL_ROOT_PASSWORD: wordpress
+        MYSQL_DATABASE: wordpress
+        MYSQL_USER: wordpress
+        MYSQL_PASSWORD: wordpress
+      networks:
+        - back
+    wp:
+      depends_on:
+        - db
+      build:
+        context: ..
+        dockerfile: provision/wp/Dockerfile
+      container_name: <%= slug %>_wp
+      restart: always
+      volumes:
+        - ./www:/var/www/html
+      environment:
+        WORDPRESS_DB_HOST: db:3306
+        WORDPRESS_DB_PASSWORD: wordpress
+        WORDPRESS_DB_PREFIX: <%= "#{db['prefix']}\n" %>
+      networks:
+        - front
+        - back
+
+volumes:
+  db-data:
+networks:
+  front:
+  back:
+

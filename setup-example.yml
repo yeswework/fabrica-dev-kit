@@ -6,21 +6,21 @@ author:
   # email: # Optional
   # url: # Optional
 
-# Vagrant
-dev_url: fabrica.dev
-dev_ip: 192.168.33.10
+# Docker
+dev_port: 8880
 
 # WordPress
-admin:
-  user: fabrica
-  pass: fabrica
-  email: admin@fabrica.dev
-lang: en_US
-rewrite_structure: /%postname%/
-multisite: false
-# acf_pro_key: # Optional (will preinstall Advanced Custom Fields Pro via Composer)
-plugins:
-#  - advanced-custom-fields # Optional (use slugs from WP Codex, plugins will be preinstalled)
+wp:
+  admin:
+    user: fabrica
+    pass: fabrica
+    email: admin@fabrica.dev
+  lang: en_US
+  rewrite_structure: /%postname%/
+  multisite: false
+  # acf_pro_key: # Optional (will preinstall Advanced Custom Fields Pro via Composer)
+  plugins:
+  #  - advanced-custom-fields # Optional (use slugs from WP Codex, plugins will be preinstalled)
 
 # Google Analytics
 # google_analytics_id: # Optional (will be preset in theme, can be added manually later)

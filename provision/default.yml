@@ -2,76 +2,47 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# General
-wp_box: ubuntu/trusty64
-chef_cookbook_path: ./provision
+# Web/Network
+web:
+  dev_port: 8880
 
-# Virtual machine
-memory: 1024
-cpus: 1
-
-linked_clone: false
-
-# DB will be reset when provision
-reset_db_on_provision: false
-
-# User and Group
-user: vagrant
-group: vagrant
-
-# SSL support
-use_ssl: false
-
-# Network
-dev_url: kit.dev
-dev_ip: 192.168.33.10
-host_document_root: 'www'
+# Database
+db:
+  prefix: wp_
 
 # WordPress
-version: latest
-lang: en_US
-# title:    # Project name if not set
-multisite: false
-rewrite_structure: /archives/%post_id%
+wp:
+  version: latest
+  lang: en_US
+  # title:    # Project name if not set
+  multisite: false
+  rewrite_structure: /archives/%post_id%
 
-# Wordpress path
-document_root: '/var/www'
-siteurl: ''  # Path to the WP_SITEURL like "wp"
-home: ''     # Path to the WP_HOME like "wp"
+  # Wordpress admin user
+  admin:
+    user: admin
+    pass: admin
+    email: fabrica@example.com
 
-# Wordpress users
-admin:
-  user: admin
-  pass: admin
-  email: fabrica@example.com
+  # Default Plugins
+  # Plugin's slug or url to the plugin's slug.
+  plugins:
+  # - advanced-custom-fields
 
-# WordPress Database
-db_prefix: wp_
-db_host: localhost
+  # Skip WP CLI default themes and plugins install
+  skip_default_plugins: true
+  skip_default_themes: true
 
-# Default Plugins
-# Plugin's slug or url to the plugin's slug.
-plugins:
-# - advanced-custom-fields
+  # WordPress Options
+  options:
+    blogdescription: Hello Fabrica.
 
-# WordPress Default Theme
-# Theme's slug or url to the theme's .zip.
-theme: ''
+  # Values for wp-config.php
+  debug: true
+  force_ssl_admin: false
+  savequeries: false
 
-# Skip WP CLI default themes and plugins install
-skip_wp_default_plugins: true
-skip_wp_default_themes: true
-
-# WordPress Options
-options:
-  blogdescription: Hello Fabrica.
-
-# The values of wp-config.php
-force_ssl_admin: false
-wp_debug: true
-savequeries: false
-
-# Theme unit testing
-theme_unit_test: false
-theme_unit_test_uri: https://wpcom-themes.svn.automattic.com/demo/theme-unit-test-data.xml
-# theme_unit_test_uri: https://raw.githubusercontent.com/jawordpressorg/theme-test-data-ja/master/wordpress-theme-test-date-ja.xml
+  # Theme unit testing
+  theme_unit_test: false
+  theme_unit_test_uri: https://wpcom-themes.svn.automattic.com/demo/theme-unit-test-data.xml
+  # theme_unit_test_uri: https://raw.githubusercontent.com/jawordpressorg/theme-test-data-ja/master/wordpress-theme-test-date-ja.xml

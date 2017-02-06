@@ -4,10 +4,10 @@
   "description": "<%= title %>",
   "author": {
     "name": "<%= author['name'] %>"<%= author['email'] || author['url'] ? ",\n" : "\n" %>
-<% if author['email'] %>
+<% if not author['email'].nil? %>
     "email": "<%= author['email'] %>"<%= author['url'] ? ",\n" : "\n" %>
 <% end %>
-<% if author['url'] %>
+<% if not author['url'].nil? %>
     "url": "<%= author['url'] %>"
 <% end %>
   },

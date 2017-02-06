@@ -20,7 +20,7 @@ var gulp = require('gulp'),
 	postcssEach = require('postcss-each'),
 	postcssMixins = require('postcss-mixins'),
 	postcssNested = require('postcss-nested'),
-	postcssNestedProps = require('postcss-nested-props').default,
+	postcssNestedProps = require('postcss-nested-props'),
 	postcssReporter = require('postcss-reporter'),
 	postcssSimpleVars = require('postcss-simple-vars'),
 	posthtml = require('gulp-posthtml'),
@@ -38,23 +38,16 @@ try {
 	console.error('Error loading source `package.json` file.', ex);
 	return;
 }
-try {
-	localSettings = yaml.load('../vagrant.yml');
-} catch (ex) {
-	localSettings = {host_document_root: 'www'}; // Fallback default
-}
 var projectSlug = projectSettings.name,
 	projectTitle = projectSettings.description,
-	projectAuthor = projectSettings.author,
-	projectDevUrl = localSettings.dev_url,
-	projectDocRoot = localSettings.host_document_root;
+	projectAuthor = projectSettings.author;
 
 // Paths for remapping
 var base = {
 	dev: './',
 	src: './src/',
-	acfRelativeSrc: projectDocRoot.replace(/[^\/]+(\/|$)/, '../') + '../../../src/',
-	theme: './' + projectDocRoot + '/wp-content/themes/' + projectSlug + '/'
+	acfRelativeSrc: '../../../../src/',
+	theme: './www/wp-content/themes/' + projectSlug + '/'
 };
 
 // Globs for each file type
@@ -231,28 +224,20 @@ function fonts() {
 		.pipe(browserSync.stream());
 }
 
-// Wordmove: add full Wordpress path to the final Movefile with the almost complete template
-function wordmove(cb) {
-	exec('erb Movefile.erb > Movefile', {'env': {'HOST_DOCUMENT_ROOT': projectDocRoot}}, function (error, stdout, stderr) {
-		if (error) {
-			console.error('Error generating Movefile:', error);
-		}
-	});
-	cb();
-}
-
 // Build: sequences all the other tasks
-gulp.task('build', gulp.series(clean, gulp.parallel(header, acf, functions, includes, controllers, views, styles, scripts, images, fonts, wordmove)));
+gulp.task('build', gulp.series(clean, gulp.parallel(header, acf, functions, includes, controllers, views, styles, scripts, images, fonts)));
 
 // Watch: fire build, then watch for changes
 gulp.task('default', gulp.series('build', watch));
 function watch() {
+	/* [TODO] BrowserSync support https://github.com/ustwo/docker-browser-sync //
 	if (projectDevUrl) {
 		browserSync.init({
 			proxy: projectDevUrl,
 			open: false
 		});
 	}
+	// */
 	gulp.watch(path.functions, gulp.series(functions));
 	gulp.watch(path.includes, gulp.series(includes));
 	gulp.watch(path.controllers, gulp.series(controllers));

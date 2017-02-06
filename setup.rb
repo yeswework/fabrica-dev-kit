@@ -11,33 +11,68 @@ require 'erb'
 require 'fileutils'
 require 'yaml'
 require 'ostruct'
+require 'net/http'
+
+# maximum time (in seconds) to wait for wp container to be up and running
+WAIT_WP_CONTAINER_TIMEOUT = 360
+
+# formatted output methods
+def echo(message)
+	puts "\e[7m[Fabrica]\e[27m 🏭  #{message}"
+end
+def halt(message)
+	abort "\e[1m\e[41m[Fabrica]\e[0m 🏭  #{message}"
+end
 
 # check Fabrica dependencies
-dependencies = ['npm', 'gulp', 'vagrant', 'composer']
+dependencies = ['gulp', 'vagrant', 'composer']
 for dependency in dependencies
 	if not system("hash #{dependency} 2>/dev/null")
-		abort "[Fabrica] Could not find dependency '#{dependency}'."
+		halt "Could not find dependency '#{dependency}'."
 	end
+end
+package_manager = ''
+dependencies = ['yarn', 'npm']
+for dependency in dependencies
+	if system("hash #{dependency} 2>/dev/null")
+		package_manager = dependency
+		break
+	end
+end
+if package_manager == ''
+	halt "Could not find any Node package manager ('yarn' or 'npm')."
 end
 
-# load setup settings
-puts '[Fabrica] Reading settings...'
-begin
-	# load default, user and project/site settings, in that order
-	settings = YAML.load_file(File.join(File.dirname(__FILE__), 'provision/default.yml'))
-	def settings.merge_settings!(settings_filename)
-		if File.exists?(settings_filename)
-			new_settings = YAML.load_file(settings_filename)
-			self.merge!(new_settings) if new_settings.is_a?(Hash)
-			return new_settings
+echo 'Reading settings...'
+# auxiliar methods to merge settings in the files
+class Hash
+	def deep_merge!(other_hash)
+		other_hash.each_pair do |current_key, other_value|
+			this_value = self[current_key]
+			if self[current_key].is_a?(Hash) && other_value.is_a?(Hash)
+				self[current_key].deep_merge!(other_value)
+			else
+				self[current_key] = other_value
+			end
 		end
+		return self
 	end
-	settings.merge_settings!(File.join(ENV['HOME'], '.fabrica/settings.yml'))
-	setup_settings = settings.merge_settings!(File.join(File.dirname(__FILE__), 'setup.yml'))
-	setup_settings['host_document_root'] = if setup_settings.has_key?('host_document_root') then setup_settings['host_document_root'] else settings['host_document_root'] end
-rescue
-	abort '[Fabrica] Could not load "setup.yml". Please create this file based on "setup-example.yml".'
+
+	def merge_settings!(settings_filename)
+		return {} if not File.exists?(settings_filename)
+		new_settings = YAML.load_file(settings_filename)
+		self.deep_merge!(new_settings) if new_settings.is_a?(Hash)
+		return new_settings
+	end
 end
+# load default, user and project/site settings, in that order
+settings = YAML.load_file(File.join(File.dirname(__FILE__), 'provision/default.yml'))
+settings.merge_settings!(File.join(ENV['HOME'], '.fabrica/settings.yml'))
+setup_settings_filename = File.join(File.dirname(__FILE__), 'setup.yml')
+if not File.exists?(setup_settings_filename)
+	halt 'Could not load "setup.yml". Please create this file based on "setup-example.yml".'
+end
+settings.merge_settings!(setup_settings_filename)
 
 # copy starter dev folder: this will preserve changes if/when kit updated
 if not Dir.exists? 'dev'
@@ -52,54 +87,101 @@ templateFilenames = [
 	'src/includes/composer.json',
 	'src/includes/project.php',
 	'src/templates/views/base.twig',
-	'Movefile.erb'
+	'Movefile',
+	'docker-compose.yml'
 ]
 for templateFilename in templateFilenames
 	destFilename = "dev/#{templateFilename}"
 	srcFilename = "#{destFilename}.erb"
-	if File.exists? srcFilename
+	if File.exists?(srcFilename)
 		template = File.read srcFilename
 		file_data = ERB.new(template, nil, ">").result(settingsostruct.instance_eval { binding })
 		File.open(destFilename, 'w') {|file| file.puts file_data }
 		FileUtils.rm srcFilename
 	else
-		abort "[Fabrica] could not find #{srcFilename} template."
+		halt "Could not find #{srcFilename} template."
 	end
 end
 
 # rename/backup "setup.yml"
 FileUtils.mv 'setup.yml', 'setup.bak.yml'
-# create "vagrant.yml" file for Vagrant
-setup_settings.reject! {|key| ['slug', 'author', 'homepage'].include?(key) }
-File.open('vagrant.yml', 'w') {|file| file.write setup_settings.to_yaml }
 
 # install build dependencies (Gulp + extensions)
 FileUtils.cd 'dev'
-puts '[Fabrica] Installing build dependencies...'
-system 'npm install'
+echo 'Installing build dependencies...'
+system "#{package_manager} install"
 
 # install initial front-end dependencies
-puts '[Fabrica] Installing front-end dependencies...'
+echo 'Installing front-end dependencies...'
 FileUtils.cd 'src'
-system 'npm install'
+system "#{package_manager} install"
 FileUtils.cd 'includes'
 system 'composer install'
-FileUtils.cd '../../..'
+FileUtils.cd '../..'
 
-# start vagrant
-puts '[Fabrica] Starting Vagrant VM...'
-if not system 'vagrant up'
-	abort '[Fabrica] Vagrant VM provisioning failed.'
+# start docker
+echo 'Bringing Docker containers up...'
+if not system 'docker-compose up -d'
+	halt 'Docker containers provision failed.'
 end
 
-# run our gulp build task and activate the theme in WordPress
-puts '[Fabrica] Building theme and activating in WordPress...'
-FileUtils.cd 'dev'
+# wait until wp container to install WordPress
+echo "Waiting for \'#{settings['slug']}_wp\' container..."
+response = ''
+sleep 10
+(WAIT_WP_CONTAINER_TIMEOUT - 10).times do
+	Net::HTTP.start('localhost', settings['web']['dev_port']) {|http| response = http.head('/wp-admin/install.php').code } rescue nil
+	break if response == '200'
+	print '.'; sleep 1
+end
+puts ''
+if response != '200'
+	abort "More than #{WAIT_WP_CONTAINER_TIMEOUT} seconds elapsed while waiting for WordPress container to start."
+end
+
+# install WordPress in container
+echo 'Installing for WordPress...'
+$wp_container = "#{settings['slug']}_wp"
+def wp(command)
+	system "docker exec #{$wp_container} wp #{command}"
+end
+# [TODO] add `wp-config.php` settings
+wp "core install \
+    --url=localhost:#{settings['web']['dev_port']} \
+    --title=\"#{settings['title']}\" \
+    --admin_user=#{settings['wp']['admin']['user']} \
+    --admin_password=#{settings['wp']['admin']['pass']} \
+    --admin_email=\"#{settings['wp']['admin']['email']}\""
+wp "rewrite structure \"#{settings['wp']['rewrite_structure']}\""
+if settings['wp']['lang'] == 'ja'
+	# activate multibyte patch for Japanese language
+	wp "plugin activate wp-multibyte-patch"
+end
+
+# run our gulp build task and build the WordPress theme
+echo 'Building WordPress theme...'
 system 'gulp build'
 # create symlink to theme folder in dev for quick access
-FileUtils.ln_s "#{settings['host_document_root']}/wp-content/themes/#{settings['slug']}/", 'build'
-system "vagrant ssh -c \"wp theme activate '#{settings['slug']}'\""
+FileUtils.ln_s "www/wp-content/themes/#{settings['slug']}/", 'build'
+# activate theme
+wp "theme activate \"#{settings['slug']}\""
 
-# after which, the site will be ready to run and develop locally
+# install and activate WordPress plugins
+(settings['wp']['plugins'] || []).each do |plugin|
+	wp "plugin install \"#{plugin}\" --activate"
+end
+# remove default WordPress plugins and themes
+if settings['wp']['skip_default_plugins']
+	wp "plugin delete \"hello\" \"akismet\""
+end
+if settings['wp']['skip_default_themes']
+	wp "theme delete \"twentysixteen\" \"twentyfifteen\" \"twentyfourteen\""
+end
+# WordPress options
+(settings['wp']['options'] || []).each do |option, value|
+	wp "option update #{option} \"#{value}\""
+end
+
+# the site will be ready to run and develop locally
 # just run gulp
-puts '[Fabrica] Setup complete. To develop locally, \'cd dev\' then run \'gulp\'.'
+echo 'Setup complete. To develop locally, \'cd dev\' then run \'gulp\'.'	
