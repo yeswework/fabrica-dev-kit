@@ -108,8 +108,7 @@ else
 		'Movefile',
 		'docker-compose.yml'
 	]
-	for templateFilename in templateFilenames
-		destFilename = "dev/#{templateFilename}"
+	for destFilename in templateFilenames
 		srcFilename = "#{destFilename}.erb"
 		if File.exists?(srcFilename)
 			template = File.read srcFilename
