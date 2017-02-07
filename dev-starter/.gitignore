@@ -1,5 +1,6 @@
 build
 Movefile
+yarn.lock
 node_modules/
 src-starter/
 src/.env
