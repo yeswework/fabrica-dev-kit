@@ -24,6 +24,8 @@ services:
         MYSQL_DATABASE: wordpress
         MYSQL_USER: wordpress
         MYSQL_PASSWORD: wordpress
+      ports:
+        - <%= db['dev_port'] %>:3306
       networks:
         - back
     wp:
