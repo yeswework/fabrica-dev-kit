@@ -51,17 +51,17 @@ class Project extends Singleton {
 <% if defined?(acf_pro_key) %>
 
 	// Set ACF paths
-	function acfSettingsPath($dir) {
+	public function acfSettingsPath($dir) {
 		return get_stylesheet_directory() . '/inc/vendor/advanced-custom-fields/advanced-custom-fields-pro/';
 	}
 
-	function acfSettingsDir($path) {
+	public function acfSettingsDir($path) {
 		return get_stylesheet_directory_uri() . '/inc/vendor/advanced-custom-fields/advanced-custom-fields-pro/';
 	}
 <% end %>
 
 	// Register Custom Post Types and Taxonomies
-	function registerStructure() {
+	public function registerStructure() {
 
 		// http://generatewp.com/ has a useful generator
 
