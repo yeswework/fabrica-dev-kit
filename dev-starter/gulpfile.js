@@ -27,8 +27,7 @@ var gulp = require('gulp'),
 	posthtmlBem = require('posthtml-bem'),
 	stylelint = require('stylelint'),
 	webpack = require('webpack-stream'),
-	exec = require('child_process').exec,
-	yaml = require('yamljs');
+	exec = require('child_process').exec;
 
 // Load project and local settings
 var projectSettings, localSettings;
@@ -225,8 +224,18 @@ function fonts() {
 		.pipe(browserSync.stream());
 }
 
+// Wordmove: add full Wordpress path to the final Movefile with the almost complete template
+function wordmove(cb) {
+	exec('erb Movefile.erb > Movefile', {}, function (error, stdout, stderr) {
+		if (error) {
+			console.error('Error generating Movefile:', error);
+		}
+	});
+	cb();
+}
+
 // Build: sequences all the other tasks
-gulp.task('build', gulp.series(clean, gulp.parallel(header, acf, functions, includes, controllers, views, styles, scripts, images, fonts)));
+gulp.task('build', gulp.series(clean, gulp.parallel(header, acf, functions, includes, controllers, views, styles, scripts, images, fonts, wordmove)));
 
 // Watch: fire build, then watch for changes
 gulp.task('default', gulp.series('build', watch));

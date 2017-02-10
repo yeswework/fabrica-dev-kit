@@ -105,7 +105,7 @@ else
 		'src/includes/composer.json',
 		'src/includes/project.php',
 		'src/templates/views/base.twig',
-		'Movefile',
+		'Movefile.erb',
 		'docker-compose.yml'
 	]
 	for destFilename in templateFilenames
