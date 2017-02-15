@@ -8,7 +8,7 @@ Fabrica provides an environment and tools to streamline every part of the WordPr
 * Version control for custom fields
 * Instant deployment
 
-##Complete feature list
+##All features
 
 ###Installs and configures an independent local development environment for each project
 
