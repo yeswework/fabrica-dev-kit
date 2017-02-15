@@ -6,9 +6,6 @@
 namespace fabrica;
 
 require_once('singleton.php');
-<% if defined?(acf_pro_key) %>
-require_once(__DIR__ . '/vendor/advanced-custom-fields/advanced-custom-fields-pro/acf.php');
-<% end %>
 
 // Set content width value based on the theme's design
 if (!isset($content_width)) {
@@ -36,11 +33,6 @@ class Project extends Singleton {
 	public static $googleAnalyticsId = '<%= google_analytics_id %>';
 
 	public function __construct() {
-<% if defined?(acf_pro_key) %>
-
-		add_filter('acf/settings/path', array($this, 'acfSettingsPath'));
-		add_filter('acf/settings/dir', array($this, 'acfSettingsDir'));
-<% end %>
 		add_action('init', array($this, 'registerStructure'));
 
 		// Project-specific tags, hooks and initialisations
@@ -48,17 +40,6 @@ class Project extends Singleton {
 		// add_filter('filter_name', array($this, 'filterHandler'));
 
 	}
-<% if defined?(acf_pro_key) %>
-
-	// Set ACF paths
-	public function acfSettingsPath($dir) {
-		return get_stylesheet_directory() . '/inc/vendor/advanced-custom-fields/advanced-custom-fields-pro/';
-	}
-
-	public function acfSettingsDir($path) {
-		return get_stylesheet_directory_uri() . '/inc/vendor/advanced-custom-fields/advanced-custom-fields-pro/';
-	}
-<% end %>
 
 	// Register Custom Post Types and Taxonomies
 	public function registerStructure() {
