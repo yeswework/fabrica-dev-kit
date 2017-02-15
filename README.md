@@ -1,4 +1,4 @@
-#Fabrica Theme Kit for WordPress
+#Fabrica Dev Kit for WordPress
 Fabrica provides an environment and tools to streamline every part of the WordPress development process. It is ideal for bespoke theme developers and/or heavyweight CMS-type requirements. Its main features are:
 
 * Instant setup of project-specific fast local development server
@@ -37,7 +37,7 @@ Fabrica provides an environment and tools to streamline every part of the WordPr
 * Automatically activates [ACF-JSON](https://www.advancedcustomfields.com/resources/local-json/) for ‘database’ version-control (tracks and synchronizes field settings for the Advanced Custom Fields plugin across multiple environments).
 
 ##Requirements + dependencies
-Fabrica Theme Kit is compatible with recent versions of Mac OS X. It has a few dependencies:
+Fabrica Dev Kit is compatible with recent versions of Mac OS X. It has a few dependencies:
 
 1. **Docker** – download and run the installer by following the link for Mac OS X from the [Docker downloads page](https://docs.docker.com/docker-for-mac/) (Stable channel is fine).
 1. **Node.js** – download and run the installer by following the link to the Recommended Version from the [Node.js homepage](https://nodejs.org/en/).

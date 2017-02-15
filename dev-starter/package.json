@@ -1,10 +1,10 @@
 {
-  "name": "fabrica-theme-kit",
+  "name": "fabrica-dev-kit",
   "version": "1.0.0",
-  "description": "Fabrica Theme Kit for Wordpress",
+  "description": "Fabrica Dev Kit for Wordpress",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fabrica-wp/theme-kit"
+    "url": "https://github.com/fabrica-wp/dev-kit"
   },
   "private": true,
   "author": "Fabrica <info@fabri.ca> (http://fabri.ca/)",
