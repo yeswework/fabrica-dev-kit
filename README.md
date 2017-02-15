@@ -1,11 +1,11 @@
 #Fabrica Dev Kit for WordPress
-Fabrica provides an environment and tools to streamline every part of the WordPress development process. It is ideal for bespoke theme developers and/or heavyweight CMS-type requirements. Its main features are:
+A best-practice development environment and build toolkit to streamline every part of the WordPress development process. Ideal for custom theme developers, especially those with complex CMS-type requirements. Its main features are:
 
-* Instant setup of project-specific fast local development server (uses [Docker](https://www.docker.com/))
+* Instant setup of project-specific fast local development server using [Docker](https://www.docker.com/)
 * Tools for coding leaner, cleaner themes using Twig, PostCSS, MVC and BEM
 * Build script to preprocess, lint and optimize assets
 * Live browser testing, synchronized across devices
-* Version control for custom fields (uses [Advanced Custom Fields](https://www.advancedcustomfields.com/))
+* Version control for custom fields
 * Instant deployment
 
 ##All features
