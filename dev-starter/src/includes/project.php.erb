@@ -14,9 +14,6 @@ if (!isset($content_width)) {
 
 class Project extends Singleton {
 
-	// public static variables and functions will be accessible anywhere
-	// using the project namespace, eg. yww::$myVar or yww::myFunction()
-
 	// Namespace for this project
 	public static $projectNamespace = '<%= slug %>';
 
@@ -38,24 +35,14 @@ class Project extends Singleton {
 		// Project-specific tags, hooks and initialisations
 		// add_action('action_name', array($this, 'actionHandler'));
 		// add_filter('filter_name', array($this, 'filterHandler'));
-
 	}
 
 	// Register Custom Post Types and Taxonomies
 	public function registerStructure() {
 
 		// http://generatewp.com/ has a useful generator
-
 	}
 
-}
-
-// Class alias so Project can be accessed directly using project slug
-if (!class_exists(Project::$projectNamespace)) {
-	class_alias('fabrica\Project', Project::$projectNamespace);
-} else {
-	// Class name is taken: namespace the class alias
-	class_alias('fabrica\Project', 'fabrica\\' . Project::$projectNamespace);
 }
 
 // Create a singleton instance of Project
