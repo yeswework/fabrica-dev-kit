@@ -81,7 +81,7 @@ To begin version control on your project run `git init` in the `dev/` folder. Th
 For direct MySQL access to the development database, we recommend using [Sequel Pro](https://www.sequelpro.com/) to access it while the development machine is up. Unless you changed it in `setup.yml`, the database server is accessible at `localhost:3306`, and the username and password are both `wordpress`.
 
 ###Housekeeping
-To remove a project's Docker containers, run `docker-compose stop && docker-compose rm -f` from the `dev/` folder. Note that this will delete the development database.
+If you have finished working on a project and want to free up the space used by its development environment, run `docker-compose stop && docker-compose rm -f` from the `dev/` folder (note that this will delete the development database). As long as `/dev/src` is preserved it's usually safe to delete the `/dev/www` folder too, but this removes all files from the WP installation, so make sure to save any other files from `/dev/www/wp-content` that you might need (such as secondary themes, plugins or uploads).
 
 ##Active development
 
@@ -103,7 +103,7 @@ Fabrica's super-minimal boilerplate makes no assumptions about your data or desi
 
 There are several predefined files (all in the `includes/` folder) to help keep your custom code well-organized. We recommend keeping all project code within the object-oriented namespaced structure provided by these files, but any other `.php` file you create in the `includes/` folder will be automatically included and run in the active theme: there is no need to manually `require()` or `include()` it.
 
-* `project.php` for hooks that should affect both front-end and admin requests, and for any other functions which you might need to make available to your theme (as methods of the singleton `Project` class). As a convenient shortcut, we alias this class to your project slug, so if your project slug is `fabrica` you can call a static member function from anywhere with `fabrica::myFunction()`.
+* `project.php` for hooks that should affect both front-end and admin requests, and for any other functions which you might need to make available to your theme (as methods of the singleton `Project` class).
 * `front.php` for hooks that should only affect front-end requests.
 * `admin.php` for hooks that should only affect admin requests (the constructor includes these conditions).
 * `ajax.php` for handling AJAX requests (the front-end calls can be added in `assets/main.js`).
