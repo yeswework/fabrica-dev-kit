@@ -81,7 +81,7 @@ To begin version control on your project run `git init` in the `dev/` folder. Th
 For direct MySQL access to the development database, we recommend using [Sequel Pro](https://www.sequelpro.com/) to access it while the development machine is up. Unless you changed it in `setup.yml`, the database server is accessible at `localhost:3306`, and the username and password are both `wordpress`.
 
 ###Housekeeping
-To remove a project's Docker containers, you can run `docker-compose rm -f` from the `/dev` folder. Note that this will delete the development database, but the project can subsequently be reinitiated with an empty database using `docker-compose up`.
+To remove a project's Docker containers, you can run `docker-compose rm -f` from the `dev/` folder. Note that this will delete the development database, but the project can subsequently be reinitiated with an empty database using `docker-compose up`.
 
 ##Active development
 
