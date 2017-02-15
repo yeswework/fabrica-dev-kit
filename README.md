@@ -53,7 +53,7 @@ Optional but strongly recommended:
 ###Installation
 First make sure you have all the required dependencies (see above). Then:
 
-1. Clone the repo into a folder for your project, eg. `git clone https://github.com/yeswework/fabrica.git fabricaproject` (replace `fabricaproject` with a project-specific name or slug).
+1. Clone the repo into a folder for your project, eg. `git clone https://github.com/fabrica-wp/fabrica-dev-kit.git fabricaproject` (replace `fabricaproject` with a project-specific name or slug).
 1. In the new folder, make a copy of `setup-example.yml` called `setup.yml`, and edit this file to set the basic parameters for the development site. Any plugins you want to be automatically installed can be listed here.
 1. Run `./setup.rb`. This will set up your virtual machine and install everything required: Nginx, PHP-FPM, WordPress, your chosen plugins and our suite of build tools.
 
