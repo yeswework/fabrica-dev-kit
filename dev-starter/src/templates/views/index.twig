@@ -2,7 +2,7 @@
 
 {% block content %}
 	<main>
-		<h1>{{ title }}</h1>
+		<h1>{{ site.title }}</h1>
 		{% for post in posts %}
 			<article>
 				<h1><a href="{{ post.link }}">{{ post.title }}</a></h1>

@@ -12,7 +12,6 @@ require_once('project.php');
 class Base extends Singleton {
 
 	public function __construct() {
-
 		new \Timber\Timber();
 		\Timber\Timber::$dirname = array('views');
 
@@ -26,7 +25,6 @@ class Base extends Singleton {
 		// Menus
 		add_action('init', array($this, 'registerMenus'));
 		add_filter('timber_context', array($this, 'exposeMenus'));
-
 	}
 
 	// Register front-end scripts
@@ -53,12 +51,10 @@ class Base extends Singleton {
 		// Repeat for stylesheets, first libraries, then theme-specific
 		wp_register_style(Project::$mainHandle, get_stylesheet_directory_uri() . '/css/main' . $suffix . '.css', $dependencies = array(), filemtime(get_template_directory() . '/css/main' . $suffix . '.css'));
 		wp_enqueue_style(Project::$mainHandle);
-
 	}
 
 	// Output Google Analytics tracking code
 	public function injectAnalytics() {
-
 		$googleAnalyticsId = Project::$googleAnalyticsId;
 		if(isset($googleAnalyticsId) && $googleAnalyticsId != '') {
 
@@ -70,9 +66,7 @@ class Base extends Singleton {
 				r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
 				ga('create','<?php echo $googleAnalyticsId; ?>','auto');ga('send','pageview');
 			</script><?php
-
 		}
-
 	}
 
 	// Register WP theme features and deregister some messy WP defaults
@@ -109,30 +103,24 @@ class Base extends Singleton {
 
 		remove_action('wp_head', 'print_emoji_detection_script', 7);
 		remove_action('wp_print_styles', 'print_emoji_styles');
-
 	}
 
 	// Register menus with WP
 	public function registerMenus() {
-
 		$locations = array();
 		foreach (Project::$menus as $slug => $name) {
 			$locations[$slug] = __($name, Project::$projectNamespace);
 		}
 		register_nav_menus($locations);
-
 	}
 
 	// Expose menus globally via Timber context
 	public function exposeMenus($context) {
-
 		foreach(Project::$menus as $slug => $name) {
 			$context['menus'][$slug] = new \Timber\Menu($slug);
 		}
 		return $context;
-
 	}
-
 }
 
 // Create a singleton instance of Project

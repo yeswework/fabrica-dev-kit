@@ -11,7 +11,6 @@ require_once('project.php');
 class Front extends Singleton {
 
 	public function __construct() {
-
 		if (is_admin() || (defined('DOING_AJAX') && DOING_AJAX)) { return; }
 
 		add_filter(Project::$varsTag, array($this, 'updateScriptVars'));
@@ -19,7 +18,6 @@ class Front extends Singleton {
 		// Front-end-specific tags, hooks and initialisations
 		// add_action('action_name', array($this, 'actionHandler'));
 		// add_filter('filter_name', array($this, 'filterHandler'));
-
 	}
 
 	// Send script variables to front end
@@ -35,9 +33,7 @@ class Front extends Singleton {
 			));
 		}
 		return $scriptVars;
-
 	}
-
 }
 
 // Create a singleton instance of Front

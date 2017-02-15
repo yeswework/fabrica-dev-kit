@@ -1,7 +1,7 @@
 #Fabrica Theme Kit for WordPress
 Fabrica provides an environment and tools to streamline every part of the WordPress development process. It is ideal for bespoke theme developers and/or heavyweight CMS-type requirements. Its main features are:
 
-* Instant setup of per-project fast local development server (using Docker)
+* Instant setup of project-specific fast local development server
 * Tools for coding leaner, cleaner themes using Twig, PostCSS, MVC and BEM
 * Build script to preprocess, lint and optimize assets
 * Live browser testing, synchronized across devices
