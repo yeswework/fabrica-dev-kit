@@ -1,8 +1,8 @@
-#Fabrica for WordPress
-Fabrica provides an environment and tools to streamline every part of the WordPress development process. It is ideal for bespoke theme developers and/or those with CMS-type requirements. Its main features are:
+#Fabrica Theme Kit for WordPress
+Fabrica provides an environment and tools to streamline every part of the WordPress development process. It is ideal for bespoke theme developers and/or heavyweight CMS-type requirements. Its main features are:
 
 * Instant setup of project-specific fast local development server
-* Tools for coding better themes using Twig, PostCSS, MVC and BEM
+* Tools for coding leaner, cleaner themes using Twig, PostCSS, MVC and BEM
 * Build script to preprocess, lint and optimize assets
 * Live browser testing, synchronized across devices
 * Version control for custom fields
@@ -12,8 +12,7 @@ Fabrica provides an environment and tools to streamline every part of the WordPr
 
 ###Installs and configures an independent local development environment for each project
 
-* Using [Vagrant](https://www.vagrantup.com/) and [Chef](https://www.chef.io/chef/) (and via a single Terminal command), installs and fully configures a virtual machine for your project running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/), for super-fast local development. Each Fabrica project has a separate virtual machine (and therefore IP / development domain). This gives a more efficient, intuitive, reliable and secure setup than a one-size-fits-all model like MAMP.
-* Maps your chosen development domain (eg. `fabrica.dev`) to the virtual machine by automatically modifying the local `hosts` file, for no-fuss browser access.
+* Using [Docker](https://www.docker.com/), creates an independent development environment for your project running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/). Docker's efficient architecture means that each Fabrica project runs and is stored separately (unlike MAMP, where all projects share space and servers), while avoiding the bloat of a Vagrant-like solution where each project has an entire virtual machine to itself.
 * Automatically installs all the software required to develop, including the latest version of WordPress and your plugins of choice (you just list them in the initial setup file), as well as build, optimization and deployment tools.
 
 ###Allows you to write cleaner, more logical and more beautiful code (if you want to)...
@@ -24,7 +23,7 @@ Fabrica provides an environment and tools to streamline every part of the WordPr
 * ... making use of the fantastic [Advanced Custom Fields](https://www.advancedcustomfields.com/) plugin, which is deeply supported by Timber (see above). Fabrica can automatically install ACF Pro via Composer if you supply your licence key at setup.
 
 ###Reduces friction in the development process
-* Keeps the development source folder outside the virtual machine for easy editing and version control. (You don't have to log into the virtual machine to build / develop: it just acts as a fast server.)
+* Keeps the development source folder outside the virtual machine for easy editing and version control. (No need to log into a virtual machine to build / develop: it just acts as a fast server.)
 * Includes a super-minimal object-orientated boilerplate theme (see below), specially constructed for bespoke theme development.
 * Live-compiles and optimizes straight to the active theme folder inside the virtual machine as you develop, via a pre-configured [Gulp](http://gulpjs.com/) watch, which:
 	* Preprocesses, [Autoprefixes](https://github.com/postcss/autoprefixer), lints and minifies (with source maps) your stylesheets.
@@ -38,33 +37,29 @@ Fabrica provides an environment and tools to streamline every part of the WordPr
 * Automatically activates [ACF-JSON](https://www.advancedcustomfields.com/resources/local-json/) for ‘database’ version-control (tracks and synchronizes field settings for the Advanced Custom Fields plugin across multiple environments).
 
 ##Requirements + dependencies
-Fabrica runs on any recent version of Mac OS X. It has a few dependencies:
+Fabrica Theme Kit is compatible with recent versions of Mac OS X. It has a few dependencies:
 
-1. **VirtualBox** – download and run the installer, by following the link to the plaform package for Mac OS X hosts from the [VirtualBox downloads page](https://www.virtualbox.org/wiki/Downloads).
-1. **Vagrant** – download and run the installer by following the link for Mac OS X from the [Vagrant downloads page](https://www.vagrantup.com/downloads.html).
-1. **Node.js** – download and run the installer by following the link to the Recommended Version from the [Node.js homepage](https://nodejs.org/en/).
-1. **Gulp command line tools** – once Node.js is installed, run `npm install gulpjs/gulp-cli -g` from the command line.
-1. **Composer** – follow the Global installation instructions in the [Composer installation guide](https://getcomposer.org/doc/00-intro.md#globally).
+1. **Docker** – download and run the installer by following the link for Mac OS X from the [Docker downloads page](https://docs.docker.com/docker-for-mac/) (Stable channel is fine).
+1. **Node.js** – download and run the installer by following the link to the Recommended Version from the [Node.js homepage](https://nodejs.org/en/).
+1. **Gulp command line tools** – once Node.js is installed, run `npm install gulpjs/gulp-cli -g` from the command line.
+1. **Composer** – follow the Global installation instructions in the [Composer installation guide](https://getcomposer.org/doc/00-intro.md#globally).
 
 Optional but strongly recommended:
 
-* **Vagrant hostsupdater plugin** (to map a chosen development domain to the virtual machine's local IP) – run `vagrant plugin install vagrant-hostsupdater` from the command line.
-* **Wordmove** (for fast command-line deployment) – run `gem install wordmove` from the command line.
+* **Wordmove** (for fast command-line deployment) which can be installed with `gem install wordmove`. Note: if you want to use FTP for deployment (rather than SSH), you'll also need **lftp** ([installation instructions](https://github.com/welaika/wordmove/wiki/Install-lftp-on-OSX-yosemite)).
 
 ##Getting started
 
 ###Installation
 First make sure you have all the required dependencies (see above). Then:
 
-1. Clone the repo into a folder for your project, eg. `git clone https://github.com/yeswework/fabrica.git fabrica-project` (replace `fabrica-project` with a project-specific name or slug).
+1. Clone the repo into a folder for your project, eg. `git clone https://github.com/yeswework/fabrica.git fabricaproject` (replace `fabricaproject` with a project-specific name or slug).
 1. In the new folder, make a copy of `setup-example.yml` called `setup.yml`, and edit this file to set the basic parameters for the development site. Any plugins you want to be automatically installed can be listed here.
 1. Run `./setup.rb`. This will set up your virtual machine and install everything required: Nginx, PHP-FPM, WordPress, your chosen plugins and our suite of build tools.
-1. **Important**: the installation procedure doesn't require any further intervention but if you are using the Vagrant hostsupdater plugin for custom development domains, you will need to enter your system password to modify the `hosts` file – so keep an eye out for the prompt, because the setup will not advance while it is waiting for this.
 
 ###Starting and stopping the virtual machine
-
-* If you have just installed a project, its virtual machine will already be running. If you are returning later to a project, first run `vagrant up` from the project folder. Your project will then be accessible at the development domain you specified in the `setup.yml` file before installation.
-* To shut down the virtual machine, run `vagrant suspend` from the project folder. (Restarting your computer will also shut down the virtual machine.)
+* If you have just installed a project, its servers will already be running. If you are returning later to a project, first run `docker-compose up` from the project folder. Your project will then be accessible at the development domain you specified in the `setup.yml` file before installation.
+* To shut down the virtual machine, run `docker-compose stop` from the project folder. (Restarting your computer will also shut down the virtual machine.)
 
 ###Running the build script + watch during active development
 * During development, keep a Gulp watch running by running `gulp` from the `dev/` folder. It'll watch your files for changes and live-compile and optimize them into the virtual machine's active theme folder.
@@ -83,7 +78,10 @@ First make sure you have all the required dependencies (see above). Then:
 To begin version control on your project run `git init` in the `dev/` folder. This will track not only your source code but also the corresponding build script and names of the modules needed to compile it into an active theme. (It's important to maintain a copy because because the default build script is subject to change in future versions of Fabrica, which could lead to problems if restoring a project from a backup.)
 
 ###Local database access
-For direct MySQL access to the development database, we recommend using [Sequel Pro](https://www.sequelpro.com/) to access it while the development machine is up. Use the development IP address you chose in `setup.yml` before installation, and the username and password are both `wordpress`.
+For direct MySQL access to the development database, we recommend using [Sequel Pro](https://www.sequelpro.com/) to access it while the development machine is up. Unless you changed it in `setup.yml`, the database server is accessible at `localhost:3306`, and the username and password are both `wordpress`.
+
+###Housekeeping
+To remove a project's Docker containers, you can run `docker-compose rm -f` from the '/dev' folder. Note that this will delete the development database, but the project can subsequently be reinitiated with an empty database using `docker-compose up`.
 
 ##Active development
 
@@ -108,7 +106,7 @@ There are several predefined files (all in the `includes/` folder) to help keep 
 * `project.php` for hooks that should affect both front-end and admin requests, and for any other functions which you might need to make available to your theme (as methods of the singleton `Project` class). As a convenient shortcut, we alias this class to your project slug, so if your project slug is `fabrica` you can call a static member function from anywhere with `fabrica::myFunction()`.
 * `front.php` for hooks that should only affect front-end requests.
 * `admin.php` for hooks that should only affect admin requests (the constructor includes these conditions).
-* `ajax.php` for AJAX requests (the front-end calls can be added in `assets/main.js`).
+* `ajax.php` for handling AJAX requests (the front-end calls can be added in `assets/main.js`).
 * `models.php` is where to extend Post / Term / User objects by assigning extra properties to them when instantiated: see MVC section in code examples below.
 
 ###Installing additional dependencies

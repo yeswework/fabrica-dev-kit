@@ -10,7 +10,6 @@ require_once('project.php');
 class Ajax extends Singleton {
 
 	public function __construct() {
-
 		add_filter(Project::$varsTag, array($this, 'updateScriptVars'));
 
 		// Namespaced tags
@@ -19,7 +18,6 @@ class Ajax extends Singleton {
 		// AJAX handler functions as required
 		add_action('wp_ajax_nopriv_AJAX-ACTION', array($this, 'ajaxHandler'));
 		add_action('wp_ajax_AJAX-ACTION', array($this, 'ajaxHandler'));
-
 	}
 
 	// Send script variables to front end
@@ -33,18 +31,15 @@ class Ajax extends Singleton {
 			));
 		}
 		return $scriptVars;
-
 	}
 
 	// Handle AJAX requests
 	public function ajaxHandler() {
-
 		if (isset($_POST['postNonce'])) {
 			$nonce = $_POST['postNonce'];
 		} else {
 			$this->sendAjaxResponse(array('success' => false, 'error' => "Couldn't retrieve nonce."));
 		}
-
 		if (!wp_verify_nonce($nonce, $this->postNonce)) {
 			$this->sendAjaxResponse(array('success' => false, 'error' => 'Invalid nonce.'));
 		}
@@ -56,16 +51,13 @@ class Ajax extends Singleton {
 
 		// Add data to response + send!
 		$this->sendAjaxResponse(array('success' => true));
-
 	}
 
 	// Send AJAX responses
 	public function sendAjaxResponse($response) {
-
 		header('Content-Type: application/json');
 		echo json_encode($response);
 		exit;
-
 	}
 }
 

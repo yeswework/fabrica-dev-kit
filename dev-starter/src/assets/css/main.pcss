@@ -21,34 +21,56 @@ $desktop: (min-width: 961px);
 
 /* Mixins */
 
+@define-mixin batch $properties, $value {
+	@each $property in $(properties) {
+		$(property): $value;
+	}
+}
+
 @define-mixin responsive $properties, $m, $t, $d {
 	@media $mobile {
-		@each $property in $(properties) {
-			$(property): $m;
-		}
+		@mixin batch $properties, $m;
 	}
 	@media $tablet {
-		@each $property in $(properties) {
-			$(property): $t;
-		}
+		@mixin batch $properties, $t;
 	}
 	@media $desktop {
-		@each $property in $(properties) {
-			$(property): $d;
-		}
+		@mixin batch $properties, $d;
 	}
 }
 
-/* Spacing defaults */
-
-@define-mixin small-spacing $properties {
-	@mixin responsive $(properties), 0.5rem, 0.75rem, 1rem;
+@define-mixin mobile $properties, $value {
+	@media $mobile {
+		@mixin batch $properties, $value;
+	}
 }
 
-@define-mixin medium-spacing $properties {
-	@mixin responsive $(properties), 0.75rem, 1rem, 1.25rem;
+@define-mixin mobileTablet $properties, $value {
+	@media $mobileTablet {
+		@mixin batch $properties, $value;
+	}
 }
 
-@define-mixin large-spacing $properties {
-	@mixin responsive $(properties), 1rem, 1.5rem, 2rem;
+@define-mixin tablet $properties, $value {
+	@media $tablet {
+		@mixin batch $properties, $value;
+	}
+}
+
+@define-mixin tabletDesktop $properties, $value {
+	@media $tabletDesktop {
+		@mixin batch $properties, $value;
+	}
+}
+
+@define-mixin desktop $properties, $value {
+	@media $desktop {
+		@mixin batch $properties, $value;
+	}
+}
+
+/* Tags */
+
+html {
+	@mixin responsive (font-size), 0.75rem, 0.875rem, 1rem;
 }

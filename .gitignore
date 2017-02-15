@@ -4,3 +4,4 @@ vagrant.yml
 .vagrant/
 dev/
 provision/tmp/
+.DS_Store
