@@ -198,4 +198,4 @@ end
 
 # the site will be ready to run and develop locally
 # just run gulp
-echo 'Setup complete. To develop locally, \'cd dev\' then run \'gulp\'.'	
+echo 'Setup complete. To develop locally, \'cd dev\' then run \'gulp\'.'
