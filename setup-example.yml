@@ -23,7 +23,7 @@ wp:
   lang: en_US
   rewrite_structure: /%postname%/
   multisite: false
-  # acf_pro_key: # Optional (will preinstall Advanced Custom Fields Pro via Composer)
+  # acf_pro_key: # Optional (will preinstall Advanced Custom Fields Pro)
   plugins:
   #  - advanced-custom-fields # Optional (use slugs from WP Codex, plugins will be preinstalled)
 

@@ -22,7 +22,7 @@ def echo(message)
 	puts "\e[7m[Fabrica]\e[27m 🏭  #{message}"
 end
 def halt(message)
-	abort "\e[1m\e[41m[Fabrica]\e[0m 🏭  #{message}"
+	abort "\e[1m\e[41m[Fabrica]\e[0m ⚠️  #{message}"
 end
 
 # check Fabrica dependencies
@@ -184,6 +184,11 @@ wp "theme activate \"#{settings['slug']}\""
 (settings['wp']['plugins'] || []).each do |plugin|
 	wp "plugin install \"#{plugin}\" --activate"
 end
+if settings['wp']['acf_pro_key']
+	system "docker exec #{$wp_container} bash -c 'curl \"http://connect.advancedcustomfields.com/index.php?p=pro&a=download&k=#{settings['wp']['acf_pro_key']}\" > /tmp/acf-pro.zip \
+		&& wp plugin install /tmp/acf-pro.zip --activate \
+		&& rm /tmp/acf-pro.zip'"
+end
 # remove default WordPress plugins and themes
 if settings['wp']['skip_default_plugins']
 	wp "plugin delete \"hello\" \"akismet\""
@@ -198,4 +203,4 @@ end
 
 # the site will be ready to run and develop locally
 # just run gulp
-echo 'Setup complete. To develop locally, \'cd dev\' then run \'gulp\'.'	
+echo 'Setup complete. To develop locally, \'cd dev\' then run \'gulp\'.'
