@@ -17,7 +17,7 @@ Fabrica provides an environment and tools to streamline every part of the WordPr
 
 ###Allows you to write cleaner, more logical and more beautiful code (if you want to)...
 * ... with templates written in [Twig](http://twig.sensiolabs.org/) rather than directly in PHP. Installs the revolutionary [Timber](https://upstatement.com/timber/) to bring MVC-like separation of concerns to WordPress development, separating data processing and analytical logic from presentation, allowing you to write more elegant, legible and maintainable templates, eradicating `<?php` `?>` tag-itis forever. A genuine 'never go back' improvement. See the MVC section in code examples below for more.
-* ... with [BEM syntax](http://csswizardry.com/2013/01/mindbemding-getting-your-head-round-bem-syntax/). Installs the [BEML](https://github.com/zenwalker/node-beml) preprocessor for HTML which allows you to write much less repetitive BEM markup (see code examples below), and which in turn reflects your (Post)CSS structure more closely.
+* ... with [BEM syntax](http://csswizardry.com/2013/01/mindbemding-getting-your-head-round-bem-syntax/). Uses the [PostHTML-bem](https://github.com/rajdee/posthtml-bem/) plugin for [PostHTML](https://github.com/posthtml/posthtml) which allows you to write much less repetitive BEM markup (see code examples below), and which in turn reflects your (Post)CSS structure more closely.
 * ... with [PostCSS](https://github.com/postcss/postcss) for variables, mixins and other CSS preprocessing enhancements (it can compile your SASS or LESS code no problem).
 * ... with the [LostGrid](https://github.com/peterramsing/lost) grid system / preprocessor, which allows you to build fluid, responsive, nested grids without using presentational classes, with or without [Flexbox](https://github.com/peterramsing/lost).
 * ... making use of the fantastic [Advanced Custom Fields](https://www.advancedcustomfields.com/) plugin, which is deeply supported by Timber (see above). Fabrica can automatically install ACF Pro via Composer if you supply your licence key at setup.
@@ -186,12 +186,12 @@ The additional information will be automatically available to the template, as l
 
 Note how here we access `post.allMeasurements` directly, without needing the call to `post.get_field()` in Twig (which is normally essential to receive full ACF Repeater data), since we have already made that call when mapping the new property in `models.php`.
 
-###BEM with BEML + PostCSS
+###BEM with PostHTML-bem + PostCSS
 The BEM methodology provides a conceptual framework which makes it easy to build blocks (groups of design and content elements) to be reused across a site without having to worry about either duplicated or conflicting rules. The methodology is simple but promotes logical, disciplined thinking and efficient, modular code. You can read more about the principles of BEM online, for example on [CSS Wizardry](http://csswizardry.com/2013/01/mindbemding-getting-your-head-round-bem-syntax/).
 
-The inclusion of BEML, an HTML preprocessor, and PostCSS plugins, in Fabrica make the process of actually writing BEM markup and styles quicker, easier and less error-prone.
+The inclusion of PostHTML, PostCSS, and specific plugins for these, in Fabrica make the process of actually writing BEM markup and styles quicker, easier and less error-prone.
 
-As an example, let's take some vanilla BEM markup and styles. We're using `__` notation for elements and `--` notation for modifiers. (If you prefer an alternative notation, you can configure it in `dev/gulpfile.js` by modifying the `beml` property of the `options` hash.)
+As an example, let's take some vanilla BEM markup and styles. We're using `__` notation for elements and `--` notation for modifiers. (If you prefer an alternative notation, you can configure it in `dev/gulpfile.js` by modifying the `posthtmlBem` property of the `options` hash.)
 
 ####Before...
 
@@ -234,13 +234,13 @@ Second, some corresponding CSS (fairly basic, but targets several of the member 
 
 ####...and after:
 
-With BEML + PostCSS we can avoid repetition in both places, which makes the code easier to write, easier to read, and less prone to typos. Here are the equivalent versions:
+With PostHTML-bem + PostCSS we can avoid repetition in both places, which makes the code easier to write, easier to read, and less prone to typos. Here are the equivalent versions:
 
-First, the BEML – note how we use the attributes `block`, `elem` and `mod` instead of classes, but these are automatically rendered as classes, so that the following compiles identically to the HTML above.
+First, the markup: note how we use the attributes `block`, `elem` and `mod` instead of classes, but these are automatically rendered as classes, so that the following compiles identically to the HTML above.
 
 ```
 <div block="measurements">
-	<div elem="entry" mod="highlight">
+	<div elem="entry" mods="highlight">
 		<span elem="label">Width</span>:
 		<span elem="number">55</span>
 		<span elem="unit">cm</span>
@@ -297,11 +297,11 @@ The following markup is representative of how many layout frameworks implement a
 
 The multiple classes are to specify size / styles at different breakpoints via media queries, but they make the code bloated and hard to read – and the CSS rules to target all the options across all the different breakpoints are hundreds of lines long. And none of the styles are semantic...
 
-With LostGrid (a PostCSS plugin included with Fabrica), we can move all the presentational rules where they belong – in our stylesheet – and make our classes semantic. We'll also make use of BEML for maximum conciseness (see above). Here's a quick example for comparison:
+With LostGrid (a PostCSS plugin included with Fabrica), we can move all the presentational rules where they belong – in our stylesheet – and make our classes semantic. We'll also make use of PostHTML-bem syntax for maximum conciseness (see above). Here's a quick example for comparison:
 
 ```
 <div block="row">
-	<div elem="cell" mod="featured">wide cell</div>
+	<div elem="cell" mods="featured">wide cell</div>
 	<div elem="cell">normal cell</div>
 </div>
 <div block="row">
