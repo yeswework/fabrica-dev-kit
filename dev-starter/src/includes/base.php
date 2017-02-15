@@ -56,7 +56,7 @@ class Base extends Singleton {
 	// Output Google Analytics tracking code
 	public function injectAnalytics() {
 		$googleAnalyticsId = Project::$googleAnalyticsId;
-		if(isset($googleAnalyticsId) && $googleAnalyticsId != '') {
+		if (isset($googleAnalyticsId) && $googleAnalyticsId != '') {
 
 			?><script>
 				(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
