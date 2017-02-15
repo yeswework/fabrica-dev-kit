@@ -81,7 +81,7 @@ To begin version control on your project run `git init` in the `dev/` folder. Th
 For direct MySQL access to the development database, we recommend using [Sequel Pro](https://www.sequelpro.com/) to access it while the development machine is up. Unless you changed it in `setup.yml`, the database server is accessible at `localhost:3306`, and the username and password are both `wordpress`.
 
 ###Housekeeping
-If you have finished working on a project and want to free up the space used by its development environment, run `docker-compose stop && docker-compose rm -f` from the `dev/` folder (note that this will delete the development database). As long as `/dev/src` is preserved it's usually safe to delete the `/dev/www` folder too, but this removes all files from the WP installation, so make sure to save any other files from `/dev/www/wp-content` that you might need (such as secondary themes, plugins or uploads).
+If you have finished working on a project and want to free up the space used by its development environment, run `docker-compose stop && docker-compose rm -f` from the `dev/` folder (note that this will delete the development database). As long as `dev/src/` is preserved it's usually safe to delete the `dev/www/` folder too, but this removes all files from the WP installation, so make sure to save any other files from `dev/www/wp-content/` that you might need (such as secondary themes, plugins or uploads).
 
 ##Active development
 
@@ -113,7 +113,7 @@ There are several predefined files (all in the `includes/` folder) to help keep 
 * PHP modules: you can install / require Composer modules from within the `includes/` folder.
 * Front-end JS libraries can be installed using `npm install` and then either included (thanks to [Webpack](https://webpack.github.io/)) via `require` statements in `assets/js/main.js`,
 * Front-end CSS libraries can also be installed with `npm` and included via `@import` statements in `assets/css/main.pcss`. The PostCSS Import plugin automatically searches `node_modules` so a statement like `@import 'library.css'` doesn't require an explicit path.
-* PostCSS plugins: use `npm install` in the `/dev` folder (parent of `src`), and modify the `gulpfile.js` accordingly to sequence them.
+* PostCSS plugins: use `npm install` in the `dev/` folder (parent of `src`), and modify the `gulpfile.js` accordingly to sequence them.
 
 ##Code examples
 All of the techniques below are optional in Fabrica and vanilla HTML / CSS / PHP / WordPress API functions will all work fine – but we highly recommend making full use of these time- and sanity-saving enhancements.
