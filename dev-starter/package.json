@@ -1,22 +1,22 @@
 {
-  "name": "fabrica",
+  "name": "fabrica-theme-kit",
   "version": "1.0.0",
-  "description": "Fabrica for WordPress",
+  "description": "Fabrica Theme Kit for Wordpress",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yeswework/fabrica"
+    "url": "https://github.com/fabrica-wp/theme-kit"
   },
   "private": true,
-  "author": "Yes We Work <info@yeswework.com> (http://yeswework.com/)",
+  "author": "Fabrica <info@fabri.ca> (http://fabri.ca/)",
   "devDependencies": {
     "autoprefixer": "^6.5.1",
-    "browser-sync": "~2.17.3",
+    "browser-sync": "~2.18.8",
     "del": "^2.2.2",
     "gulp": "gulpjs/gulp#4.0",
     "gulp-changed": "^1.3.2",
     "gulp-concat": "^2.6.0",
     "gulp-cssnano": "^2.1.2",
-    "gulp-filter": "^4.0.0",
+    "gulp-filter": "^5.0.0",
     "gulp-flatten": "^0.3.1",
     "gulp-imagemin": "^3.0.3",
     "gulp-jshint": "^2.0.1",
@@ -27,17 +27,17 @@
     "gulp-tap": "^0.1.3",
     "gulp-uglify": "^2.0.0",
     "jshint": "^2.9.3",
-    "lost": "^7.1.0",
+    "lost": "^8.0.0",
     "postcss-each": "^0.9.3",
     "postcss-fontpath": "^0.3.0",
-    "postcss-import": "^8.1.2",
+    "postcss-import": "^9.1.0",
     "postcss-mixins": "^5.4.0",
     "postcss-nested": "^1.0.0",
     "postcss-nested-props": "^1.1.5",
     "postcss-simple-vars": "^3.0.0",
     "posthtml-bem": "^0.2.2",
     "stylelint": "^7.4.2",
-    "stylelint-config-standard": "^13.0.2",
+    "stylelint-config-standard": "^16.0.0",
     "webpack-stream": "^3.2.0"
   }
 }
