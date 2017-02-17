@@ -47,7 +47,7 @@ var base = {
 	dev: './',
 	src: './src/',
 	acfRelativeSrc: '../../../../src/',
-	theme: './www/wp-content/themes/' + projectSlug + '/'
+	theme: '../www/wp-content/themes/' + projectSlug + '/'
 };
 
 // Globs for each file type

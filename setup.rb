@@ -66,17 +66,28 @@ class Hash
 		return new_settings
 	end
 end
+# set command line options
+settings = {}
+if ARGV.size > 0 and ARGV.include? '--reinstall'
+	settings['reinstall'] = true
+	echo '"--reinstall" flag is set. "setup.bak.yml" will be used for configuration if "setup.yml" is not available.'
+end
 # load default, user and project/site settings, in that order
-settings = YAML.load_file(File.join(File.dirname(__FILE__), 'provision/default.yml'))
+settings.merge_settings!(File.join(File.dirname(__FILE__), 'provision/default.yml'))
 settings.merge_settings!(File.join(ENV['HOME'], '.fabrica/settings.yml'))
 setup_settings_filename = File.join(File.dirname(__FILE__), 'setup.yml')
+setup_settings_bak_filename = File.join(File.dirname(__FILE__), 'setup.bak.yml')
 if not File.exists?(setup_settings_filename)
-	halt 'Could not load "setup.yml". Please create this file based on "setup-example.yml".'
+	if settings['reinstall']
+		FileUtils.mv setup_settings_bak_filename, setup_settings_filename
+	else
+		halt 'Could not load "setup.yml". Please create this file based on "setup-example.yml". If the current project has been set up previously, you can set the "--reinstall" flag and "setup.bak.yml" will be used to bring the Docker containers back up and reconfigure them.'
+	end
 end
 settings.merge_settings!(setup_settings_filename)
 
 # rename/backup "setup.yml"
-FileUtils.mv 'setup.yml', 'setup.bak.yml'
+FileUtils.mv setup_settings_filename, setup_settings_bak_filename
 
 if Dir.exists? 'dev'
 	# working on an existing project
@@ -175,8 +186,8 @@ end
 # run our gulp build task and build the WordPress theme
 echo 'Building WordPress theme...'
 system 'gulp build'
-# create symlink to theme folder in dev for quick access
-FileUtils.ln_s "www/wp-content/themes/#{settings['slug']}/", 'build'
+# create symlink to theme folder for quick access
+FileUtils.ln_s "../www/wp-content/themes/#{settings['slug']}/", 'build'
 # activate theme
 wp "theme activate \"#{settings['slug']}\""
 

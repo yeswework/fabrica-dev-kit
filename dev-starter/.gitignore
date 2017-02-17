@@ -7,4 +7,3 @@ src/.env
 src/composer.lock
 src/includes/vendor/
 src/node_modules/
-www/
