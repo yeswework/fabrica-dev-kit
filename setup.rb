@@ -96,7 +96,7 @@ if Dir.exists? 'dev'
 		halt 'Folder \'dev/\' already exists but no \'package.json\' found there.'
 	end
 	project_settings = JSON.parse(File.read('src/package.json'))
-	echo 'Existing project \'dev/src/package.json\' found. Overriding the following settings in \'setup.yml\' with those in this file  (old \'setup.rb\' value → new value):'
+	echo 'Existing project \'dev/src/package.json\' found. Overriding the following settings in \'setup.yml\' with those in this file  (old \'setup.yml\' value → new value):'
 	{'name' => 'slug', 'description' => 'title', 'author' => 'author'}.each do |project_key, setting_key|
 		echo " ◦ #{setting_key} / #{project_key}: '#{settings[setting_key]}' → '#{project_settings[project_key]}'"
 		settings[setting_key] = project_settings[project_key]
@@ -117,6 +117,7 @@ else
 		'src/includes/project.php',
 		'src/templates/views/base.twig',
 		'Movefile.erb',
+		'.env',
 		'docker-compose.yml'
 	]
 	for destFilename in templateFilenames
