@@ -250,11 +250,12 @@ gulp.task('default', gulp.series('build', watch));
 function wpconfig() {
 	// Update WP config URLs with access port dynamically assigned by Docker to expose Web container port 80
 	exec('docker exec ' + projectSlug + '_wp bash -c \'wp option update home "http://localhost:' + projectWebPort + '" && wp option update siteurl "http://localhost:' + projectWebPort + '"\'');
-	outputSeparator = ' \x1b[36m' + '-'.repeat(35 + String.valueOf(projectWebPort).length) + '\x1b[0m';
+	outputSeparator = ' \x1b[36m' + '-'.repeat(36 + projectWebPort.toString().length) + '\x1b[0m';
 	console.log('\x1b[1m' + projectTitle + ' (' + projectSlug + ') access URLs:\x1b[22m');
 	console.log(outputSeparator);
 	console.log(' 🌍  WordPress: \x1b[35mhttp://localhost:' + projectWebPort + '\x1b[0m');
-	console.log(' 📀  Database: \x1b[35mlocalhost:' + projectDBPort + '\x1b[0m');
+	console.log(' 🔧  Admin: \x1b[35mhttp://localhost:' + projectWebPort + '/wp-admin\x1b[0m');
+	console.log(' 🗃  Database: \x1b[35mlocalhost:' + projectDBPort + '\x1b[0m');
 	console.log(outputSeparator);
 }
 
