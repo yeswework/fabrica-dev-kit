@@ -42,7 +42,7 @@ var projectSlug = projectSettings.name,
 	projectAuthor = projectSettings.author;
 try {
 	var projectWebPort = exec('docker-compose port web 80').toString().replace(/^0.0.0.0:|\n$/g, ''),
-		projectDBPort = exec('docker-compose port db 3306').toString().replace(/^0.0.0.0:|\n$/g, '');	
+		projectDBPort = exec('docker-compose port db 3306').toString().replace(/^0.0.0.0:|\n$/g, '');
 } catch (ex) {
 	console.error('Error obtaining containers access ports.', ex);
 	return;
@@ -52,7 +52,7 @@ try {
 var base = {
 	dev: './',
 	src: './src/',
-	acfRelativeSrc: '../../../../src/',
+	acfRelativeSrc: '../../../../dev/src/',
 	theme: '../www/wp-content/themes/' + projectSlug + '/'
 };
 
