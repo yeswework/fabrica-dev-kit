@@ -1,3 +1,8 @@
+# If setting up a new project, complete all sections
+# If setting up an existing project (ie. you already have a `dev/` folder),
+# just complete the WordPress section with values for your local development environment
+# (other values will be taken from the project's existing information)
+
 # Project
 slug: fabricaproject # Lowercase letters only - used for theme folder and namespacing
 title: Fabrica Project
