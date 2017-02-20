@@ -101,8 +101,6 @@ if Dir.exists? 'dev'
 		echo " ◦ #{setting_key} / #{project_key}: '#{settings[setting_key]}' → '#{project_settings[project_key]}'"
 		settings[setting_key] = project_settings[project_key]
 	end
-	echo " ◦ web.dev_port / config.port: '#{settings['web']['dev_port']}' → '#{project_settings['config']['port']}'"
-	settings['web']['dev_port'] = project_settings['config']['port']
 else
 	# new project: copy starter dev folder (this will preserve changes if/when kit updated)
 	FileUtils.cp_r 'dev-starter', 'dev'
@@ -156,7 +154,10 @@ echo "Waiting for \'#{settings['slug']}_wp\' container..."
 response = ''
 sleep 10
 (WAIT_WP_CONTAINER_TIMEOUT - 10).times do
-	Net::HTTP.start('localhost', settings['web']['dev_port']) {|http| response = http.head('/wp-admin/install.php').code } rescue nil
+	# get port dynamically assigned by Docker to expose web container's port 80
+	$web_port = `docker-compose port web 80`.gsub(/^0.0.0.0:|\n$/, '')
+	# check if WordPress is already available at the expected URL
+	Net::HTTP.start('localhost', $web_port) {|http| response = http.head('/wp-admin/install.php').code } rescue nil
 	break if response == '200'
 	print '•'; sleep 1
 end
@@ -173,7 +174,7 @@ def wp(command)
 end
 # [TODO] add `wp-config.php` settings
 wp "core install \
-    --url=localhost:#{settings['web']['dev_port']} \
+    --url=localhost:#{$web_port} \
     --title=\"#{settings['title']}\" \
     --admin_user=#{settings['wp']['admin']['user']} \
     --admin_password=#{settings['wp']['admin']['pass']} \

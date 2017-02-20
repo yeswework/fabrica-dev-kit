@@ -10,7 +10,7 @@ services:
       - ../provision/web/wordpress-fpm.conf:/etc/nginx/conf.d/default.conf
       - ../provision/web/global:/etc/nginx/global
     ports:
-      - <%= web['dev_port'] %>:80
+      - "80"
     networks:
       - front
   db:
@@ -25,7 +25,7 @@ services:
       MYSQL_USER: wordpress
       MYSQL_PASSWORD: wordpress
     ports:
-      - <%= db['dev_port'] %>:3306
+      - "3306"
     networks:
       - back
   wp:

@@ -6,14 +6,6 @@ author:
   # email: # Optional
   # url: # Optional
 
-# Web server
-web:
-  dev_port: 8880
-
-# Database
-db:
-  dev_port: 3306
-
 # WordPress
 wp:
   admin:

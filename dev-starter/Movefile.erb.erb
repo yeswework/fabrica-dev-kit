@@ -1,5 +1,5 @@
 local:
-  vhost: "localhost:<%= web['dev_port'] %>"
+  vhost: "localhost:<%%= ENV['WEB_PORT'] %>"
   # path to WordPress installation from FTP/SSH root folder
   wordpress_path: '<%%= File.expand_path "#{Dir.pwd}/../www/" %>'
 
@@ -7,7 +7,7 @@ local:
     name: "wordpress"
     user: "wordpress"
     password: "wordpress"
-    host: "localhost:<%= web['dev_port'] %>"
+    host: "localhost:<%%= ENV['DB_PORT'] %>"
 
 production:
   vhost: "<%= url %>"

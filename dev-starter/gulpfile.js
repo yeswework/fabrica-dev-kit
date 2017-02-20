@@ -27,7 +27,7 @@ var gulp = require('gulp'),
 	posthtmlBem = require('posthtml-bem'),
 	stylelint = require('stylelint'),
 	webpack = require('webpack-stream'),
-	exec = require('child_process').exec;
+	exec = require('child_process').execSync;
 
 // Load project and local settings
 var projectSettings, localSettings;
@@ -39,8 +39,14 @@ try {
 }
 var projectSlug = projectSettings.name,
 	projectTitle = projectSettings.description,
-	projectAuthor = projectSettings.author,
-	projectDevPort = projectSettings.config.port;
+	projectAuthor = projectSettings.author;
+try {
+	var projectWebPort = exec('docker-compose port web 80').toString().replace(/^0.0.0.0:|\n$/g, ''),
+		projectDBPort = exec('docker-compose port db 3306').toString().replace(/^0.0.0.0:|\n$/g, '');	
+} catch (ex) {
+	console.error('Error obtaining containers access ports.', ex);
+	return;
+}
 
 // Paths for remapping
 var base = {
@@ -226,11 +232,11 @@ function fonts() {
 
 // Wordmove: add full Wordpress path to the final Movefile with the almost complete template
 function wordmove(cb) {
-	exec('erb Movefile.erb > Movefile', {}, function (error, stdout, stderr) {
-		if (error) {
-			console.error('Error generating Movefile:', error);
-		}
-	});
+	try {
+		exec('erb Movefile.erb > Movefile', {env: {WEB_PORT: projectWebPort, DB_PORT: projectDBPort}});
+	} catch (ex) {
+		console.error('Error generating Movefile:', ex);
+	}
 	cb();
 }
 
@@ -239,9 +245,24 @@ gulp.task('build', gulp.series(clean, gulp.parallel(header, acf, functions, incl
 
 // Watch: fire build, then watch for changes
 gulp.task('default', gulp.series('build', watch));
+
+// Update WP config URLs with access port dynamically assigned by Docker to expose Web container port 80
+function wpconfig() {
+	// Update WP config URLs with access port dynamically assigned by Docker to expose Web container port 80
+	exec('docker exec ' + projectSlug + '_wp bash -c \'wp option update home "http://localhost:' + projectWebPort + '" && wp option update siteurl "http://localhost:' + projectWebPort + '"\'');
+	outputSeparator = ' \x1b[36m' + '-'.repeat(35 + String.valueOf(projectWebPort).length) + '\x1b[0m';
+	console.log('\x1b[1m' + projectTitle + ' (' + projectSlug + ') access URLs:\x1b[22m');
+	console.log(outputSeparator);
+	console.log(' 🌍  WordPress: \x1b[35mhttp://localhost:' + projectWebPort + '\x1b[0m');
+	console.log(' 📀  Database: \x1b[35mlocalhost:' + projectDBPort + '\x1b[0m');
+	console.log(outputSeparator);
+}
+
 function watch() {
+	wpconfig();
+	// Initialise BrowserSync
 	browserSync.init({
-		proxy: 'localhost:' + projectDevPort,
+		proxy: 'localhost:' + projectWebPort,
 		open: false
 	});
 	gulp.watch(path.functions, gulp.series(functions));

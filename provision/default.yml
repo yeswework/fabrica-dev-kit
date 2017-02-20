@@ -2,13 +2,8 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# Web server
-web:
-  dev_port: 8880
-
 # Database
 db:
-  dev_port: 3306
   prefix: wp_
 
 # WordPress
