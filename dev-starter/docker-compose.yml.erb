@@ -4,7 +4,7 @@ services:
   web:
     image: nginx:latest
     container_name: <%= slug %>_web
-    restart: always
+    restart: unless-stopped
     volumes:
       - ../www:/var/www/html
       - ../provision/web/wordpress-fpm.conf:/etc/nginx/conf.d/default.conf
@@ -18,7 +18,7 @@ services:
     container_name: <%= slug %>_db
     volumes:
       - db-data:/var/lib/mysql
-    restart: always
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: wordpress
       MYSQL_DATABASE: wordpress
@@ -35,9 +35,10 @@ services:
       context: ..
       dockerfile: provision/wp/Dockerfile
     container_name: <%= slug %>_wp
-    restart: always
+    restart: unless-stopped
     volumes:
       - ../www:/var/www/html
+      - .:/var/www/dev
     environment:
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_PASSWORD: wordpress
