@@ -75,7 +75,7 @@ First make sure you have all the required dependencies (see above). Then:
 1. If you are using ACF (whether normal or Pro), ACF-JSON will take care of synching your fields automatically, but it's a good idea to [synchronize the fields on the remote site](https://www.advancedcustomfields.com/resources/synchronized-json/) once you have deployed changes, so that the new fields are saved (from the files in the `acf-json` folder) into the production database.
 
 ###Version control
-To begin version control on your project run `git init` in the `dev/` folder. This will track not only your source code but also the corresponding build script and names of the modules needed to compile it into an active theme. (It's important to maintain a copy because because the default build script is subject to change in future versions of Fabrica, which could lead to problems if restoring a project from a backup.)
+To begin version control on your project run `git init` in the `dev/` folder. This will track not only your source code but also the corresponding build script and names of the modules needed to compile it into an active theme. (It's important to maintain a copy because because the default build script is subject to change in future versions of Dev Kit, which could lead to problems if restoring a project from a backup.)
 
 ###Local database access
 For direct MySQL access to the development database, we recommend using [Sequel Pro](https://www.sequelpro.com/) to access it while the development machine is up. Unless you changed it in `setup.yml`, the database server is accessible at `localhost:3306`, and the username and password are both `wordpress`.
