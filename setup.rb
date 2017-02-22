@@ -24,6 +24,14 @@ end
 def halt(message)
 	abort "\e[1m\e[41m[Fabrica]\e[0m ⚠️  #{message}"
 end
+$waitcounter = 0
+def wait(message, delay=0.1)
+	spinner = ['🕐', '🕑', '🕒', '🕓', '🕔', '🕕', '🕖', '🕗', '🕘', '🕙', '🕚', '🕛']
+	print "\e[7m[Fabrica]\e[27m #{spinner[$waitcounter % 12]}  #{message}\r"
+	$stdout.flush
+	$waitcounter += 1
+	sleep delay
+end
 
 # check Fabrica dependencies
 dependencies = ['gulp', 'vagrant', 'composer']
@@ -150,24 +158,24 @@ if not system 'docker-compose up -d'
 end
 
 # wait until wp container to install WordPress
-echo "Waiting for \'#{settings['slug']}_wp\' container..."
+start_time = Time.now
 response = ''
-sleep 10
-(WAIT_WP_CONTAINER_TIMEOUT - 10).times do
+loop do
+	wait "Waiting for \'#{settings['slug']}_wp\' container...", 0.05
 	# get port dynamically assigned by Docker to expose web container's port 80
-	$web_port = `docker-compose port web 80`.gsub(/^0.0.0.0:|\n$/, '')
+	$web_port = `docker-compose port web 80`.gsub(/^.*:(\d+)\n$/, '\1')
 	# check if WordPress is already available at the expected URL
 	Net::HTTP.start('localhost', $web_port) {|http| response = http.head('/wp-admin/install.php').code } rescue nil
-	break if response == '200'
-	print '•'; sleep 1
+	break if response == '200' or Time.now - start_time > WAIT_WP_CONTAINER_TIMEOUT
 end
 puts ''
 if response != '200'
 	abort "More than #{WAIT_WP_CONTAINER_TIMEOUT} seconds elapsed while waiting for WordPress container to start."
 end
+echo "Web server running at port #{$web_port}"
 
 # install WordPress in container
-echo 'Installing for WordPress...'
+echo 'Installing WordPress...'
 $wp_container = "#{settings['slug']}_wp"
 def wp(command)
 	system "docker exec #{$wp_container} wp #{command}"
@@ -207,7 +215,7 @@ if settings['wp']['skip_default_plugins']
 	wp "plugin delete \"hello\" \"akismet\""
 end
 if settings['wp']['skip_default_themes']
-	wp "theme delete \"twentysixteen\" \"twentyfifteen\" \"twentyfourteen\""
+	wp "theme delete \"twentyseventeen\" \"twentysixteen\" \"twentyfifteen\" \"twentyfourteen\""
 end
 # WordPress options
 (settings['wp']['options'] || []).each do |option, value|

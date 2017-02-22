@@ -41,8 +41,8 @@ var projectSlug = projectSettings.name,
 	projectTitle = projectSettings.description,
 	projectAuthor = projectSettings.author;
 try {
-	var projectWebPort = exec('docker-compose port web 80').toString().replace(/^0.0.0.0:|\n$/g, ''),
-		projectDBPort = exec('docker-compose port db 3306').toString().replace(/^0.0.0.0:|\n$/g, '');
+	var projectWebPort = exec('docker-compose port web 80').toString().replace(/^.*:(\d+)\n$/g, '$1'),
+		projectDBPort = exec('docker-compose port db 3306').toString().replace(/^.*:(\d+)\n$/g, '$1');
 } catch (ex) {
 	console.error('Error obtaining containers access ports.', ex);
 	return;
@@ -248,13 +248,20 @@ gulp.task('default', gulp.series('build', watch));
 
 // Update WP config URLs with access port dynamically assigned by Docker to expose Web container port 80
 function wpconfig() {
-	// Update WP config URLs with access port dynamically assigned by Docker to expose Web container port 80
-	exec('docker exec ' + projectSlug + '_wp bash -c \'wp option update home "http://localhost:' + projectWebPort + '" && wp option update siteurl "http://localhost:' + projectWebPort + '"\'');
-	outputSeparator = ' \x1b[36m' + '-'.repeat(36 + projectWebPort.toString().length) + '\x1b[0m';
+	// Get current port in WordPress to check if it matches the current Web container port
+	var dockerCmd = 'docker exec ' + projectSlug + '_wp',
+		wpPort = exec(dockerCmd + ' wp option get siteurl').toString().replace(/^.*:(\d+)\n$/g, '$1');
+	if (wpPort != projectWebPort) {
+		// Ports needs to be updated
+		console.log('Updating WordPress port from ' + wpPort + ' to ' + projectWebPort + '...');
+		exec(dockerCmd + ' wp search-replace --quiet "localhost:' + wpPort + '" "localhost:' + projectWebPort + '"');
+		exec(dockerCmd + ' bash -c \'wp option update home "http://localhost:' + projectWebPort + '" && wp option update siteurl "http://localhost:' + projectWebPort + '"\'');
+	}
+	outputSeparator = ' \x1b[36m' + '-'.repeat(37 + projectWebPort.toString().length) + '\x1b[0m';
 	console.log('\x1b[1m' + projectTitle + ' (' + projectSlug + ') access URLs:\x1b[22m');
 	console.log(outputSeparator);
-	console.log(' 🌍  WordPress: \x1b[35mhttp://localhost:' + projectWebPort + '\x1b[0m');
-	console.log(' 🔧  Admin: \x1b[35mhttp://localhost:' + projectWebPort + '/wp-admin\x1b[0m');
+	console.log(' 🌍  WordPress: \x1b[35mhttp://localhost:' + projectWebPort + '/\x1b[0m');
+	console.log(' 🔧  Admin: \x1b[35mhttp://localhost:' + projectWebPort + '/wp-admin/\x1b[0m');
 	console.log(' 🗃  Database: \x1b[35mlocalhost:' + projectDBPort + '\x1b[0m');
 	console.log(outputSeparator);
 }
