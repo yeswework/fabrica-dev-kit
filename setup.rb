@@ -34,7 +34,7 @@ def wait(message, delay=0.1)
 end
 
 # check Fabrica dependencies
-dependencies = ['gulp', 'vagrant', 'composer']
+dependencies = ['gulp', 'docker-compose', 'composer']
 for dependency in dependencies
 	if not system("hash #{dependency} 2>/dev/null")
 		halt "Could not find dependency '#{dependency}'."
