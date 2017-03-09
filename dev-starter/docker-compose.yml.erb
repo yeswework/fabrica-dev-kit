@@ -11,8 +11,8 @@ services:
       - ../provision/web/global:/etc/nginx/global
     ports:
       - "80"
-    networks:
-      - front
+    links:
+      - wp
   db:
     image: mysql:5.7
     container_name: <%= slug %>_db
@@ -26,11 +26,7 @@ services:
       MYSQL_PASSWORD: wordpress
     ports:
       - "3306"
-    networks:
-      - back
   wp:
-    depends_on:
-      - db
     build:
       context: ..
       dockerfile: provision/wp/Dockerfile
@@ -44,13 +40,8 @@ services:
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_PASSWORD: wordpress
       WORDPRESS_DB_PREFIX: <%= "#{db['prefix']}\n" %>
-    networks:
-      - front
-      - back
+    links:
+      - db:mysql
 
 volumes:
   db-data:
-networks:
-  front:
-  back:
-
