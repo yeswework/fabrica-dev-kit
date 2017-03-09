@@ -269,6 +269,7 @@ function wpconfig() {
 function watch() {
 	wpconfig();
 	// Initialise BrowserSync
+	console.log('Starting BrowserSync...');
 	browserSync.init({
 		proxy: 'localhost:' + projectWebPort,
 		open: false
