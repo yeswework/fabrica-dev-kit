@@ -8,6 +8,9 @@ RUN curl https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.ph
 RUN chmod +x /tmp/wp-cli.phar
 RUN mv /tmp/wp-cli.phar /usr/local/bin/wp
 
+# Install Xdebug
+RUN pecl -q install xdebug
+
 # Cleanup
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
