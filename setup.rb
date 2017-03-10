@@ -180,7 +180,7 @@ $wp_container = "#{settings['slug']}_wp"
 def wp(command)
 	system "docker exec #{$wp_container} wp #{command}"
 end
-# [TODO] add `wp-config.php` settings
+
 wp "core install \
     --url=localhost:#{$web_port} \
     --title=\"#{settings['title']}\" \

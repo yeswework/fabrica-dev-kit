@@ -40,6 +40,7 @@ services:
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_PASSWORD: wordpress
       WORDPRESS_DB_PREFIX: <%= "#{db['prefix']}\n" %>
+      WORDPRESS_DEBUG: "true"
     links:
       - db:mysql
 
