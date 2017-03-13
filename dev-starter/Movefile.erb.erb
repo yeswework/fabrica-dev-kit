@@ -7,7 +7,8 @@ local:
     name: "wordpress"
     user: "wordpress"
     password: "wordpress"
-    host: "localhost:<%%= ENV['DB_PORT'] %>"
+    host: "localhost"
+    port: "<%%= ENV['DB_PORT'] %>"
 
 production:
   vhost: "<%= url %>"
