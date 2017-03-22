@@ -5,7 +5,6 @@ var gulp = require('gulp'),
 	concat = require('gulp-concat'),
 	changed = require('gulp-changed'),
 	cssnano = require('gulp-cssnano'),
-	flatten = require('gulp-flatten'),
 	imagemin = require('gulp-imagemin'),
 	jshint = require('gulp-jshint'),
 	postcss = require('gulp-postcss'),
@@ -61,7 +60,7 @@ var path = {
 	functions: base.src + 'includes/*.php',
 	includes: [base.src + 'includes/**/*', base.src + 'includes/.env'],
 	controllers: base.src + 'templates/controllers/**/*.php',
-	views: base.src + 'templates/**/*.twig',
+	views: base.src + 'templates/views/**/*.twig',
 	styles: base.src + 'assets/css/**/*.{css,pcss}',
 	scripts: base.src + 'assets/js/**/*.js',
 	images: base.src + 'assets/img/**/*',
@@ -154,19 +153,17 @@ function includes() {
 		.pipe(browserSync.stream());
 }
 
-// Controllers: copy PHP files, flattening tree
+// Controllers: copy PHP files
 function controllers() {
 	return gulp.src(path.controllers)
-		.pipe(flatten())
 		.pipe(changed(base.theme + dest.controllers))
 		.pipe(gulp.dest(base.theme + dest.controllers))
 		.pipe(browserSync.stream());
 }
 
-// Views: copy Twig files, flattening tree
+// Views: copy Twig files
 function views() {
 	return gulp.src(path.views)
-		.pipe(flatten())
 		.pipe(changed(base.theme + dest.views))
 		.pipe(posthtml([posthtmlBem(options.posthtmlBem)]))
 		.pipe(gulp.dest(base.theme + dest.views))
