@@ -2,7 +2,7 @@
 A development environment and build toolkit to accelerate and optimize every stage of the WordPress development process. For custom theme (or plugin) developers, especially those with complex CMS-type requirements. Its main features are:
 
 * Instant setup of project-specific fast local development server (using [Docker](https://www.docker.com/))
-* Tools for coding leaner, cleaner themes (using Twig, PostCSS and/or SASS/LESS, MVC and BEM)
+* Tools for coding leaner, cleaner themes (using Twig, PostCSS, MVC and BEM)
 * Build script to preprocess, lint and optimize assets
 * Live browser testing, synchronized across devices (using Browsersync)
 * Version control for custom fields (using ACF-JSON)
