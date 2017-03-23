@@ -1,4 +1,4 @@
-#Fabrica Dev Kit for WordPress
+# Fabrica Dev Kit for WordPress
 A best-practice development environment and build toolkit to streamline every part of the WordPress development process. Ideal for custom theme developers, especially those with complex CMS-type requirements. Its main features are:
 
 * Instant setup of project-specific fast local development server using [Docker](https://www.docker.com/)
@@ -8,21 +8,21 @@ A best-practice development environment and build toolkit to streamline every pa
 * Version control for custom fields
 * Instant deployment
 
-##All features
+## All features
 
-###Installs and configures an independent local development environment for each project
+### Installs and configures an independent local development environment for each project
 
 * Using [Docker](https://www.docker.com/), creates an independent development environment for your project running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/). Docker's efficient architecture means that each Fabrica Dev Kit project runs and is stored separately (unlike MAMP, where all projects share space and servers), while avoiding the bloat of a Vagrant-like solution where each project has an entire virtual machine to itself.
 * Automatically installs all the software required to develop, including the latest version of WordPress and your plugins of choice (you just list them in the initial setup file), as well as build, optimization and deployment tools.
 
-###Allows you to write cleaner, more logical and more beautiful code (if you want to)...
+### Allows you to write cleaner, more logical and more beautiful code (if you want to)...
 * ... with templates written in [Twig](http://twig.sensiolabs.org/) rather than directly in PHP. Installs the revolutionary [Timber](https://upstatement.com/timber/) to bring MVC-like separation of concerns to WordPress development, separating data processing and analytical logic from presentation, allowing you to write more elegant, legible and maintainable templates, eradicating `<?php` `?>` tag-itis forever. A genuine 'never go back' improvement. See the MVC section in code examples below for more.
 * ... with [BEM syntax](http://csswizardry.com/2013/01/mindbemding-getting-your-head-round-bem-syntax/). Uses the [PostHTML-bem](https://github.com/rajdee/posthtml-bem/) plugin for [PostHTML](https://github.com/posthtml/posthtml) which allows you to write much less repetitive BEM markup (see code examples below), and which in turn reflects your (Post)CSS structure more closely.
 * ... with [PostCSS](https://github.com/postcss/postcss) for variables, mixins and other CSS preprocessing enhancements (it can compile your SASS or LESS code no problem).
 * ... with the [LostGrid](https://github.com/peterramsing/lost) grid system / preprocessor, which allows you to build fluid, responsive, nested grids without using presentational classes, with or without [Flexbox](https://github.com/peterramsing/lost).
 * ... making use of the fantastic [Advanced Custom Fields](https://www.advancedcustomfields.com/) plugin, which is deeply supported by Timber (see above). Fabrica Dev Kit can automatically install ACF Pro via Composer if you supply your licence key at setup.
 
-###Reduces friction in the development process
+### Reduces friction in the development process
 * Keeps the development source folder outside the virtual machine for easy editing and version control. (No need to log into a virtual machine to build / develop: it just acts as a fast server.)
 * Includes a super-minimal object-orientated boilerplate theme (see below), specially constructed for bespoke theme development.
 * Live-compiles and optimizes straight to the active theme folder inside the virtual machine as you develop, via a pre-configured [Gulp](http://gulpjs.com/) watch, which:
