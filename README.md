@@ -62,11 +62,14 @@ First make sure you have all the required dependencies (see above). Then:
 * After the first build Gulp will tell you which dynamic port the site front-end and admin are accessible at, as well as the Browsersync proxy you can use for live-editing of markup and styles without needing to refresh:
  ```
  Fabrica Dev Kit Project (fabricaproject) access URLs:
+ -------------------------------------------
  🌍  WordPress: http://localhost:32773/
  🔧  Admin: http://localhost:32773/wp-admin/
  🗃  Database: localhost:32769
+ -------------------------------------------
  [BS] Proxying: http://localhost:32773
  [BS] Access URLs:
+ ---------------------------------
  Local: http://localhost:3000
  External: http://172.17.3.50:3000
  ```
