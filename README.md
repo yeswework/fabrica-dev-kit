@@ -123,7 +123,7 @@ There are several predefined files (all in the `includes/` folder) to help keep 
 * PHP modules: you can install / require Composer modules from within the `includes/` folder.
 * Front-end JS libraries can be installed using `npm install` and then either included (thanks to [Webpack](https://webpack.github.io/)) via `require` statements in `assets/js/main.js`,
 * Front-end CSS libraries can also be installed with `npm` and included via `@import` statements in `assets/css/main.pcss`. The PostCSS Import plugin automatically searches `node_modules` so a statement like `@import 'library.css'` doesn't require an explicit path.
-* PostCSS plugins: use `npm install` in the `dev/` folder (parent of `src`), and modify the `gulpfile.js` accordingly to sequence them.
+* PostCSS plugins: use `npm install` in the `dev/` folder (parent of `src/`), and modify the `gulpfile.js` accordingly to sequence them.
 
 ## Code examples
 All of the techniques below are optional in Fabrica Dev Kit and vanilla HTML / CSS / PHP / WordPress API functions will all work fine – but we highly recommend making full use of these time- and sanity-saving enhancements.
