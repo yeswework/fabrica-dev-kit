@@ -4,7 +4,6 @@ yarn.lock
 node_modules/
 src-starter/
 src/.env
-src/composer.lock
 src/includes/vendor/
 src/node_modules/
 .DS_Store
