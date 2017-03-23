@@ -1,29 +1,29 @@
 # Fabrica Dev Kit setup configuration
 # Modify for your project, then run `./setup.rb` from this folder
 
-# Project
-slug: fabricaproject # Lowercase letters only (used for theme folder and PHP namespacing)
-title: Fabrica Project # Used for WP site title
+# Project settings
+slug: fabricaproject # lowercase letters only (also used for theme slug and PHP namespacing)
+title: Fabrica Project
 author:
-  name: Fabrica Project Author # Used for theme author settings
-  email: admin@fabrica.dev # Optional (used for theme author settings)
-  url: http://fabrica.dev/ # Optional (used for theme author settings)
+  name: Fabrica Project Author
+  email: admin@fabrica.dev
+  url: http://fabrica.dev/
 
-# WordPress
+# WordPress settings
 wp:
-  admin:
-    user: fabrica # Development site admin user
-    pass: fabrica # Development site admin password
-    email: admin@fabrica.dev # Development site admin email
-  lang: en_US  # Development site WP locale/language
-  rewrite_structure: /%postname%/ # Development site permalink structure (can be changed later)
-  #acf_pro_key: # Optional - if set will preinstall Advanced Custom Fields Pro
+  admin: # development site admin user credentials
+    user: fabrica
+    pass: fabrica
+    email: admin@fabrica.dev
+  lang: en_US  # dev site WP locale/language
+  rewrite_structure: /%postname%/ # dev site permalink structure (can be changed later)
+  #acf_pro_key: # optional (if set will preinstall Advanced Custom Fields Pro)
   plugins:
-  #- advanced-custom-fields # Optional (use slugs from WP Codex, one per line, to auto install plugins at setup)
+  #- advanced-custom-fields # optional (installs plugins at setup - use URL slugs from WP plugins directory)
   #- force-regenerate-thumbnails
 
-# Google Analytics
-#google_analytics_id: # Optional (will be preset in theme, can be added manually later)
+# Google Analytics - optional (will preset tracking code in theme, can be added manually later)
+#google_analytics_id:
 
 # Production deployment quick FTP set up - optional (can be added later in dev/Movefile.erb)
 #ftp:
