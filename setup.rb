@@ -122,7 +122,6 @@ else
 		'src/includes/composer.json',
 		'src/includes/project.php',
 		'src/templates/views/base.twig',
-		'Movefile.erb',
 		'.env',
 		'docker-compose.yml'
 	]

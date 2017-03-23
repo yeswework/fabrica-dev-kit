@@ -24,10 +24,3 @@ wp:
 
 # Google Analytics - optional (will preset tracking code in theme, can be added manually later)
 #google_analytics_id:
-
-# Production deployment quick FTP set up - optional (can be added later in dev/Movefile.erb)
-#ftp:
-#  host:
-#  user:
-#  password:
-#  path_to_wp: /path/to/wordpress/from/ftp/root/
