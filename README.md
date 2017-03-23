@@ -12,7 +12,7 @@ A best-practice development environment and build toolkit to streamline every pa
 
 ###Installs and configures an independent local development environment for each project
 
-* Using [Docker](https://www.docker.com/), creates an independent development environment for your project running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/). Docker's efficient architecture means that each Fabrica project runs and is stored separately (unlike MAMP, where all projects share space and servers), while avoiding the bloat of a Vagrant-like solution where each project has an entire virtual machine to itself.
+* Using [Docker](https://www.docker.com/), creates an independent development environment for your project running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/). Docker's efficient architecture means that each Fabrica Dev Kit project runs and is stored separately (unlike MAMP, where all projects share space and servers), while avoiding the bloat of a Vagrant-like solution where each project has an entire virtual machine to itself.
 * Automatically installs all the software required to develop, including the latest version of WordPress and your plugins of choice (you just list them in the initial setup file), as well as build, optimization and deployment tools.
 
 ###Allows you to write cleaner, more logical and more beautiful code (if you want to)...
@@ -20,7 +20,7 @@ A best-practice development environment and build toolkit to streamline every pa
 * ... with [BEM syntax](http://csswizardry.com/2013/01/mindbemding-getting-your-head-round-bem-syntax/). Uses the [PostHTML-bem](https://github.com/rajdee/posthtml-bem/) plugin for [PostHTML](https://github.com/posthtml/posthtml) which allows you to write much less repetitive BEM markup (see code examples below), and which in turn reflects your (Post)CSS structure more closely.
 * ... with [PostCSS](https://github.com/postcss/postcss) for variables, mixins and other CSS preprocessing enhancements (it can compile your SASS or LESS code no problem).
 * ... with the [LostGrid](https://github.com/peterramsing/lost) grid system / preprocessor, which allows you to build fluid, responsive, nested grids without using presentational classes, with or without [Flexbox](https://github.com/peterramsing/lost).
-* ... making use of the fantastic [Advanced Custom Fields](https://www.advancedcustomfields.com/) plugin, which is deeply supported by Timber (see above). Fabrica can automatically install ACF Pro via Composer if you supply your licence key at setup.
+* ... making use of the fantastic [Advanced Custom Fields](https://www.advancedcustomfields.com/) plugin, which is deeply supported by Timber (see above). Fabrica Dev Kit can automatically install ACF Pro via Composer if you supply your licence key at setup.
 
 ###Reduces friction in the development process
 * Keeps the development source folder outside the virtual machine for easy editing and version control. (No need to log into a virtual machine to build / develop: it just acts as a fast server.)
@@ -57,14 +57,18 @@ First make sure you have all the required dependencies (see above). Then:
 1. In the new folder, make a copy of `setup-example.yml` called `setup.yml`, and edit this file to set the basic parameters for the development site. Any plugins you want to be automatically installed can be listed here.
 1. Run `./setup.rb`. This will set up your virtual machine and install everything required: Nginx, PHP-FPM, WordPress, your chosen plugins and our suite of build tools.
 
-###Starting and stopping the virtual machine
-* If you have just installed a project, its servers will already be running. If you are returning later to a project, first run `docker-compose up` from the project folder. Your project will then be accessible at the development domain you specified in the `setup.yml` file before installation.
-* To shut down the virtual machine, run `docker-compose stop` from the project folder. (Restarting your computer will also shut down the virtual machine.)
-
 ###Running the build script + watch during active development
-* During development, keep a Gulp watch running by running `gulp` from the `dev/` folder. It'll watch your files for changes and live-compile and optimize them into the virtual machine's active theme folder.
-* Make all changes in the `dev/src/` folder (full info about what goes where below).
-* While Gulp is running the site will also be accessible as a Browsersync proxy – by default at `http://localhost:3000/`.
+* To work on the project, run a Gulp watch with `gulp` from the `dev/` folder. This will compile / preprocess / optimize your source files and actively watch for changes.
+* After the first build Gulp will tell you which dynamic port the site front-end and admin are accessible at, as well as the Browsersync proxy you can use for live-editing of markup and styles without needing to refresh:
+ ```Fabrica Dev Kit Project (fabricaproject) access URLs:
+ 🌍  WordPress: http://localhost:32773/
+ 🔧  Admin: http://localhost:32773/wp-admin/
+ 🗃  Database: localhost:32769
+ [BS] Proxying: http://localhost:32773
+ [BS] Access URLs:
+ Local: http://localhost:3000
+ External: http://172.17.3.50:3000```
+* Make all changes in the `dev/src/` folder (see below for information about the structure).
 * You can escape Gulp with `Ctrl` + `C`. While Gulp is not running, changes to source files will not be reflected in the active theme.
 * You can also run `gulp build` to compile the current source code into the active theme folder without starting a watch.
 
@@ -75,13 +79,13 @@ First make sure you have all the required dependencies (see above). Then:
 1. If you are using ACF (whether normal or Pro), ACF-JSON will take care of synching your fields automatically, but it's a good idea to [synchronize the fields on the remote site](https://www.advancedcustomfields.com/resources/synchronized-json/) once you have deployed changes, so that the new fields are saved (from the files in the `acf-json` folder) into the production database.
 
 ###Version control
-To begin version control on your project run `git init` in the `dev/` folder. This will track not only your source code but also the corresponding build script and names of the modules needed to compile it into an active theme. (It's important to maintain a copy because because the default build script is subject to change in future versions of Dev Kit, which could lead to problems if restoring a project from a backup.)
+To begin version control on your project run `git init` in the `dev/` folder. This will track not only your source code but also the corresponding build script and names of the modules needed to compile it into an active theme.
 
 ###Local database access
-For direct MySQL access to the development database, we recommend using [Sequel Pro](https://www.sequelpro.com/) to access it while the development machine is up. Unless you changed it in `setup.yml`, the database server is accessible at `localhost:3306`, and the username and password are both `wordpress`.
+For direct MySQL access to the development database, we recommend using [Sequel Pro](https://www.sequelpro.com/) to access it while the development machine is up. The database server is accessible at `127.0.0.1`, and with the dynamic port which you'll be told whenever you run `gulp`. The username, password and database name are are `wordpress`.
 
 ###Housekeeping
-If you have finished working on a project and want to free up the space used by its development environment, run `docker-compose stop && docker-compose rm -f` from the `dev/` folder (note that this will delete the development database). As long as `dev/src/` is preserved it's usually safe to delete the `dev/www/` folder too, but this removes all files from the WP installation, so make sure to save any other files from `dev/www/wp-content/` that you might need (such as secondary themes, plugins or uploads).
+If you have finished working on a project and want to free up the space used by its development environment, run `docker-compose stop && docker-compose rm -f` from the `dev/` folder. This will remove the Docker containers used for the project (so your development database will be deleted). You can delete the `www/` folder too, but this removes all files from the WP installation, so make sure to save any files in `www/wp-content/` you might need (such as secondary themes, plugins or uploads).
 
 ##Active development
 
@@ -99,7 +103,7 @@ File paths in this section refer to the `src/` folder.
 * Images can go in `assets/img/` and any local fonts in `assets/fonts/`. These can be referenced from the stylesheet via `../img/` or `../fonts/`.
 
 ###Hooks and custom functions
-Fabrica's super-minimal boilerplate makes no assumptions about your data or design, but it's structured to make it easy for you to hook WordPress actions and filters and add your own functions.
+Fabrica Dev Kit's super-minimal boilerplate makes no assumptions about your data or design, but it's organized to make it easy for you to hook WordPress actions and filters and add your own functions.
 
 There are several predefined files (all in the `includes/` folder) to help keep your custom code well-organized. We recommend keeping all project code within the object-oriented namespaced structure provided by these files, but any other `.php` file you create in the `includes/` folder will be automatically included and run in the active theme: there is no need to manually `require()` or `include()` it.
 
@@ -116,7 +120,7 @@ There are several predefined files (all in the `includes/` folder) to help keep 
 * PostCSS plugins: use `npm install` in the `dev/` folder (parent of `src`), and modify the `gulpfile.js` accordingly to sequence them.
 
 ##Code examples
-All of the techniques below are optional in Fabrica and vanilla HTML / CSS / PHP / WordPress API functions will all work fine – but we highly recommend making full use of these time- and sanity-saving enhancements.
+All of the techniques below are optional in Fabrica Dev Kit and vanilla HTML / CSS / PHP / WordPress API functions will all work fine – but we highly recommend making full use of these time- and sanity-saving enhancements.
 
 ###Achieving a [Model-View-Controller](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller) (MVC) paradigm with Timber + ACF
 The magic combination of Timber and Advanced Custom Fields means we can render even complex data in our templates without carrying out any data retrieval or decision logic at all. Take for example this [Repeater field](https://www.advancedcustomfields.com/add-ons/repeater-field/) setup:
@@ -189,7 +193,7 @@ Note how here we access `post.allMeasurements` directly, without needing the cal
 ###BEM with PostHTML-bem + PostCSS
 The BEM methodology provides a conceptual framework which makes it easy to build blocks (groups of design and content elements) to be reused across a site without having to worry about either duplicated or conflicting rules. The methodology is simple but promotes logical, disciplined thinking and efficient, modular code. You can read more about the principles of BEM online, for example on [CSS Wizardry](http://csswizardry.com/2013/01/mindbemding-getting-your-head-round-bem-syntax/).
 
-The inclusion of PostHTML, PostCSS, and specific plugins for these, in Fabrica make the process of actually writing BEM markup and styles quicker, easier and less error-prone.
+The inclusion of PostHTML, PostCSS, and specific plugins for these, in Fabrica Dev Kit make the process of actually writing BEM markup and styles quicker, easier and less error-prone.
 
 As an example, let's take some vanilla BEM markup and styles. We're using `__` notation for elements and `--` notation for modifiers. (If you prefer an alternative notation, you can configure it in `dev/gulpfile.js` by modifying the `posthtmlBem` property of the `options` hash.)
 
@@ -297,7 +301,7 @@ The following markup is representative of how many layout frameworks implement a
 
 The multiple classes are to specify size / styles at different breakpoints via media queries, but they make the code bloated and hard to read – and the CSS rules to target all the options across all the different breakpoints are hundreds of lines long. And none of the styles are semantic...
 
-With LostGrid (a PostCSS plugin included with Fabrica), we can move all the presentational rules where they belong – in our stylesheet – and make our classes semantic. We'll also make use of PostHTML-bem syntax for maximum conciseness (see above). Here's a quick example for comparison:
+With LostGrid (a PostCSS plugin included with Fabrica Dev Kit), we can move all the presentational rules where they belong – in our stylesheet – and make our classes semantic. We'll also make use of PostHTML-bem syntax for maximum conciseness (see above). Here's a quick example for comparison:
 
 ```
 <div block="row">
