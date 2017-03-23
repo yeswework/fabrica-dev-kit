@@ -36,7 +36,7 @@ A best-practice development environment and build toolkit to streamline every pa
 * Allows push-button deployment (ie. with a single terminal command) to staging or production servers using [Wordmove](https://github.com/welaika/wordmove).
 * Automatically activates [ACF-JSON](https://www.advancedcustomfields.com/resources/local-json/) for ‘database’ version-control (tracks and synchronizes field settings for the Advanced Custom Fields plugin across multiple environments).
 
-##Requirements + dependencies
+## Requirements + dependencies
 Fabrica Dev Kit is compatible with recent versions of Mac OS X. It has a few dependencies:
 
 1. **Docker** – download and run the installer by following the link for Mac OS X from the [Docker downloads page](https://docs.docker.com/docker-for-mac/) (Stable channel is fine).
@@ -48,61 +48,63 @@ Optional but strongly recommended:
 
 * **Wordmove** (for fast command-line deployment) which can be installed with `gem install wordmove`. Note: if you want to use FTP for deployment (rather than SSH), you'll also need **lftp** ([installation instructions](https://github.com/welaika/wordmove/wiki/Install-lftp-on-OSX-yosemite)).
 
-##Getting started
+## Getting started
 
-###Installation
+### Installation
 First make sure you have all the required dependencies (see above). Then:
 
 1. Clone the repo into a folder for your project, eg. `git clone https://github.com/fabrica-wp/fabrica-dev-kit.git fabricaproject` (replace `fabricaproject` with a project-specific name or slug).
 1. In the new folder, make a copy of `setup-example.yml` called `setup.yml`, and edit this file to set the basic parameters for the development site. Any plugins you want to be automatically installed can be listed here.
 1. Run `./setup.rb`. This will set up your virtual machine and install everything required: Nginx, PHP-FPM, WordPress, your chosen plugins and our suite of build tools.
 
-###Running the build script + watch during active development
+### Running the build script + watch during active development
 * To work on the project, run a Gulp watch with `gulp` from the `dev/` folder. This will compile / preprocess / optimize your source files and actively watch for changes.
 * After the first build Gulp will tell you which dynamic port the site front-end and admin are accessible at, as well as the Browsersync proxy you can use for live-editing of markup and styles without needing to refresh:
- ```Fabrica Dev Kit Project (fabricaproject) access URLs:
+ ```
+ Fabrica Dev Kit Project (fabricaproject) access URLs:
  🌍  WordPress: http://localhost:32773/
  🔧  Admin: http://localhost:32773/wp-admin/
  🗃  Database: localhost:32769
  [BS] Proxying: http://localhost:32773
  [BS] Access URLs:
  Local: http://localhost:3000
- External: http://172.17.3.50:3000```
+ External: http://172.17.3.50:3000
+ ```
 * Make all changes in the `dev/src/` folder (see below for information about the structure).
 * You can escape Gulp with `Ctrl` + `C`. While Gulp is not running, changes to source files will not be reflected in the active theme.
 * You can also run `gulp build` to compile the current source code into the active theme folder without starting a watch.
 
-###Deployment
+### Deployment
 1. If you already filled in FTP details in `setup.yml` skip straight to step 3.
 1. If you didn't, once you have a staging or production server set up, edit the `dev/Movefile.erb` with your FTP (or SSH details).
 1. To deploy your theme, make sure the latest source code is compiled (if a watch isn't running, do a `gulp build`), then type `wordmove push --themes`. Wordmove will push the new / modified files to the server.
 1. If you are using ACF (whether normal or Pro), ACF-JSON will take care of synching your fields automatically, but it's a good idea to [synchronize the fields on the remote site](https://www.advancedcustomfields.com/resources/synchronized-json/) once you have deployed changes, so that the new fields are saved (from the files in the `acf-json` folder) into the production database.
 
-###Version control
+### Version control
 To begin version control on your project run `git init` in the `dev/` folder. This will track not only your source code but also the corresponding build script and names of the modules needed to compile it into an active theme.
 
-###Local database access
+### Local database access
 For direct MySQL access to the development database, we recommend using [Sequel Pro](https://www.sequelpro.com/) to access it while the development machine is up. The database server is accessible at `127.0.0.1`, and with the dynamic port which you'll be told whenever you run `gulp`. The username, password and database name are are `wordpress`.
 
-###Housekeeping
+### Housekeeping
 If you have finished working on a project and want to free up the space used by its development environment, run `docker-compose stop && docker-compose rm -f` from the `dev/` folder. This will remove the Docker containers used for the project (so your development database will be deleted). You can delete the `www/` folder too, but this removes all files from the WP installation, so make sure to save any files in `www/wp-content/` you might need (such as secondary themes, plugins or uploads).
 
-##Active development
+## Active development
 
 All editing should be done within the `dev/src/` folder – while Gulp is running your changes will be live-compiled from here into the virtual machine's active theme folder (in `dev/www/wp-content/`). The `dev/build/` folder is a shortcut symlink to the active theme folder: no editing should be done here, but it may occasionally be useful for checking compiled code in case of problems.
 
 File paths in this section refer to the `src/` folder.
 
-###Templates
+### Templates
 * If you want to make use of Timber (and you would be insane not to), the PHP files live in `templates/controllers/` and the corresponding Twig views in `templates/views/`. See the [Timber documentation](http://timber.github.io/timber/) and the MVC section of code examples below for more information.
 * If you don't or can't use Timber, just create your vanilla WordPress templates in `templates/controllers/` as you usually would and they'll work fine.
 
-###Assets
+### Assets
 * CSS goes in `assets/css/main.pcss` (automatically included in the front-end). If you prefer to split it into several files, you can include the additional files with `@import` at the top. Vanilla CSS works fine but any PostCSS is processed automatically (see below).
 * Javascript / jQuery code goes in `assets/js/main.js` (automatically included in the front-end), or additional JS files can be enqueued in the standard WordPress way by [hooking](https://codex.wordpress.org/Plugin_API/Action_Reference/wp_enqueue_scripts) `wp_enqueue_scripts` according to where you want the assets to load (most likely in `includes/front.php` – see next section).
 * Images can go in `assets/img/` and any local fonts in `assets/fonts/`. These can be referenced from the stylesheet via `../img/` or `../fonts/`.
 
-###Hooks and custom functions
+### Hooks and custom functions (ie. what usually goes in `functions.php`)
 Fabrica Dev Kit's super-minimal boilerplate makes no assumptions about your data or design, but it's organized to make it easy for you to hook WordPress actions and filters and add your own functions.
 
 There are several predefined files (all in the `includes/` folder) to help keep your custom code well-organized. We recommend keeping all project code within the object-oriented namespaced structure provided by these files, but any other `.php` file you create in the `includes/` folder will be automatically included and run in the active theme: there is no need to manually `require()` or `include()` it.
@@ -113,16 +115,16 @@ There are several predefined files (all in the `includes/` folder) to help keep 
 * `ajax.php` for handling AJAX requests (the front-end calls can be added in `assets/main.js`).
 * `models.php` is where to extend Post / Term / User objects by assigning extra properties to them when instantiated: see MVC section in code examples below.
 
-###Installing additional dependencies
+### Installing additional dependencies
 * PHP modules: you can install / require Composer modules from within the `includes/` folder.
 * Front-end JS libraries can be installed using `npm install` and then either included (thanks to [Webpack](https://webpack.github.io/)) via `require` statements in `assets/js/main.js`,
 * Front-end CSS libraries can also be installed with `npm` and included via `@import` statements in `assets/css/main.pcss`. The PostCSS Import plugin automatically searches `node_modules` so a statement like `@import 'library.css'` doesn't require an explicit path.
 * PostCSS plugins: use `npm install` in the `dev/` folder (parent of `src`), and modify the `gulpfile.js` accordingly to sequence them.
 
-##Code examples
+## Code examples
 All of the techniques below are optional in Fabrica Dev Kit and vanilla HTML / CSS / PHP / WordPress API functions will all work fine – but we highly recommend making full use of these time- and sanity-saving enhancements.
 
-###Achieving a [Model-View-Controller](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller) (MVC) paradigm with Timber + ACF
+### Achieving a [Model-View-Controller](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller) (MVC) paradigm with Timber + ACF
 The magic combination of Timber and Advanced Custom Fields means we can render even complex data in our templates without carrying out any data retrieval or decision logic at all. Take for example this [Repeater field](https://www.advancedcustomfields.com/add-ons/repeater-field/) setup:
 
 ![Repeater Field Example](http://assets.yeswework.com/acf-repeater-example.png)
@@ -190,14 +192,14 @@ The additional information will be automatically available to the template, as l
 
 Note how here we access `post.allMeasurements` directly, without needing the call to `post.get_field()` in Twig (which is normally essential to receive full ACF Repeater data), since we have already made that call when mapping the new property in `models.php`.
 
-###BEM with PostHTML-bem + PostCSS
+### BEM with PostHTML-bem + PostCSS
 The BEM methodology provides a conceptual framework which makes it easy to build blocks (groups of design and content elements) to be reused across a site without having to worry about either duplicated or conflicting rules. The methodology is simple but promotes logical, disciplined thinking and efficient, modular code. You can read more about the principles of BEM online, for example on [CSS Wizardry](http://csswizardry.com/2013/01/mindbemding-getting-your-head-round-bem-syntax/).
 
 The inclusion of PostHTML, PostCSS, and specific plugins for these, in Fabrica Dev Kit make the process of actually writing BEM markup and styles quicker, easier and less error-prone.
 
 As an example, let's take some vanilla BEM markup and styles. We're using `__` notation for elements and `--` notation for modifiers. (If you prefer an alternative notation, you can configure it in `dev/gulpfile.js` by modifying the `posthtmlBem` property of the `options` hash.)
 
-####Before...
+#### Before...
 
 First, the HTML:
 
@@ -236,7 +238,7 @@ Second, some corresponding CSS (fairly basic, but targets several of the member 
 }
 ```
 
-####...and after:
+#### ...and after:
 
 With PostHTML-bem + PostCSS we can avoid repetition in both places, which makes the code easier to write, easier to read, and less prone to typos. Here are the equivalent versions:
 
@@ -283,7 +285,7 @@ Second, the PostCSS, where we can make use of the `&` token both to nest element
 }
 ```
 
-###Semantic grids with LostGrid
+### Semantic grids with LostGrid
 
 The following markup is representative of how many layout frameworks implement a responsive design:
 
