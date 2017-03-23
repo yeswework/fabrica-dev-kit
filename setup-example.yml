@@ -1,30 +1,33 @@
+# Fabrica Dev Kit setup configuration
+# Modify for your project, then run `./setup.rb` from this folder
+
 # Project
-slug: fabricaproject # Lowercase letters only - used for theme folder and namespacing
-title: Fabrica Project
+slug: fabricaproject # Lowercase letters only (used for theme folder and PHP namespacing)
+title: Fabrica Project # Used for WP site title
 author:
-  name: Fabrica Project Author
-  # email: # Optional
-  # url: # Optional
+  name: Fabrica Project Author # Used for theme author settings
+  email: admin@fabrica.dev # Optional (used for theme author settings)
+  url: http://fabrica.dev/ # Optional (used for theme author settings)
 
 # WordPress
 wp:
   admin:
-    user: fabrica
-    pass: fabrica
-    email: admin@fabrica.dev
-  lang: en_US
-  rewrite_structure: /%postname%/
-  multisite: false
-  # acf_pro_key: # Optional (will preinstall Advanced Custom Fields Pro)
+    user: fabrica # Development site admin user
+    pass: fabrica # Development site admin password
+    email: admin@fabrica.dev # Development site admin email
+  lang: en_US  # Development site WP locale/language
+  rewrite_structure: /%postname%/ # Development site permalink structure (can be changed later)
+  #acf_pro_key: # Optional - if set will preinstall Advanced Custom Fields Pro
   plugins:
-  #  - advanced-custom-fields # Optional (use slugs from WP Codex, plugins will be preinstalled)
+  #- advanced-custom-fields # Optional (use slugs from WP Codex, one per line, to auto install plugins at setup)
+  #- force-regenerate-thumbnails
 
 # Google Analytics
-# google_analytics_id: # Optional (will be preset in theme, can be added manually later)
+#google_analytics_id: # Optional (will be preset in theme, can be added manually later)
 
-# Production deployment quick set up - optional (can be added later in dev/Movefile.erb)
-# ftp:
-#   host:
-#   user:
-#   password:
-# remote_path: /path/to/wordpress/from/ftp/root/
+# Production deployment quick FTP set up - optional (can be added later in dev/Movefile.erb)
+#ftp:
+#  host:
+#  user:
+#  password:
+#  path_to_wp: /path/to/wordpress/from/ftp/root/

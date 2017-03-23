@@ -1,26 +1,27 @@
 # Fabrica Dev Kit for WordPress
-A best-practice development environment and build toolkit to streamline every part of the WordPress development process. Ideal for custom theme developers, especially those with complex CMS-type requirements. Its main features are:
+A development environment and build toolkit to accelerate and optimize every stage of the WordPress development process. For custom theme (or plugin) developers, especially those with complex CMS-type requirements. Its main features are:
 
-* Instant setup of project-specific fast local development server using [Docker](https://www.docker.com/)
-* Tools for coding leaner, cleaner themes using Twig, PostCSS, MVC and BEM
+* Instant setup of project-specific fast local development server (using [Docker](https://www.docker.com/))
+* Tools for coding leaner, cleaner themes (using Twig, PostCSS and/or SASS/LESS, MVC and BEM)
 * Build script to preprocess, lint and optimize assets
-* Live browser testing, synchronized across devices
-* Version control for custom fields
-* Instant deployment
+* Live browser testing, synchronized across devices (using Browsersync)
+* Version control for custom fields (using ACF-JSON)
+* Instant deployment (using Wordmove)
 
 ## All features
 
 ### Installs and configures an independent local development environment for each project
 
-* Using [Docker](https://www.docker.com/), creates an independent development environment for your project running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/). Docker's efficient architecture means that each Fabrica Dev Kit project runs and is stored separately (unlike MAMP, where all projects share space and servers), while avoiding the bloat of a Vagrant-like solution where each project has an entire virtual machine to itself.
+* Using [Docker](https://www.docker.com/), creates an independent development environment for your project running the [Nginx](https://nginx.org/) web server with [PHP-FPM](https://php-fpm.org/). Docker's efficient architecture means that each Fabrica Dev Kit project runs and is stored separately (unlike MAMP, where all projects share space and servers), while avoiding the bloat of a Vagrant-like solution (where each project has a capacious virtual machine to itself).
 * Automatically installs all the software required to develop, including the latest version of WordPress and your plugins of choice (you just list them in the initial setup file), as well as build, optimization and deployment tools.
+* Setup of a new project takes a matter of seconds (after the one-time installation of initial dependencies and base images).
 
 ### Allows you to write cleaner, more logical and more beautiful code (if you want to)...
 * ... with templates written in [Twig](http://twig.sensiolabs.org/) rather than directly in PHP. Installs the revolutionary [Timber](https://upstatement.com/timber/) to bring MVC-like separation of concerns to WordPress development, separating data processing and analytical logic from presentation, allowing you to write more elegant, legible and maintainable templates, eradicating `<?php` `?>` tag-itis forever. A genuine 'never go back' improvement. See the MVC section in code examples below for more.
 * ... with [BEM syntax](http://csswizardry.com/2013/01/mindbemding-getting-your-head-round-bem-syntax/). Uses the [PostHTML-bem](https://github.com/rajdee/posthtml-bem/) plugin for [PostHTML](https://github.com/posthtml/posthtml) which allows you to write much less repetitive BEM markup (see code examples below), and which in turn reflects your (Post)CSS structure more closely.
 * ... with [PostCSS](https://github.com/postcss/postcss) for variables, mixins and other CSS preprocessing enhancements (it can compile your SASS or LESS code no problem).
 * ... with the [LostGrid](https://github.com/peterramsing/lost) grid system / preprocessor, which allows you to build fluid, responsive, nested grids without using presentational classes, with or without [Flexbox](https://github.com/peterramsing/lost).
-* ... making use of the fantastic [Advanced Custom Fields](https://www.advancedcustomfields.com/) plugin, which is deeply supported by Timber (see above). Fabrica Dev Kit can automatically install ACF Pro via Composer if you supply your licence key at setup.
+* ... making use of the fantastic [Advanced Custom Fields](https://www.advancedcustomfields.com/) plugin, which is deeply supported by Timber (see above). Fabrica Dev Kit can automatically install ACF Pro if you supply your licence key at setup.
 
 ### Reduces friction in the development process
 * Keeps the development source folder outside the virtual machine for easy editing and version control. (No need to log into a virtual machine to build / develop: it just acts as a fast server.)
@@ -33,7 +34,7 @@ A best-practice development environment and build toolkit to streamline every pa
 * Allows simultaneous testing on multiple devices (with synchronized scrolling and keystrokes!), also via Browsersync.
 * Combines [NPM](https://www.npmjs.com/) support with [Webpack](https://webpack.github.io/) allowing super-fast installation and inclusion of front-end modules such as jQuery plugins / other JS libraries. (We include [jQuery](https://jquery.com/) and [normalize.css](https://necolas.github.io/normalize.css/) by default.)
 * Includes PHP [Composer](https://getcomposer.org/) support in the starter theme for super-fast installation and automatic inclusion of back-end extensions.
-* Allows push-button deployment (ie. with a single terminal command) to staging or production servers using [Wordmove](https://github.com/welaika/wordmove).
+* Allows one-command deployment (ie. with a single terminal command) to staging or production servers using [Wordmove](https://github.com/welaika/wordmove).
 * Automatically activates [ACF-JSON](https://www.advancedcustomfields.com/resources/local-json/) for ‘database’ version-control (tracks and synchronizes field settings for the Advanced Custom Fields plugin across multiple environments).
 
 ## Requirements + dependencies
@@ -59,7 +60,7 @@ First make sure you have all the required dependencies (see above). Then:
 
 ### Running the build script + watch during active development
 * To work on the project, run a Gulp watch with `gulp` from the `dev/` folder. This will compile / preprocess / optimize your source files and actively watch for changes.
-* After the first build Gulp will tell you which dynamic port the site front-end and admin are accessible at, as well as the Browsersync proxy you can use for live-editing of markup and styles without needing to refresh:
+* Following its initial build, Gulp will tell you which dynamic port the site front-end and admin are accessible at, as well as the Browsersync proxy you can use for live-editing of markup and styles without needing to refresh:
  ```
  Fabrica Dev Kit Project (fabricaproject) access URLs:
  -------------------------------------------
@@ -73,9 +74,9 @@ First make sure you have all the required dependencies (see above). Then:
  Local: http://localhost:3000
  External: http://172.17.3.50:3000
  ```
-* Make all changes in the `dev/src/` folder (see below for information about the structure).
-* You can escape Gulp with `Ctrl` + `C`. While Gulp is not running, changes to source files will not be reflected in the active theme.
-* You can also run `gulp build` to compile the current source code into the active theme folder without starting a watch.
+* Make all changes in the `dev/src/` folder (see below for information about what goes where).
+* You can escape Gulp with Ctrl + c. While Gulp is not running, changes to source files will not be reflected in the active theme.
+* You can also run `gulp build` to compile the current source code into the active theme folder without starting a watch (eg. if you've made a tiny change and want to deploy it without needing to check on development site).
 
 ### Deployment
 1. If you already filled in FTP details in `setup.yml` skip straight to step 3.
@@ -87,7 +88,7 @@ First make sure you have all the required dependencies (see above). Then:
 To begin version control on your project run `git init` in the `dev/` folder. This will track not only your source code but also the corresponding build script and names of the modules needed to compile it into an active theme.
 
 ### Local database access
-For direct MySQL access to the development database, we recommend using [Sequel Pro](https://www.sequelpro.com/) to access it while the development machine is up. The database server is accessible at `127.0.0.1`, and with the dynamic port which you'll be told whenever you run `gulp`. The username, password and database name are are `wordpress`.
+For direct MySQL access to the development database, we recommend using [Sequel Pro](https://www.sequelpro.com/) to access it while the development machine is up. The database server is accessible at `127.0.0.1`, and with the dynamic port which you'll be told when you run `gulp` (see example output above). The username, password and database name are are `wordpress`.
 
 ### Housekeeping
 If you have finished working on a project and want to free up the space used by its development environment, run `docker-compose stop && docker-compose rm -f` from the `dev/` folder. This will remove the Docker containers used for the project (so your development database will be deleted). You can delete the `www/` folder too, but this removes all files from the WP installation, so make sure to save any files in `www/wp-content/` you might need (such as secondary themes, plugins or uploads).
