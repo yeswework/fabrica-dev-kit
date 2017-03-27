@@ -31,7 +31,7 @@ wp:
 
   # WordPress Options
   options:
-    blogdescription: Hello Fabrica.
+    blogdescription: Welcome to Fabrica Dev Kit
 
   # Values for wp-config.php
   debug: true
