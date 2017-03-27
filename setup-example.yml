@@ -15,12 +15,12 @@ wp:
     user: fabrica
     pass: fabrica
     email: admin@fabrica.dev
-  lang: en_US  # dev site WP locale/language
+  lang: en_US # dev site WP locale/language
   rewrite_structure: /%postname%/ # dev site permalink structure (can be changed later)
-  #acf_pro_key: # optional (if set will preinstall Advanced Custom Fields Pro)
-  plugins:
-  #- advanced-custom-fields # optional (installs plugins at setup - use URL slugs from WP plugins directory)
-  #- force-regenerate-thumbnails
+  # acf_pro_key: # optional (if set will preinstall Advanced Custom Fields Pro)
+  plugins: # optional (installs plugins at setup - use URL slugs from WP plugins directory)
+  # - advanced-custom-fields
+  # - force-regenerate-thumbnails
 
 # Google Analytics - optional (will preset tracking code in theme, can be added manually later)
-#google_analytics_id:
+# google_analytics_id:
