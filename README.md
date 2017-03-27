@@ -79,8 +79,7 @@ First make sure you have all the required dependencies (see above). Then:
 * You can also run `gulp build` to compile the current source code into the active theme folder without starting a watch (eg. if you've made a tiny change and want to deploy it without needing to check on development site).
 
 ### Deployment
-1. If you already filled in FTP details in `setup.yml` skip straight to step 3.
-1. If you didn't, once you have a staging or production server set up, edit the `dev/Movefile.erb` with your FTP (or SSH details).
+1. Once you have a staging or production server set up, edit the `dev/Movefile.erb` with your FTP (or SSH details).
 1. To deploy your theme, make sure the latest source code is compiled (if a watch isn't running, do a `gulp build`), then type `wordmove push --themes`. Wordmove will push the new / modified files to the server.
 1. If you are using ACF (whether normal or Pro), ACF-JSON will take care of synching your fields automatically, but it's a good idea to [synchronize the fields on the remote site](https://www.advancedcustomfields.com/resources/synchronized-json/) once you have deployed changes, so that the new fields are saved (from the files in the `acf-json` folder) into the production database.
 
