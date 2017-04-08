@@ -8,6 +8,8 @@ A development environment and build toolkit to accelerate and optimize every sta
 * Version control for custom fields (using ACF-JSON)
 * Instant deployment (using Wordmove)
 
+You can watch a [video of new project setup](https://www.youtube.com/watch?v=C0c0gkTZV90) and basic features.
+
 ## All features
 
 ### Installs and configures an independent local development environment for each project
