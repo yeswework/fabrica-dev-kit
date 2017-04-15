@@ -3,4 +3,5 @@ setup.bak.yml
 dev/
 www/
 provision/tmp/
+_resources/
 .DS_Store
