@@ -92,11 +92,11 @@ To begin version control on your project run `git init` in the `dev/` folder. Th
 For direct MySQL access to the development database, we recommend using [Sequel Pro](https://www.sequelpro.com/) to access it while the development machine is up. The database server is accessible at `127.0.0.1`, and with the dynamic port which you'll be told when you run `gulp` (see example output above). The username, password and database name are are `wordpress`.
 
 ### Housekeeping
-If you have finished working on a project and want to free up the space used by its development environment, run `docker-compose stop && docker-compose rm -f && docker system prune -a` from the `dev/` folder. This will remove the Docker containers used for the project (so your development database will be deleted). You can delete the `www/` folder too, but this removes all files from the WP installation, so make sure to save any files in `www/wp-content/` you might need (such as secondary themes, plugins or uploads).
+If you have finished working on a project and want to free up the space used by its development environment, run `docker-compose down --volumes --rmi all` from the `dev/` folder. This will remove the Docker containers and images used for the project (so your development database will be deleted). You can delete the `www/` folder too, but this removes all files from the WP installation, so make sure to save any files in `www/wp-content/` you might need (such as secondary themes, plugins or uploads).
 
 ## Active development
 
-Theme source files live in the `dev/src/` folder – while Gulp is running your changes will be live-compiled from here into the virtual machine's active theme folder (in `dev/www/wp-content/`). The `dev/build/` folder is a shortcut symlink to the active theme folder: no editing should be done here, but it may occasionally be useful for checking compiled code in case of problems.
+Theme source files live in the `dev/src/` folder – while Gulp is running your changes will be live-compiled from here into the virtual machine's active theme folder (in `www/wp-content/themes/`). The `dev/build/` folder is a shortcut symlink to the active theme folder: no editing should be done here, but it may occasionally be useful for checking compiled code in case of problems.
 
 File paths in this section refer to the `dev/src/` (unless specified relative to `dev/`).
 
