@@ -8,6 +8,10 @@
   },
   "private": true,
   "author": "Fabrica <info@fabri.ca> (http://fabri.ca/)",
+  "scripts": {
+    "sh": "docker-compose exec wp /bin/bash",
+    "wp": "docker-compose exec -T wp wp"
+  },
   "devDependencies": {
     "autoprefixer": "^6.5.1",
     "browser-sync": "~2.18.8",

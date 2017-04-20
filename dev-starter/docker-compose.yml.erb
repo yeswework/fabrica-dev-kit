@@ -30,6 +30,9 @@ services:
     build:
       context: ..
       dockerfile: provision/wp/Dockerfile
+      args:
+        UID: <%= "#{user['uid']}\n" %>
+        GID: <%= "#{user['gid']}\n" %>
     container_name: <%= slug %>_wp
     restart: unless-stopped
     volumes:

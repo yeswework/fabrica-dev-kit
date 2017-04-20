@@ -80,6 +80,11 @@ if ARGV.size > 0 and ARGV.include? '--reinstall'
 	settings['reinstall'] = true
 	echo '"--reinstall" flag is set. "setup.bak.yml" will be used for configuration if "setup.yml" is not available.'
 end
+# get UID/GID to set container user to match
+settings['user'] = {
+	'uid' => `id -u $(whoami)`,
+	'gid' => `id -g $(whoami)`,
+}
 # load default, user and project/site settings, in that order
 settings.merge_settings!(File.join(File.dirname(__FILE__), 'provision/default.yml'))
 settings.merge_settings!(File.join(ENV['HOME'], '.fabrica/settings.yml'))
