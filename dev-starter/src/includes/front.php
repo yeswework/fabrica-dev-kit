@@ -11,7 +11,7 @@ require_once('project.php');
 class Front extends Singleton {
 
 	public function __construct() {
-		if (is_admin() || (defined('DOING_AJAX') && DOING_AJAX)) { return; }
+		if (is_admin() || wp_doing_ajax()) { return; }
 
 		add_filter(Project::$varsTag, array($this, 'updateScriptVars'));
 
