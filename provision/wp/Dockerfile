@@ -27,6 +27,5 @@ RUN usermod -o -u ${UID} www-data
 RUN CONTAINER_GROUP_OLD=`getent group ${GID} | cut -d: -f1` && \
     if [ -n "$CONTAINER_GROUP_OLD" ]; then groupmod -o -g 21001 $CONTAINER_GROUP_OLD; fi
 RUN groupmod -o -g ${GID} www-data
-RUN chown -R www-data:www-data /var/www/html
 
 USER www-data
