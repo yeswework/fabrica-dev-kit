@@ -237,14 +237,8 @@ function wordmove(cb) {
 	cb();
 }
 
-// Build: sequences all the other tasks
-gulp.task('build', gulp.series(clean, gulp.parallel(header, acf, functions, includes, controllers, views, styles, scripts, images, fonts, wordmove)));
-
-// Watch: fire build, then watch for changes
-gulp.task('default', gulp.series('build', watch));
-
 // Update WP config URLs with access port dynamically assigned by Docker to expose Web container port 80
-function wpconfig() {
+function wpconfig(cb) {
 	// Get current port in WordPress to check if it matches the current Web container port
 	var dockerCmd = 'docker exec ' + projectSlug + '_wp',
 		wpPort = exec(dockerCmd + ' wp option get siteurl').toString().replace(/^.*:(\d+)\n$/g, '$1');
@@ -261,10 +255,10 @@ function wpconfig() {
 	console.log(' 🔧  Admin: \x1b[35mhttp://localhost:' + projectWebPort + '/wp-admin/\x1b[0m');
 	console.log(' 🗃  Database: \x1b[35mlocalhost:' + projectDBPort + '\x1b[0m');
 	console.log(outputSeparator);
+	cb();
 }
 
 function watch() {
-	wpconfig();
 	// Initialise BrowserSync
 	console.log('Starting BrowserSync...');
 	browserSync.init({
@@ -280,3 +274,12 @@ function watch() {
 	gulp.watch(path.images, gulp.series(images));
 	gulp.watch(path.fonts, gulp.series(fonts));
 }
+
+// Build: sequences all the other tasks
+gulp.task('build', gulp.series(clean, gulp.parallel(header, acf, functions, includes, controllers, views, styles, scripts, images, fonts, wordmove)));
+
+// Wpconfig: update Docker dynamic ports in Wordpress config
+gulp.task('wpconfig', wpconfig);
+
+// Watch: fire build, then watch for changes
+gulp.task('default', gulp.series('build', 'wpconfig', watch));
