@@ -86,7 +86,7 @@ settings['user'] = {
 	'gid' => `id -g $(whoami)`,
 }
 # create "www" folder (to ensure its owner is the user running the script)
-FileUtils.mkdir 'www'
+FileUtils.mkdir_p 'www'
 # load default, user and project/site settings, in that order
 settings.merge_settings!(File.join(File.dirname(__FILE__), 'provision/default.yml'))
 settings.merge_settings!(File.join(ENV['HOME'], '.fabrica/settings.yml'))
