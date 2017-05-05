@@ -118,7 +118,7 @@ if Dir.exists? 'dev'
 	end
 else
 	# new project: copy starter dev folder (this will preserve changes if/when kit updated)
-	FileUtils.cp_r 'dev-starter', 'dev'
+	FileUtils.cp_r 'provision/dev', 'dev'
 	FileUtils.cd 'dev'
 
 	# set configuration data in source and Wordmove files
