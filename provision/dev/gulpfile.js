@@ -25,7 +25,8 @@ var gulp = require('gulp'),
 	posthtml = require('gulp-posthtml'),
 	posthtmlBem = require('posthtml-bem'),
 	stylelint = require('stylelint'),
-	webpack = require('webpack-stream'),
+	webpackStream = require('webpack-stream'),
+	webpack = require('webpack'),
 	exec = require('child_process').execSync;
 
 // Load project and local settings
@@ -198,7 +199,7 @@ function scripts(done) {
 		.pipe(jshint())
 		.pipe(jshint.reporter())
 		.pipe(changed(base.theme + dest.scripts))
-		.pipe(webpack({output: {filename: 'main.js'}}))
+		.pipe(webpackStream({output: {filename: 'main.js'}}))
 		.pipe(sourcemaps.init({loadMaps: true}))
 		.pipe(gulp.dest(base.theme + dest.scripts))
 		.pipe(browserSync.stream())
