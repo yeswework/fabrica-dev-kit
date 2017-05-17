@@ -199,7 +199,7 @@ function scripts(done) {
 		.pipe(jshint())
 		.pipe(jshint.reporter())
 		.pipe(changed(base.theme + dest.scripts))
-		.pipe(webpackStream({output: {filename: 'main.js'}}))
+		.pipe(webpackStream({output: {filename: 'main.js'}}, webpack))
 		.pipe(sourcemaps.init({loadMaps: true}))
 		.pipe(gulp.dest(base.theme + dest.scripts))
 		.pipe(browserSync.stream())

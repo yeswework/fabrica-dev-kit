@@ -39,7 +39,7 @@ class Base extends Singleton {
 
 		// Load third-party libraries and project code
 		wp_deregister_script('jquery');
-		wp_enqueue_script(Project::$mainHandle, get_stylesheet_directory_uri() . '/js/main' . $suffix . '.js', array(), filemtime(get_template_directory() . '/js/main' . $suffix . '.js'), true);
+		wp_enqueue_script('jquery', get_stylesheet_directory_uri() . '/js/main' . $suffix . '.js', array(), filemtime(get_template_directory() . '/js/main' . $suffix . '.js'), true);
 
 		// Pass variables to JavaScript at runtime
 		$scriptVars = array();
@@ -49,8 +49,7 @@ class Base extends Singleton {
 		}
 
 		// Repeat for stylesheets, first libraries, then theme-specific
-		wp_register_style(Project::$mainHandle, get_stylesheet_directory_uri() . '/css/main' . $suffix . '.css', $dependencies = array(), filemtime(get_template_directory() . '/css/main' . $suffix . '.css'));
-		wp_enqueue_style(Project::$mainHandle);
+		wp_enqueue_style(Project::$mainHandle, get_stylesheet_directory_uri() . '/css/main' . $suffix . '.css', array(), filemtime(get_template_directory() . '/css/main' . $suffix . '.css'));
 	}
 
 	// Output Google Analytics tracking code
