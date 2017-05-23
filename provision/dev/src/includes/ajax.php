@@ -10,10 +10,12 @@ require_once('project.php');
 class Ajax extends Singleton {
 
 	public function __construct() {
-		add_filter(Project::$varsTag, array($this, 'updateScriptVars'));
-
 		// Namespaced tags
 		$this->postNonce = Project::$projectNamespace . '-post-nonce';
+	}
+
+	public function init() {
+		add_filter(Project::$varsTag, array($this, 'updateScriptVars'));
 
 		// AJAX handler functions as required
 		add_action('wp_ajax_nopriv_AJAX-ACTION', array($this, 'ajaxHandler'));
@@ -62,4 +64,4 @@ class Ajax extends Singleton {
 }
 
 // Create a singleton instance of Ajax
-Ajax::instance();
+Ajax::instance()->init();

@@ -14,7 +14,9 @@ class Base extends Singleton {
 	public function __construct() {
 		new \Timber\Timber();
 		\Timber\Timber::$dirname = array('views');
+	}
 
+	public function init() {
 		// Assets
 		add_action('wp_enqueue_scripts', array($this, 'enqueueScripts'));
 		add_action('wp_footer', array($this, 'injectAnalytics'));
@@ -123,4 +125,4 @@ class Base extends Singleton {
 }
 
 // Create a singleton instance of Project
-Base::instance();
+Base::instance()->init();

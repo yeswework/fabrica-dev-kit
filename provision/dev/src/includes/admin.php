@@ -9,8 +9,7 @@ require_once('singleton.php');
 
 class Admin extends Singleton {
 
-	public function __construct() {
-
+	public function init() {
 		// Exit now for non-admin requests
 		if (!is_admin()) { return; }
 
@@ -28,4 +27,4 @@ class Admin extends Singleton {
 }
 
 // Create a singleton instance of Admin
-Admin::instance();
+Admin::instance()->init();

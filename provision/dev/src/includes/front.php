@@ -10,7 +10,7 @@ require_once('project.php');
 
 class Front extends Singleton {
 
-	public function __construct() {
+	public function init() {
 		if (is_admin() || wp_doing_ajax()) { return; }
 
 		add_filter(Project::$varsTag, array($this, 'updateScriptVars'));
@@ -37,4 +37,4 @@ class Front extends Singleton {
 }
 
 // Create a singleton instance of Front
-Front::instance();
+Front::instance()->init();

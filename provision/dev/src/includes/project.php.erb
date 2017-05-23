@@ -29,7 +29,7 @@ class Project extends Singleton {
 	// Google Analytics ID (injected by Base class)
 	public static $googleAnalyticsId = '<%= google_analytics_id %>';
 
-	public function __construct() {
+	public function init() {
 		add_action('init', array($this, 'registerStructure'));
 
 		// Project-specific tags, hooks and initialisations
@@ -46,4 +46,4 @@ class Project extends Singleton {
 }
 
 // Create a singleton instance of Project
-Project::instance();
+Project::instance()->init();
