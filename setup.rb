@@ -125,7 +125,6 @@ else
 	settingsostruct = OpenStruct.new(settings)
 	templateFilenames = [
 		'src/package.json',
-		'src/includes/.env',
 		'src/includes/composer.json',
 		'src/includes/project.php',
 		'src/templates/views/base.twig',
