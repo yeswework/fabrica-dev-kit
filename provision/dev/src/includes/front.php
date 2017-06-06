@@ -3,7 +3,7 @@
    Front-end-specific configuration, scripts and handlers
    ========================================================================= */
 
-namespace fabrica;
+namespace Fabrica\Devkit;
 
 require_once('singleton.php');
 require_once('project.php');

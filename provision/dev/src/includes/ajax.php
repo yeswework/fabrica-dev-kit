@@ -3,7 +3,7 @@
    Ajax calls and handlers
    ========================================================================= */
 
-namespace fabrica;
+namespace Fabrica\Devkit;
 
 require_once('project.php');
 

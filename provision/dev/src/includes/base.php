@@ -3,7 +3,7 @@
    Basic configuration for all projects - you should not need to edit this
    ========================================================================= */
 
-namespace fabrica;
+namespace Fabrica\Devkit;
 
 require_once(__DIR__ . '/vendor/autoload.php');
 require_once('singleton.php');

@@ -3,7 +3,7 @@
    Singleton pattern implementation
    ========================================================================= */
 
-namespace fabrica;
+namespace Fabrica\Devkit;
 
 class Singleton {
 

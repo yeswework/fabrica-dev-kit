@@ -3,7 +3,7 @@
    Admin-specific configuration, scripts and handlers
    ========================================================================= */
 
-namespace fabrica;
+namespace Fabrica\Devkit;
 
 require_once('singleton.php');
 
