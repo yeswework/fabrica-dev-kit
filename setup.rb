@@ -221,7 +221,7 @@ if settings['wp']['skip_default_plugins']
 	wp "plugin delete \"hello\" \"akismet\""
 end
 if settings['wp']['skip_default_themes']
-	wp "theme delete \"twentyseventeen\" \"twentysixteen\" \"twentyfifteen\" \"twentyfourteen\""
+	wp "theme delete \"twentyseventeen\" \"twentysixteen\" \"twentyfifteen\""
 end
 # WordPress options
 (settings['wp']['options'] || []).each do |option, value|
