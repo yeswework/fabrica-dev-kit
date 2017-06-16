@@ -1,0 +1,33 @@
+{
+  "name": "fabrica-dev-kit",
+  "version": "1.0.1",
+  "description": "Fabrica Dev Kit for Wordpress",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fabrica-wp/fabrica-dev-kit.git"
+  },
+  "keywords": [
+    "wordpress",
+    "docker",
+    "toolkit"
+  ],
+  "author": "Fabrica <info@fabri.ca> (http://fabri.ca/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fabrica-wp/fabrica-dev-kit/issues"
+  },
+  "homepage": "https://github.com/fabrica-wp/fabrica-dev-kit#readme",
+  "bin": {
+    "fdk": "./index.js"
+  },
+  "dependencies": {
+    "commander": "^2.9.0",
+    "js-yaml": "^3.8.4",
+    "lodash": "^4.17.4",
+    "shelljs": "^0.7.8"
+  }
+}
