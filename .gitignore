@@ -1,7 +1,6 @@
 setup.yml
 setup.bak.yml
-/dev/
-/www/
+/node_modules/
 /provision/tmp/
 _resources/
 .DS_Store

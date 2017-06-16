@@ -175,11 +175,10 @@ program.version(VERSION);
 	// finalize
 	.parse(process.argv);
 
-	/* ~%%~ [TODO] ~%%~ separate commands into their own files with a common file for auxiliar commands? ~%%~ */
-	/* ~%%~ [TODO] ~%%~ also execute `<project>/dev/package.json` scripts (`npm run <command> [vars...]`), either by:
+	/* ~%%~ [TODO] ~%%~ also execute `<project>/package.json` scripts (`npm run <command> [vars...]`), either by:
 	• opening `<project>/dev/package.json` and go through them and add them as
 	• pre-def list of commands to add
 	for already defined commands:
-	• prefix with char like `:<command>`, `!<command>`, `~<command>`, `@<command>` or `\<command>` (maybe one of these could set that it should change to `dev/` folder before running the command)
+	• prefix with char like `:<command>`, `!<command>`, `~<command>`, `@<command>` or `\<command>` (maybe one of these could set that it should change to root project folder before running the command)
 	• command for run like `. <command>` or `run <command>`
 	// ~%%~ */
