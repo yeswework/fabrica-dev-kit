@@ -28,6 +28,7 @@
     "commander": "^2.9.0",
     "js-yaml": "^3.8.4",
     "lodash": "^4.17.4",
+    "promise": "^7.3.0",
     "shelljs": "^0.7.8"
   }
 }

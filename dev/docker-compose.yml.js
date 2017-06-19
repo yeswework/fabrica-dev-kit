@@ -1,9 +1,10 @@
+module.exports = (data) => `
 version: '2'
 
 services:
   web:
     image: nginx:latest
-    container_name: <%= slug %>_web
+    container_name: ${data.slug}_web
     restart: unless-stopped
     volumes:
       - ../www:/var/www/html
@@ -15,7 +16,7 @@ services:
       - wp
   db:
     image: mysql:5.7
-    container_name: <%= slug %>_db
+    container_name: ${data.slug}_db
     volumes:
       - db-data:/var/lib/mysql
     restart: unless-stopped
@@ -31,9 +32,9 @@ services:
       context: ..
       dockerfile: provision/wp/Dockerfile
       args:
-        UID: <%= "#{user['uid']}\n" %>
-        GID: <%= "#{user['gid']}\n" %>
-    container_name: <%= slug %>_wp
+        UID: ${data.user.uid}
+        GID: ${data.user.gid}
+    container_name: ${data.slug}_wp
     restart: unless-stopped
     volumes:
       - ../www:/var/www/html
@@ -42,10 +43,11 @@ services:
     environment:
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_PASSWORD: wordpress
-      WORDPRESS_DB_PREFIX: <%= "#{db['prefix']}\n" %>
+      WORDPRESS_DB_PREFIX: ${data.db.prefix}
       WORDPRESS_DEBUG: "true"
     links:
       - db:mysql
 
 volumes:
   db-data:
+`;

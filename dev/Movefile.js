@@ -1,17 +1,20 @@
+const path = require('path');
+
+module.exports = (data) => `
 # Wordmove configuration
 # for more info see https://github.com/welaika/wordmove/wiki/Movefile-configurations-explained
 
 # Development site settings - do not modify
 local:
-  vhost: "localhost:<%%= ENV['WEB_PORT'] %>"
-  wordpress_path: '<%%= File.expand_path "#{Dir.pwd}/../www/" %>'
+  vhost: "localhost:${data.webPort}"
+  wordpress_path: '${path.resolve(`${__dirname}/www/`)}'
 
   database:
     name: "wordpress"
     user: "wordpress"
     password: "wordpress"
     host: "127.0.0.1"
-    port: "<%%= ENV['DB_PORT'] %>"
+    port: "${data.dbPort}"
 
 # Production site settings - uncomment and specify for your staging/production environments as required
 # production:
@@ -54,3 +57,4 @@ local:
 #       host: "host"
 #       user: "user"
 #       password: "password" # password is optional, will use public keys if available.
+`;
