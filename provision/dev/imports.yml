@@ -1,0 +1,9 @@
+# Define other files to be imported into WordPress
+
+plugins:
+# 2 alternative formats:
+#- /path/to/plugin/source
+#- path: /path/to/plugin/source
+#  watch: **/*.{php,png,jpg} # glob for files to watch
+#  include: ** # glob for files to copy
+#  exclude: **/.git* # glob for files to ignore

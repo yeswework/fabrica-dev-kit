@@ -1,19 +1,20 @@
 var gulp = require('gulp'),
 	autoprefixer = require('autoprefixer'),
 	browserSync = require('browser-sync').create(),
-	del = require('del'),
 	concat = require('gulp-concat'),
 	changed = require('gulp-changed'),
 	cssnano = require('gulp-cssnano'),
+	del = require('del'),
+	exec = require('child_process').execSync,
+	mergeStream = require('merge-stream'),
+	fs = require('fs'),
 	imagemin = require('gulp-imagemin'),
 	jshint = require('gulp-jshint'),
-	postcss = require('gulp-postcss'),
+	lost = require('lost'),
 	rename = require('gulp-rename'),
 	sourcemaps = require('gulp-sourcemaps'),
-	tap = require('gulp-tap'),
-	fs = require('fs'),
-	uglify = require('gulp-uglify'),
-	lost = require('lost'),
+	path = require('path'),
+	postcss = require('gulp-postcss'),
 	postcssImport = require('postcss-import'),
 	postcssFontpath = require('postcss-fontpath'),
 	postcssEach = require('postcss-each'),
@@ -25,39 +26,65 @@ var gulp = require('gulp'),
 	posthtml = require('gulp-posthtml'),
 	posthtmlBem = require('posthtml-bem'),
 	stylelint = require('stylelint'),
+	tap = require('gulp-tap'),
+	uglify = require('gulp-uglify'),
 	webpackStream = require('webpack-stream'),
 	webpack = require('webpack'),
-	exec = require('child_process').execSync;
+	yaml = require('js-yaml');
 
-// Load project and local settings
-var projectSettings, localSettings;
+// Load project settings
+var packageData;
 try {
-	projectSettings = require('./src/package.json');
+	packageData = require('./src/package.json');
 } catch (ex) {
 	console.error('Error loading source `package.json` file.', ex);
 	return;
 }
-var projectSlug = projectSettings.name,
-	projectTitle = projectSettings.description,
-	projectAuthor = projectSettings.author;
+var settings = {
+	slug: packageData.name,
+	title: packageData.description,
+	author: packageData.author
+};
 try {
-	var projectWebPort = exec('docker-compose port web 80').toString().replace(/^.*:(\d+)\n$/g, '$1'),
-		projectDBPort = exec('docker-compose port db 3306').toString().replace(/^.*:(\d+)\n$/g, '$1');
+	settings.webPort = exec('docker-compose port web 80').toString().replace(/^.*:(\d+)\n$/g, '$1');
+	settings.dbPort = exec('docker-compose port db 3306').toString().replace(/^.*:(\d+)\n$/g, '$1');
 } catch (ex) {
 	console.error('Error obtaining containers access ports.', ex);
 	return;
 }
+
+// Load optional imports file
+try {
+	settings.imports = yaml.safeLoad(fs.readFileSync('./imports.yml', 'utf8'));
+} catch (ex) {
+	settings.imports = {}; // ignore
+}
+settings.imports.plugins = settings.imports.plugins.map(function(pluginOrPath) {
+	var plugin = (pluginOrPath instanceof Object) ? pluginOrPath : { path: pluginOrPath };
+
+	plugin.path = path.resolve(plugin.path.replace(/^~/, require('os').homedir()));
+	plugin.watch = plugin.watch || '**/*.{php,css,js}';
+	plugin.watchPath = path.join(plugin.path, plugin.watch);
+	plugin.include = plugin.include || '**';
+	plugin.src = [path.join(plugin.path, plugin.include)];
+	if (plugin.exclude) {
+		plugin.src.push('!' + path.join(plugin.path, plugin.exclude));
+	}
+
+	return plugin;
+});
 
 // Paths for remapping
 var base = {
 	dev: './',
 	src: './src/',
 	acfRelativeSrc: '../../../../dev/src/',
-	theme: '../www/wp-content/themes/' + projectSlug + '/'
+	theme: '../www/wp-content/themes/' + settings.slug + '/',
+	plugins: '../www/wp-content/plugins/'
 };
 
 // Globs for each file type
-var path = {
+var glob = {
 	functions: base.src + 'includes/*.php',
 	includes: base.src + 'includes/**/*',
 	controllers: base.src + 'templates/controllers/**/*.php',
@@ -121,9 +148,9 @@ function clean() {
 // Header: auto-create style.css using project info we already have
 function header(cb) {
 	var data = '/*\r\n'
-		+ 'Theme Name: ' + projectTitle + '\r\n'
-		+ 'Author: ' + projectAuthor['name'] + '\r\n'
-		+ (projectAuthor['url'] ? 'Author URI: ' + projectAuthor['url'] + '\r\n' : '')
+		+ 'Theme Name: ' + settings.title + '\r\n'
+		+ 'Author: ' + settings.author['name'] + '\r\n'
+		+ (settings.author['url'] ? 'Author URI: ' + settings.author['url'] + '\r\n' : '')
 		+ '*/';
 	fs.writeFileSync(base.theme + 'style.css', data);
 	cb();
@@ -139,7 +166,7 @@ function acf(cb) {
 // Functions: auto-create functions.php with root level PHP includes
 function functions(cb) {
 	fs.writeFileSync(base.theme + 'functions.php', '<?php\r\n');
-	return gulp.src(path.functions)
+	return gulp.src(glob.functions)
 		.pipe(tap(function(file) {
 			fs.appendFileSync(base.theme + 'functions.php', "require_once(get_stylesheet_directory() . '/" + dest.includes + '/' + file.path.replace(file.base, '') + "');\r\n");
 		}));
@@ -148,7 +175,7 @@ function functions(cb) {
 
 // Includes: copy all project and vendor includes
 function includes() {
-	return gulp.src(path.includes)
+	return gulp.src(glob.includes)
 		.pipe(changed(base.theme + dest.includes))
 		.pipe(gulp.dest(base.theme + dest.includes))
 		.pipe(browserSync.stream());
@@ -156,7 +183,7 @@ function includes() {
 
 // Controllers: copy PHP files
 function controllers() {
-	return gulp.src(path.controllers)
+	return gulp.src(glob.controllers)
 		.pipe(changed(base.theme + dest.controllers))
 		.pipe(gulp.dest(base.theme + dest.controllers))
 		.pipe(browserSync.stream());
@@ -164,7 +191,7 @@ function controllers() {
 
 // Views: copy Twig files
 function views() {
-	return gulp.src(path.views)
+	return gulp.src(glob.views)
 		.pipe(changed(base.theme + dest.views))
 		.pipe(posthtml([posthtmlBem(options.posthtmlBem)]))
 		.pipe(gulp.dest(base.theme + dest.views))
@@ -173,7 +200,7 @@ function views() {
 
 // Styles (CSS): lint, concatenate into one file, write source map, preprocess, save full and minified versions, then copy
 function styles() {
-	return gulp.src(path.styleMain)
+	return gulp.src(glob.styleMain)
 		.pipe(postcss(options.postcss)
 			.on('error', function(error) {
 				console.error(error.message);
@@ -195,7 +222,7 @@ function styles() {
 
 // Scripts (JS): get third-party dependencies, concatenate all scripts into one file, save full and minified versions, then copy
 function scripts(done) {
-	return gulp.src(path.scriptMain)
+	return gulp.src(glob.scriptMain)
 		.pipe(jshint())
 		.pipe(jshint.reporter())
 		.pipe(changed(base.theme + dest.scripts))
@@ -213,7 +240,7 @@ function scripts(done) {
 
 // Images: optimise and copy, maintaining tree
 function images() {
-	return gulp.src(path.images)
+	return gulp.src(glob.images)
 		.pipe(changed(base.theme + dest.images))
 		.pipe(imagemin(options.imagemin))
 		.pipe(gulp.dest(base.theme + dest.images))
@@ -222,16 +249,30 @@ function images() {
 
 // Fonts: just copy, maintaining tree
 function fonts() {
-	return gulp.src(path.fonts)
+	return gulp.src(glob.fonts)
 		.pipe(changed(base.theme + dest.fonts))
 		.pipe(gulp.dest(base.theme + dest.fonts))
 		.pipe(browserSync.stream());
 }
 
+// Imports: extra folders to be copied
+function imports() {
+	let importsPipes = [];
+	settings.imports.plugins.forEach(function(plugin) {
+		importsPipes.push(
+			gulp.src(plugin.src, { base: path.dirname(plugin.path) })
+				.pipe(changed(base.plugins))
+				.pipe(gulp.dest(base.plugins))
+				.pipe(browserSync.stream())
+		)
+	});
+	return mergeStream(importsPipes);
+}
+
 // Wordmove: add full Wordpress path to the final Movefile with the almost complete template
 function wordmove(cb) {
 	try {
-		exec('erb Movefile.erb > Movefile', {env: {WEB_PORT: projectWebPort, DB_PORT: projectDBPort}});
+		exec('erb Movefile.erb > Movefile', {env: {WEB_PORT: settings.webPort, DB_PORT: settings.dbPort}});
 	} catch (ex) {
 		console.error('Error generating Movefile:', ex);
 	}
@@ -241,20 +282,20 @@ function wordmove(cb) {
 // Update WP config URLs with access port dynamically assigned by Docker to expose Web container port 80
 function wpconfig(cb) {
 	// Get current port in WordPress to check if it matches the current Web container port
-	var dockerCmd = 'docker exec ' + projectSlug + '_wp',
+	var dockerCmd = 'docker exec ' + settings.slug + '_wp',
 		wpPort = exec(dockerCmd + ' wp option get siteurl').toString().replace(/^.*:(\d+)\n$/g, '$1');
-	if (wpPort != projectWebPort) {
+	if (wpPort != settings.webPort) {
 		// Ports needs to be updated
-		console.log('Updating WordPress port from ' + wpPort + ' to ' + projectWebPort + '...');
-		exec(dockerCmd + ' wp search-replace --quiet "localhost:' + wpPort + '" "localhost:' + projectWebPort + '"');
-		exec(dockerCmd + ' bash -c \'wp option update home "http://localhost:' + projectWebPort + '" && wp option update siteurl "http://localhost:' + projectWebPort + '"\'');
+		console.log('Updating WordPress port from ' + wpPort + ' to ' + settings.webPort + '...');
+		exec(dockerCmd + ' wp search-replace --quiet "localhost:' + wpPort + '" "localhost:' + settings.webPort + '"');
+		exec(dockerCmd + ' bash -c \'wp option update home "http://localhost:' + settings.webPort + '" && wp option update siteurl "http://localhost:' + settings.webPort + '"\'');
 	}
-	outputSeparator = ' \x1b[36m' + '-'.repeat(37 + projectWebPort.toString().length) + '\x1b[0m';
-	console.log('\x1b[1m' + projectTitle + ' (' + projectSlug + ') access URLs:\x1b[22m');
+	outputSeparator = ' \x1b[36m' + '-'.repeat(37 + settings.webPort.toString().length) + '\x1b[0m';
+	console.log('\x1b[1m' + settings.title + ' (' + settings.slug + ') access URLs:\x1b[22m');
 	console.log(outputSeparator);
-	console.log(' 🌍  WordPress: \x1b[35mhttp://localhost:' + projectWebPort + '/\x1b[0m');
-	console.log(' 🔧  Admin: \x1b[35mhttp://localhost:' + projectWebPort + '/wp-admin/\x1b[0m');
-	console.log(' 🗃  Database: \x1b[35mlocalhost:' + projectDBPort + '\x1b[0m');
+	console.log(' 🌍  WordPress: \x1b[35mhttp://localhost:' + settings.webPort + '/\x1b[0m');
+	console.log(' 🔧  Admin: \x1b[35mhttp://localhost:' + settings.webPort + '/wp-admin/\x1b[0m');
+	console.log(' 🗃  Database: \x1b[35mlocalhost:' + settings.dbPort + '\x1b[0m');
 	console.log(outputSeparator);
 	cb();
 }
@@ -263,21 +304,24 @@ function watch() {
 	// Initialise BrowserSync
 	console.log('Starting BrowserSync...');
 	browserSync.init({
-		proxy: 'localhost:' + projectWebPort,
+		proxy: 'localhost:' + settings.webPort,
 		open: false
 	});
-	gulp.watch(path.functions, gulp.series(functions));
-	gulp.watch(path.includes, gulp.series(includes));
-	gulp.watch(path.controllers, gulp.series(controllers));
-	gulp.watch(path.views, gulp.series(views));
-	gulp.watch(path.styles, gulp.series(styles));
-	gulp.watch(path.scripts, gulp.series(scripts));
-	gulp.watch(path.images, gulp.series(images));
-	gulp.watch(path.fonts, gulp.series(fonts));
+	gulp.watch(glob.functions, gulp.series(functions));
+	gulp.watch(glob.includes, gulp.series(includes));
+	gulp.watch(glob.controllers, gulp.series(controllers));
+	gulp.watch(glob.views, gulp.series(views));
+	gulp.watch(glob.styles, gulp.series(styles));
+	gulp.watch(glob.scripts, gulp.series(scripts));
+	gulp.watch(glob.images, gulp.series(images));
+	gulp.watch(glob.fonts, gulp.series(fonts));
+	settings.imports.plugins.forEach(function(plugin) {
+		gulp.watch(plugin.watchPath, gulp.series(imports));
+	});
 }
 
 // Build: sequences all the other tasks
-gulp.task('build', gulp.series(clean, gulp.parallel(header, acf, functions, includes, controllers, views, styles, scripts, images, fonts, wordmove)));
+gulp.task('build', gulp.series(clean, gulp.parallel(header, acf, functions, includes, controllers, views, styles, scripts, images, fonts, imports, wordmove)));
 
 // Wpconfig: update Docker dynamic ports in Wordpress config
 gulp.task('wpconfig', wpconfig);
