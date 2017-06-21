@@ -2,17 +2,18 @@
 
 'use strict';
 
-const program = require('commander'),
+const findup = require('findup-sync'),
 	http = require('http'),
 	merge = require('lodash/merge'),
+	program = require('commander'),
 	Promise = require('promise'),
 	sh = require('shelljs'),
 	yaml = require('js-yaml');
 
 // Fabrica Dev Kit version
 const VERSION = '1.0.1',
-// maximum time (in seconds) to wait for wp container to be up and running
-	WAIT_WP_CONTAINER_TIMEOUT = 360;
+// maximum time (in milliseconds) to wait for wp container to be up and running
+	WAIT_WP_CONTAINER_TIMEOUT = 360 * 1000;
 
 // output functions
 let echo = message => {
@@ -31,6 +32,7 @@ let wait = (message, callback, delay=500) => {
 			stopWaitInterval = response => {
 				clearTimeout(handler);
 				console.log();
+				console.log('~%%~ response:', response);
 				resolve(response);
 			};
 		handler = setInterval(() => {
@@ -65,14 +67,16 @@ if (packageManager == '') {
 	halt('Could not find any Node package manager (\'yarn\' or \'npm\').');
 }
 
+// load all settings files
 let loadSettings = (reinstall = false) => {
 	echo('Reading settings...');
 	let settings = {};
 	// auxiliar method to get settings from the files
 	let mergeSettings = (filename) => {
 		if (!sh.test('-f', filename)) { return; }
+		let newSettings;
 		try {
-			let newSettings = yaml.safeLoad(fs.readFileSync(filename, 'utf8'));
+			newSettings = yaml.safeLoad(sh.cat(filename));
 		} catch (ex) {
 			halt(`Failed to open settings file: ${filename}.\nException: ${ex}`);
 		}
@@ -81,22 +85,22 @@ let loadSettings = (reinstall = false) => {
 
 	// get user's UID/GID to match on container's user
 	settings.user = {
-		uid: sh.exec('id -u $(whoami)', {silent: true}).output,
-		gid: sh.exec('id -g $(whoami)', {silent: true}).output,
+		uid: sh.exec('id -u $(whoami)', {silent: true}).stdout,
+		gid: sh.exec('id -g $(whoami)', {silent: true}).stdout,
 	}
 
 	// load default, user and project/site settings, in that order
 	mergeSettings(`${__dirname}/default.yml`);
 	mergeSettings(`${process.env.HOME}/.fabrica/settings.yml`);
-	setupSettingsFilename = './setup.yml';
-	setupSettingsBakFilename = './setup.bak.yml';
+	let setupSettingsFilename = './setup.yml',
+		setupSettingsBakFilename = './setup.bak.yml';
 	if (!sh.test('-f', setupSettingsFilename)) {
-		if (reinstall && sh.test('-f', setupSettingsFilename)) {
+		if (reinstall && !sh.test('-f', setupSettingsFilename)) {
 			sh.mv(setupSettingsBakFilename, setupSettingsFilename);
 		} else if (reinstall) {
-			halt('Could not find \'setup.yml\' or \'setup.bak.yml\'. Please use the \'fdk init <slug>\' command to create a new project folder with this file.');
+			halt('Could not find \'setup.yml\' or \'setup.bak.yml\'. Please use the \'fdk init <slug>\' command to create a new project folder and \'setup.yml\'.');
 		} else {
-			halt('Could not find \'setup.yml\'. Please use the \'fdk init <slug>\' command to create a new project folder with this file. If the current project has been set up previously, you can set the \'--reinstall\' flag and \'setup.bak.yml\' will be used to bring the Docker containers back up and reconfigure them.');
+			halt('Could not find \'setup.yml\'. Please use the \'fdk init <slug>\' command to create a new project folder and \'setup.yml\'. If the current project has been set up previously, you can run \'fdk setup --reinstall\' and \'setup.bak.yml\' will be used to bring the Docker containers back up and reconfigure them.');
 		}
 	}
 	mergeSettings(setupSettingsFilename);
@@ -125,9 +129,9 @@ let createFolders = settings => {
 			'src/templates/views/base.twig',
 			'docker-compose.yml'
 		];
-		for (let destFilename in templateFilenames) {
+		for (let destFilename of templateFilenames) {
 			// load template file and generate final version
-			let srcFilename = `./${destFilename}.js`;
+			let srcFilename = `${process.cwd()}/${destFilename}.js`;
 			if (sh.test('-f', srcFilename)) {
 				let generatedFile = require(srcFilename)(settings);
 				sh.ShellString(generatedFile).to(destFilename);
@@ -141,7 +145,7 @@ let createFolders = settings => {
 		if (!sh.test('-f', 'src/package.json')) {
 			halt('Folder \'src/\' already exists but no \'package.json\' found there.');
 		}
-		projectSettings = JSON.parse(File.read('src/package.json'))
+		let projectSettings = JSON.parse(sh.cat('src/package.json'))
 		echo('Existing project \'src/package.json\' found. Overriding the following settings in \'setup.yml\' with those in this file  (old \'setup.yml\' value → new value):');
 		for (let [projectKey, settingKey] of Object.entries({name: 'slug', description: 'title', author: 'author'})) {
 			echo(` ◦ ${settingKey} / ${projectKey}: '${settings[settingKey]}' → '${projectSettings[projectKey]}'`);
@@ -153,34 +157,37 @@ let createFolders = settings => {
 // install build dependencies (Gulp + extensions)
 let installDependencies = () => {
 	echo('Installing build dependencies...');
-	sh.exec(`${packageManager} install`);
+	// `shelljs.exec` doesn't handle color and animations yet
+	// https://github.com/shelljs/shelljs/issues/86
+	let spawn = require('child_process').spawnSync;
+	spawn(`${packageManager}`, ['install'], { stdio: 'inherit' });
 
 	// install initial front-end dependencies
 	echo('Installing front-end dependencies...');
 	sh.cd('src');
-	sh.exec(`${packageManager} install`);
+	spawn(`${packageManager}`, ['install'], { stdio: 'inherit' });
 	sh.cd('includes');
-	sh.exec('composer install');
+	spawn('composer', ['install'], { stdio: 'inherit' });
 	sh.cd('../..');
 };
 
 
 // install and configure WordPress in the Docker container
-let installWordPress = settings => {
+let installWordPress = (webPort, settings) => {
 	echo('Installing WordPress...');
 	let wpContainer = `${settings['slug']}_wp`,
 		wp = command => {
 			if (sh.exec(`docker exec ${wpContainer} wp ${command}`).code != 0) {
-				abort(`Failed to execute: 'docker exec ${wpContainer} wp ${command}'`);
+				halt(`Failed to execute: 'docker exec ${wpContainer} wp ${command}'`);
 			}
 		};
 
-	wp(`core install
-		--url=localhost:${$webPort}
-		--title="${settings.title}"
-		--admin_user=${settings.wp.admin.user}
-		--admin_password=${settings.wp.admin.pass}
-		--admin_email="${settings.wp.admin.email}"`);
+	wp(['core install',
+		`--url=localhost:${webPort}`,
+		`--title="${settings.title}"`,
+		`--admin_user=${settings.wp.admin.user}`,
+		`--admin_password=${settings.wp.admin.pass}`,
+		`--admin_email="${settings.wp.admin.email}"`].join(' '));
 	wp(`rewrite structure "${settings.wp.rewrite_structure}"`);
 	if (settings.wp.lang == 'ja') {
 		// activate multibyte patch for Japanese language
@@ -190,10 +197,10 @@ let installWordPress = settings => {
 	// run our gulp build task and build the WordPress theme
 	echo('Building WordPress theme...');
 	if (sh.exec('gulp build').code != 0) {
-		abort('Gulp \'build\' task failed');
+		halt('Gulp \'build\' task failed');
 	}
 	// create symlink to theme folder for quick access
-	FileUtils.ln('-s', `../www/wp-content/themes/${settings.slug}/`, 'build');
+	sh.ln('-s', `../www/wp-content/themes/${settings.slug}/`, 'build');
 	// activate theme
 	wp(`theme activate "${settings.slug}"`);
 
@@ -202,9 +209,9 @@ let installWordPress = settings => {
 		wp(`plugin install "${plugin}" --activate`);
 	}
 	if (settings.wp.acf_pro_key) {
-		let execCode = sh.exec(`docker exec ${wpContainer} bash -c 'curl "http://connect.advancedcustomfields.com/index.php?p=pro&a=download&k=${settings.wp.acf_pro_key}" > /tmp/acf-pro.zip
-			&& wp plugin install /tmp/acf-pro.zip --activate
-			&& rm /tmp/acf-pro.zip'`).code;
+		let execCode = sh.exec([`docker exec ${wpContainer} bash -c 'curl "http://connect.advancedcustomfields.com/index.php?p=pro&a=download&k=${settings.wp.acf_pro_key}" > /tmp/acf-pro.zip`,
+			`&& wp plugin install /tmp/acf-pro.zip --activate`
+			`&& rm /tmp/acf-pro.zip'`].join(' ')).code;
 	}
 	// remove default WordPress plugins and themes
 	if (settings.wp.skip_default_plugins) {
@@ -237,28 +244,39 @@ let startContainersAndInstall = settings => {
 		// get port dynamically assigned by Docker to expose web container's port 80
 		webPort = webPort ||
 			sh.exec('docker-compose port web 80', {silent: true})
-				.output.replace(/^.*:(\d+)\n$/, '$1');
+				.stdout.replace(/^.*:(\d+)\n$/, '$1');
 		if (webPort) {
 			// check if WordPress is already available at the expected URL
-			http.get(`http://localhost:${webPort}`, response => {
+			http.get(`http://localhost:${webPort}/wp-admin/install.php`, response => {
 				// container is up
-				stopWaitInterval(response);
+				stopWaitInterval(response.statusCode);
 			}).on('error', error => {
 				// Ignore errors (container still not up)
 			});
 		}
 		if (Date.now() - startTime > WAIT_WP_CONTAINER_TIMEOUT) {
 			// timeout
+			console.log('~%%~ timeout', Date.now() - startTime, WAIT_WP_CONTAINER_TIMEOUT);
 			stopWaitInterval('-1');
 		}
 	}).then(response => {
+		/* [FIXME] ~%%~
+		• continued timer interval after positive response
+		• continued timer interval after timeout
+		• no error output
+		//	~%%~ */
+		console.log('~%%~ then', response);
 		// wait is over: containers are up or timeout has expired
 		if (response != '200') {
-			abort('More than ${WAIT_WP_CONTAINER_TIMEOUT} seconds elapsed while waiting for WordPress container to start.');
+			halt(`More than ${WAIT_WP_CONTAINER_TIMEOUT / 1000} seconds elapsed while waiting for WordPress container to start.`);
 		}
-		echo(`Web server running at port ${$web_port}`);
+		console.log('~%%~ echo?');
+		echo(`Web server running at port ${webPort}`);
 
-		installWordPress(response, settings);
+		console.log('~%%~ install WP?');
+		installWordPress(webPort, settings);
+	}).catch(error => {
+		halt(`~%%~ error: ${error}`);
 	});
 }
 
@@ -275,7 +293,7 @@ let init = (slug, options) => {
 	sh.mkdir(slug);
 	sh.cd(slug);
 	sh.ShellString(generatedFile).to(`./setup.yml`);
-	echo(`Project '${slug}' folder and initial 'setup.yml' file created. Edit this file and run 'fdk setup' to setup the project.`)
+	echo(`Project '${slug}' folder and initial 'setup.yml' file created. Edit this file and run 'fdk setup' to setup the project.`);
 };
 
 let setup = options => {
@@ -314,7 +332,7 @@ if (program.args.length === 0) { program.help(); }
 /* ~%%~ [TODO] ~%%~ also execute `<project>/package.json` scripts (`npm run <command> [vars...]`), either by:
 • opening `<project>/package.json` and go through them and add them as
 • pre-def list of commands to add
-for already defined commands:
+for already defined commands (use `program.commands` array to check and `findup('setup.back.yml', {cwd: process.cwd()})`):
 • prefix with char like `:<command>`, `!<command>`, `~<command>`, `@<command>` or `\<command>` (maybe one of these could set that it should change to root project folder before running the command)
 • command for run like `. <command>` or `run <command>`
 // ~%%~ */

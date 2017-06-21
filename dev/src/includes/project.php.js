@@ -1,3 +1,4 @@
+module.exports = (data) => `
 <?php
 /* =========================================================================
    Project-specific configuration, scripts and handlers
@@ -15,19 +16,19 @@ if (!isset($content_width)) {
 class Project extends Singleton {
 
 	// Namespace for this project
-	public static $projectNamespace = '<%= slug %>';
+	public static $projectNamespace = '${data.slug}';
 
 	// Project scripts main handle
-	public static $mainHandle = '<%= slug %>-main';
+	public static $mainHandle = '${data.slug}-main';
 
 	// Tag for sending variables to front-end's script
-	public static $varsTag = '<%= slug %>_script_vars';
+	public static $varsTag = '${data.slug}_script_vars';
 
 	// Menus required
 	public static $menus = array('main' => 'Main menu');
 
 	// Google Analytics ID (injected by Base class)
-	public static $googleAnalyticsId = '<%= google_analytics_id %>';
+	public static $googleAnalyticsId = '${data.google_analytics_id || ''}';
 
 	public function init() {
 		add_action('init', array($this, 'registerStructure'));
@@ -47,3 +48,4 @@ class Project extends Singleton {
 
 // Create a singleton instance of Project
 Project::instance()->init();
+`;

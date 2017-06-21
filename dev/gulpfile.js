@@ -57,7 +57,7 @@ try {
 try {
 	settings.imports = yaml.safeLoad(fs.readFileSync('./imports.yml', 'utf8'));
 } catch (ex) {
-	settings.imports = {}; // ignore
+	settings.imports = {plugins: []}; // ignore
 }
 settings.imports.plugins = settings.imports.plugins.map(function(pluginOrPath) {
 	var plugin = (pluginOrPath instanceof Object) ? pluginOrPath : { path: pluginOrPath };
@@ -78,9 +78,9 @@ settings.imports.plugins = settings.imports.plugins.map(function(pluginOrPath) {
 var base = {
 	dev: './',
 	src: './src/',
-	acfRelativeSrc: '../../../../dev/src/',
-	theme: '../www/wp-content/themes/' + settings.slug + '/',
-	plugins: '../www/wp-content/plugins/'
+	acfRelativeSrc: '../../../../' + settings.slug + '/src/',
+	theme: './www/wp-content/themes/' + settings.slug + '/',
+	plugins: './www/wp-content/plugins/'
 };
 
 // Globs for each file type
@@ -272,7 +272,8 @@ function imports() {
 // Wordmove: add full Wordpress path to the final Movefile with the almost complete template
 function wordmove(cb) {
 	try {
-		exec('erb Movefile.erb > Movefile', {env: {WEB_PORT: settings.webPort, DB_PORT: settings.dbPort}});
+		var movefileContent = require('Movefile.js')(settings);
+		fs.writeFileSync('Movefile', movefileContent);
 	} catch (ex) {
 		console.error('Error generating Movefile:', ex);
 	}

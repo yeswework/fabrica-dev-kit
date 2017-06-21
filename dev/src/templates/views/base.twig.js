@@ -1,10 +1,11 @@
+module.exports = (data) => `
 <!DOCTYPE html>
 <html class="no-js" lang="{{ site.language }}">
 <head>
 	<meta charset="{{ site.charset }}">
 	<meta http-equiv="x-ua-compatible" content="ie=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="author" content="<%= author['name'] %><%= author['email'] ? " <#{author['email']}>" : '' %><%= author['url'] ? " (#{author['url']})" : '' %>">
+	<meta name="author" content="${data.author.name}${data.author.email ? ` <${data.author.email}>` : ''}${data.author.url ? ` (${data.author.url})` : ''}">
 	<script>document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, 'js');</script>
 	{{ function('wp_head') }}
 </head>
@@ -34,3 +35,4 @@
 
 </body>
 </html>
+`;
