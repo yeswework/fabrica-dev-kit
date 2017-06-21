@@ -57,8 +57,9 @@ try {
 try {
 	settings.imports = yaml.safeLoad(fs.readFileSync('./imports.yml', 'utf8'));
 } catch (ex) {
-	settings.imports = {plugins: []}; // ignore
+	settings.imports = {}; // ignore
 }
+settings.imports.plugins = settings.imports.plugins || [];
 settings.imports.plugins = settings.imports.plugins.map(function(pluginOrPath) {
 	var plugin = (pluginOrPath instanceof Object) ? pluginOrPath : { path: pluginOrPath };
 
@@ -256,7 +257,7 @@ function fonts() {
 }
 
 // Imports: extra folders to be copied
-function imports() {
+function imports(cb) {
 	let importsPipes = [];
 	settings.imports.plugins.forEach(function(plugin) {
 		importsPipes.push(
@@ -266,13 +267,16 @@ function imports() {
 				.pipe(browserSync.stream())
 		)
 	});
-	return mergeStream(importsPipes);
+	if (importsPipes.length > 0) {
+		return mergeStream(importsPipes);
+	}
+	cb();
 }
 
 // Wordmove: add full Wordpress path to the final Movefile with the almost complete template
 function wordmove(cb) {
 	try {
-		var movefileContent = require('Movefile.js')(settings);
+		var movefileContent = require('./Movefile.js')(settings);
 		fs.writeFileSync('Movefile', movefileContent);
 	} catch (ex) {
 		console.error('Error generating Movefile:', ex);

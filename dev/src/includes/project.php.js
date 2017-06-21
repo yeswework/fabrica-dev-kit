@@ -1,10 +1,9 @@
-module.exports = (data) => `
-<?php
+module.exports = (data) => `<?php
 /* =========================================================================
    Project-specific configuration, scripts and handlers
    ========================================================================= */
 
-namespace Fabrica\Devkit;
+namespace Fabrica\\Devkit;
 
 require_once('singleton.php');
 

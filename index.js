@@ -5,6 +5,7 @@
 const findup = require('findup-sync'),
 	http = require('http'),
 	merge = require('lodash/merge'),
+	path = require('path'),
 	program = require('commander'),
 	Promise = require('promise'),
 	sh = require('shelljs'),
@@ -32,7 +33,6 @@ let wait = (message, callback, delay=500) => {
 			stopWaitInterval = response => {
 				clearTimeout(handler);
 				console.log();
-				console.log('~%%~ response:', response);
 				resolve(response);
 			};
 		handler = setInterval(() => {
@@ -145,7 +145,7 @@ let createFolders = settings => {
 		if (!sh.test('-f', 'src/package.json')) {
 			halt('Folder \'src/\' already exists but no \'package.json\' found there.');
 		}
-		let projectSettings = JSON.parse(sh.cat('src/package.json'))
+		let projectSettings = JSON.parse(sh.cat('src/package.json'));
 		echo('Existing project \'src/package.json\' found. Overriding the following settings in \'setup.yml\' with those in this file  (old \'setup.yml\' value → new value):');
 		for (let [projectKey, settingKey] of Object.entries({name: 'slug', description: 'title', author: 'author'})) {
 			echo(` ◦ ${settingKey} / ${projectKey}: '${settings[settingKey]}' → '${projectSettings[projectKey]}'`);
@@ -248,35 +248,28 @@ let startContainersAndInstall = settings => {
 		if (webPort) {
 			// check if WordPress is already available at the expected URL
 			http.get(`http://localhost:${webPort}/wp-admin/install.php`, response => {
-				// container is up
-				stopWaitInterval(response.statusCode);
+				if (response != 404) {
+					// container is up
+					stopWaitInterval(response.statusCode);
+				}
 			}).on('error', error => {
 				// Ignore errors (container still not up)
 			});
 		}
 		if (Date.now() - startTime > WAIT_WP_CONTAINER_TIMEOUT) {
 			// timeout
-			console.log('~%%~ timeout', Date.now() - startTime, WAIT_WP_CONTAINER_TIMEOUT);
 			stopWaitInterval('-1');
 		}
 	}).then(response => {
-		/* [FIXME] ~%%~
-		• continued timer interval after positive response
-		• continued timer interval after timeout
-		• no error output
-		//	~%%~ */
-		console.log('~%%~ then', response);
 		// wait is over: containers are up or timeout has expired
 		if (response != '200') {
 			halt(`More than ${WAIT_WP_CONTAINER_TIMEOUT / 1000} seconds elapsed while waiting for WordPress container to start.`);
 		}
-		console.log('~%%~ echo?');
 		echo(`Web server running at port ${webPort}`);
 
-		console.log('~%%~ install WP?');
 		installWordPress(webPort, settings);
 	}).catch(error => {
-		halt(`~%%~ error: ${error}`);
+		halt(`Error installing or configuring WordPress:\n${error}`);
 	});
 }
 
@@ -307,7 +300,7 @@ let setup = options => {
 // set command line options
 program.version(VERSION)
 	.usage('[options] <command>')
-	.description(`Run "init <slug>" to start a new project.\n\nfdk <command> -h\tquick help on <command>`);
+	.description(`Run 'init <slug>' to start a new project.\n\n    fdk <command> -h\tquick help on <command>`);
 // `init` command
 program.command('init <slug>')
 	.description('Start a new project folder called <slug> containing the \'setup.yml\' configuration file. <slug> must be unique and no other Docker Compose project should share this name. All optional arguments will be set in the \'setup.yml\' file and can be modified there.')
@@ -324,15 +317,24 @@ program.command('setup')
 	.description('Setup project based on setting on \'setup.yml\' file')
 	.option('--reinstall', 'Reuse settings for previously setup project. \'setup.bak.yml\' will be used for configuration if \'setup.yml\' is not available.')
 	.action(setup);
-// finalize
+// check if we're inside a project
+let rootDir = path.dirname(findup('setup.bak.yml', {cwd: process.cwd()}));
+if (rootDir && (!sh.test('-f', path.join(rootDir, 'docker-compose.yml')) || !sh.test('-f', path.join(rootDir, 'package.json')))) {
+	rootDir = null;
+}
+if (rootDir) {
+	// change to project root folder and add `package.json` scripts to commands
+	sh.cd(rootDir);
+	echo(`Working directory changed to ${rootDir}`);
+
+	let packageSettings = JSON.parse(sh.cat('package.json'));
+	for (let [command, script] of Object.entries(packageSettings.scripts)) {
+		program.command(command)
+			.description('\'package.json\' script')
+			.action(options => { sh.exec(script); });
+	}
+}
+// finalize `commander` config
 program.parse(process.argv);
 // show help if no arguments are passed
 if (program.args.length === 0) { program.help(); }
-
-/* ~%%~ [TODO] ~%%~ also execute `<project>/package.json` scripts (`npm run <command> [vars...]`), either by:
-• opening `<project>/package.json` and go through them and add them as
-• pre-def list of commands to add
-for already defined commands (use `program.commands` array to check and `findup('setup.back.yml', {cwd: process.cwd()})`):
-• prefix with char like `:<command>`, `!<command>`, `~<command>`, `@<command>` or `\<command>` (maybe one of these could set that it should change to root project folder before running the command)
-• command for run like `. <command>` or `run <command>`
-// ~%%~ */
