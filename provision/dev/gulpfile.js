@@ -59,6 +59,7 @@ try {
 } catch (ex) {
 	settings.imports = {}; // ignore
 }
+settings.imports.plugins = settings.imports.plugins || [];
 settings.imports.plugins = settings.imports.plugins.map(function(pluginOrPath) {
 	var plugin = (pluginOrPath instanceof Object) ? pluginOrPath : { path: pluginOrPath };
 
@@ -256,7 +257,7 @@ function fonts() {
 }
 
 // Imports: extra folders to be copied
-function imports() {
+function imports(cb) {
 	let importsPipes = [];
 	settings.imports.plugins.forEach(function(plugin) {
 		importsPipes.push(
@@ -266,7 +267,10 @@ function imports() {
 				.pipe(browserSync.stream())
 		)
 	});
-	return mergeStream(importsPipes);
+	if (importsPipes.length > 0) {
+		return mergeStream(importsPipes);
+	}
+	cb();
 }
 
 // Wordmove: add full Wordpress path to the final Movefile with the almost complete template
