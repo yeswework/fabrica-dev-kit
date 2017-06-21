@@ -1,6 +1,6 @@
 module.exports = (data) => `
 # Fabrica Dev Kit setup configuration
-# Modify for your project, then run `./setup.rb` from this folder
+# Modify for your project, then run \`fdk setup\` from this folder
 
 # Project settings
 slug: ${data.slug || 'fabrica'} # lowercase letters only (also used for theme slug and PHP namespacing)

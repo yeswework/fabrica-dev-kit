@@ -17,11 +17,11 @@ const VERSION = '1.0.1',
 // output functions
 let echo = message => {
 	console.log(`\x1b[7m[Fabrica]\x1b[27m 🏭  ${message}`);
-}
+};
 let halt = message => {
 	console.error(`\x1b[1m\x1b[41m[Fabrica]\x1b[0m ⚠️  ${message}`);
 	process.exit(1)
-}
+};
 let wait = (message, callback, delay=500) => {
 	return new Promise((resolve, reject) => {
 		console.log();
@@ -44,7 +44,7 @@ let wait = (message, callback, delay=500) => {
 			// send callback a closure to stop the interval timer
 		}, delay);
 	});
-}
+};
 
 // check Fabrica dependencies
 let dependencies = ['gulp', 'docker-compose', 'composer'];
@@ -65,7 +65,7 @@ if (packageManager == '') {
 	halt('Could not find any Node package manager (\'yarn\' or \'npm\').');
 }
 
-let loadSettings = (reinstall = false) =>
+let loadSettings = (reinstall = false) => {
 	echo('Reading settings...');
 	let settings = {};
 	// auxiliar method to get settings from the files
@@ -86,12 +86,12 @@ let loadSettings = (reinstall = false) =>
 	}
 
 	// load default, user and project/site settings, in that order
-	mergeSettings(`${__dirname}/default.yml`));
-	mergeSettings(`${process.env.HOME}/.fabrica/settings.yml`));
+	mergeSettings(`${__dirname}/default.yml`);
+	mergeSettings(`${process.env.HOME}/.fabrica/settings.yml`);
 	setupSettingsFilename = './setup.yml';
 	setupSettingsBakFilename = './setup.bak.yml';
 	if (!sh.test('-f', setupSettingsFilename)) {
-		if (reinstall && sh.test('-f', setupSettingsFilename) {
+		if (reinstall && sh.test('-f', setupSettingsFilename)) {
 			sh.mv(setupSettingsBakFilename, setupSettingsFilename);
 		} else if (reinstall) {
 			halt('Could not find \'setup.yml\' or \'setup.bak.yml\'. Please use the \'fdk init <slug>\' command to create a new project folder with this file.');
@@ -104,8 +104,8 @@ let loadSettings = (reinstall = false) =>
  	// rename/backup 'setup.yml'
 	sh.mv(setupSettingsFilename, setupSettingsBakFilename);
 
-	return settings();
-}
+	return settings;
+};
 
 // create and copy project folders
 let createFolders = settings => {
@@ -130,7 +130,7 @@ let createFolders = settings => {
 			let srcFilename = `./${destFilename}.js`;
 			if (sh.test('-f', srcFilename)) {
 				let generatedFile = require(srcFilename)(settings);
-				sh.echo(generatedFile).to(destFilename);
+				sh.ShellString(generatedFile).to(destFilename);
 				sh.rm(srcFilename);
 			} else {
 				halt(`Could not find ${srcFilename} template.`);
@@ -148,40 +148,83 @@ let createFolders = settings => {
 			settings[settingKey] = projectSettings[projectKey];
 		}
 	}
-}
+};
 
 // install build dependencies (Gulp + extensions)
 let installDependencies = () => {
 	echo('Installing build dependencies...');
-	sh.exec(`${package_manager} install`);
+	sh.exec(`${packageManager} install`);
 
 	// install initial front-end dependencies
 	echo('Installing front-end dependencies...');
 	sh.cd('src');
-	sh.exec(`${package_manager} install`);
+	sh.exec(`${packageManager} install`);
 	sh.cd('includes');
 	sh.exec('composer install');
 	sh.cd('../..');
+};
+
+
+// install and configure WordPress in the Docker container
+let installWordPress = settings => {
+	echo('Installing WordPress...');
+	let wpContainer = `${settings['slug']}_wp`,
+		wp = command => {
+			if (sh.exec(`docker exec ${wpContainer} wp ${command}`).code != 0) {
+				abort(`Failed to execute: 'docker exec ${wpContainer} wp ${command}'`);
+			}
+		};
+
+	wp(`core install
+		--url=localhost:${$webPort}
+		--title="${settings.title}"
+		--admin_user=${settings.wp.admin.user}
+		--admin_password=${settings.wp.admin.pass}
+		--admin_email="${settings.wp.admin.email}"`);
+	wp(`rewrite structure "${settings.wp.rewrite_structure}"`);
+	if (settings.wp.lang == 'ja') {
+		// activate multibyte patch for Japanese language
+		wp('plugin activate wp-multibyte-patch');
+	}
+
+	// run our gulp build task and build the WordPress theme
+	echo('Building WordPress theme...');
+	if (sh.exec('gulp build').code != 0) {
+		abort('Gulp \'build\' task failed');
+	}
+	// create symlink to theme folder for quick access
+	FileUtils.ln('-s', `../www/wp-content/themes/${settings.slug}/`, 'build');
+	// activate theme
+	wp(`theme activate "${settings.slug}"`);
+
+	// install and activate WordPress plugins
+	for (let plugin of (settings.wp.plugins || [])) {
+		wp(`plugin install "${plugin}" --activate`);
+	}
+	if (settings.wp.acf_pro_key) {
+		let execCode = sh.exec(`docker exec ${wpContainer} bash -c 'curl "http://connect.advancedcustomfields.com/index.php?p=pro&a=download&k=${settings.wp.acf_pro_key}" > /tmp/acf-pro.zip
+			&& wp plugin install /tmp/acf-pro.zip --activate
+			&& rm /tmp/acf-pro.zip'`).code;
+	}
+	// remove default WordPress plugins and themes
+	if (settings.wp.skip_default_plugins) {
+		wp(`plugin delete "hello" "akismet"`);
+	}
+	if (settings.wp.skip_default_themes) {
+		wp(`theme delete "twentyseventeen" "twentysixteen" "twentyfifteen"`);
+	}
+	// WordPress options
+	for (let [option, value] of Object.entries(settings.wp.options || {})) {
+		wp(`option update ${option} "${value}"`);
+	}
+	// Default post
+	wp(`post update 1 --post_name='welcome-to-fabrica-dev-kit' --post_title='Welcome to Fabrica Dev Kit' --post_content='For more information about developing with Fabrica Dev Kit, <a href="https://github.com/fabrica-wp/fabrica-dev-kit">see the documentation</a>.'`);
+
+	// the site will be ready to run and develop locally
+	echo('Setup complete. To develop locally, \'cd dev\' then run \'gulp\'.');
 }
 
-// Commands
-
-let init = slug => {
-	echo(`Creating '${slug}' folder and the 'setup.yml' file...`);
-	let data = { slug: slug };
-	sh.mkdir(slug);
-	let generatedFile = require(`${__dirname}/setup.yml.js`)(data);
-	sh.echo(generatedFile).to(`./${slug}/setup.yml`);
-	echo(`Project '${slug}' folder and initial 'setup.yml' file created. Edit this file and run 'fdk setup' to setup the project.`)
-}
-
-let setup = options => {
-	let settings = loadSettings(options.reinstall);
-
-	createFolders(settings);
-
-	installDependencies();
-
+let startContainersAndInstall = settings => {
 	// start docker
 	echo('Bringing Docker containers up...');
 	if (sh.exec('docker-compose up -d').code != 0) {
@@ -189,8 +232,7 @@ let setup = options => {
 	}
 
 	// wait until `wp` container is up to install WordPress
-	let startTime = Date.now(),
-		webPort;
+	let startTime = Date.now(), webPort;
 	wait(`Waiting for '${settings['slug']}_wp' container...`, stopWaitInterval => {
 		// get port dynamically assigned by Docker to expose web container's port 80
 		webPort = webPort ||
@@ -211,96 +253,68 @@ let setup = options => {
 		}
 	}).then(response => {
 		// wait is over: containers are up or timeout has expired
-
 		if (response != '200') {
 			abort('More than ${WAIT_WP_CONTAINER_TIMEOUT} seconds elapsed while waiting for WordPress container to start.');
 		}
-
 		echo(`Web server running at port ${$web_port}`);
-		// install WordPress in container
-		echo('Installing WordPress...');
-		let wpContainer = `${settings['slug']}_wp`,
-			wp = command => {
-				if (sh.exec(`docker exec ${wpContainer} wp ${command}`).code != 0) {
-					abort(`Failed to execute: 'docker exec ${wpContainer} wp ${command}'`);
-				}
-			};
 
-		wp(`core install
-			--url=localhost:${$webPort}
-			--title="${settings.title}"
-			--admin_user=${settings.wp.admin.user}
-			--admin_password=${settings.wp.admin.pass}
-			--admin_email="${settings.wp.admin.email}"`);
-		wp(`rewrite structure "${settings.wp.rewrite_structure}"`);
-		if (settings.wp.lang == 'ja') {
-			// activate multibyte patch for Japanese language
-			wp('plugin activate wp-multibyte-patch');
-		}
-
-		// run our gulp build task and build the WordPress theme
-		echo('Building WordPress theme...');
-		if (sh.exec('gulp build').code != 0) {
-			abort('Gulp \'build\' task failed');
-		}
-		// create symlink to theme folder for quick access
-		FileUtils.ln('-s', `../www/wp-content/themes/${settings.slug}/`, 'build');
-		// activate theme
-		wp(`theme activate "${settings.slug}"`);
-
-		// install and activate WordPress plugins
-		for (let plugin of (settings.wp.plugins || [])) {
-			wp(`plugin install "${plugin}" --activate`);
-		}
-		if (settings.wp.acf_pro_key) {
-			let execCode = sh.exec(`docker exec ${wpContainer} bash -c 'curl "http://connect.advancedcustomfields.com/index.php?p=pro&a=download&k=${settings.wp.acf_pro_key}" > /tmp/acf-pro.zip
-				&& wp plugin install /tmp/acf-pro.zip --activate
-				&& rm /tmp/acf-pro.zip'`).code;
-		}
-		// remove default WordPress plugins and themes
-		if (settings.wp.skip_default_plugins) {
-			wp(`plugin delete "hello" "akismet"`);
-		}
-		if (settings.wp.skip_default_themes) {
-			wp(`theme delete "twentyseventeen" "twentysixteen" "twentyfifteen"`);
-		}
-		// WordPress options
-		for (let [option, value] of Object.entries(settings.wp.options || {})) {
-			wp(`option update ${option} "${value}"`);
-		}
-		// Default post
-		wp(`post update 1 --post_name='welcome-to-fabrica-dev-kit' --post_title='Welcome to Fabrica Dev Kit' --post_content='For more information about developing with Fabrica Dev Kit, <a href="https://github.com/fabrica-wp/fabrica-dev-kit">see the documentation</a>.'`);
-
-		// the site will be ready to run and develop locally
-		echo('Setup complete. To develop locally, \'cd dev\' then run \'gulp\'.');
+		installWordPress(response, settings);
 	});
 }
 
+// Commands
+
+let init = (slug, options) => {
+	if (sh.test('-e', slug)) {
+		halt(`There's already a file or folder called ${slug}.`);
+	}
+	echo(`Creating '${slug}' folder and the 'setup.yml' file...`);
+	let data = Object.assign({ slug: slug }, options),
+		generatedFile = require(`${__dirname}/setup.yml.js`)(data);
+
+	sh.mkdir(slug);
+	sh.cd(slug);
+	sh.ShellString(generatedFile).to(`./setup.yml`);
+	echo(`Project '${slug}' folder and initial 'setup.yml' file created. Edit this file and run 'fdk setup' to setup the project.`)
+};
+
+let setup = options => {
+	let settings = loadSettings(options.reinstall);
+
+	createFolders(settings);
+	installDependencies();
+	startContainersAndInstall(settings);
+};
+
 // set command line options
 program.version(VERSION)
-	// `init` command
-	.command('init <slug>')
+	.usage('[options] <command>')
+	.description(`Run "init <slug>" to start a new project.\n\nfdk <command> -h\tquick help on <command>`);
+// `init` command
+program.command('init <slug>')
 	.description('Start a new project folder called <slug> containing the \'setup.yml\' configuration file. <slug> must be unique and no other Docker Compose project should share this name. All optional arguments will be set in the \'setup.yml\' file and can be modified there.')
-	.option('-t --title', 'project title')
-	.option('--author_name', 'project author\'s name')
-	.option('--author_email', 'project author\'s email')
-	.option('--author_url', 'project author\'s url')
-	.option('--wp_admin_user', 'WordPress admin username')
-	.option('--wp_admin_pass', 'WordPress admin password')
-	.option('--wp_admin_email', 'WordPress admin email')
-	.action(init)
-	// `setup` command
-	.command('setup')
-	.description('Start a new project folder called <slug> and an example setup file')
-	.option('--reinstall', 'Perform setup on a previously setup project. \'setup.bak.yml\' will be used for configuration if \'setup.yml\' is not available.')
-	.action(setup)
-	// finalize
-	.parse(process.argv);
+	.option('-t, --title <title>', 'project title')
+	.option('--author_name <name>', 'project author\'s name')
+	.option('--author_email <email>', 'project author\'s email')
+	.option('--author_url <url>', 'project author\'s url')
+	.option('--wp_admin_user <username>', 'WordPress admin username')
+	.option('--wp_admin_pass <password>', 'WordPress admin password')
+	.option('--wp_admin_email <email>', 'WordPress admin email')
+	.action(init);
+// `setup` command
+program.command('setup')
+	.description('Setup project based on setting on \'setup.yml\' file')
+	.option('--reinstall', 'Reuse settings for previously setup project. \'setup.bak.yml\' will be used for configuration if \'setup.yml\' is not available.')
+	.action(setup);
+// finalize
+program.parse(process.argv);
+// show help if no arguments are passed
+if (program.args.length === 0) { program.help(); }
 
-	/* ~%%~ [TODO] ~%%~ also execute `<project>/package.json` scripts (`npm run <command> [vars...]`), either by:
-	• opening `<project>/package.json` and go through them and add them as
-	• pre-def list of commands to add
-	for already defined commands:
-	• prefix with char like `:<command>`, `!<command>`, `~<command>`, `@<command>` or `\<command>` (maybe one of these could set that it should change to root project folder before running the command)
-	• command for run like `. <command>` or `run <command>`
-	// ~%%~ */
+/* ~%%~ [TODO] ~%%~ also execute `<project>/package.json` scripts (`npm run <command> [vars...]`), either by:
+• opening `<project>/package.json` and go through them and add them as
+• pre-def list of commands to add
+for already defined commands:
+• prefix with char like `:<command>`, `!<command>`, `~<command>`, `@<command>` or `\<command>` (maybe one of these could set that it should change to root project folder before running the command)
+• command for run like `. <command>` or `run <command>`
+// ~%%~ */
