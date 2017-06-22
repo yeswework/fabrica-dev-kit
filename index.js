@@ -300,6 +300,29 @@ let setup = options => {
 	startContainersAndInstall(settings);
 };
 
+// add commands for project's root `package.json` if current path is part of a project
+let addScriptCommands = () => {
+	// check if we're inside a project
+	let rootDir = findup('setup.bak.yml', {cwd: process.cwd()});
+	if (!rootDir) { return; }
+	rootDir = path.dirname(rootDir);
+	if (!sh.test('-f', `${rootDir}/docker-compose.yml`) || !sh.test('-f', `${rootDir}/package.json`)) {
+		return;
+	}
+	if (rootDir != process.cwd()) {
+		// change to project root folder and add `package.json` scripts to commands
+		sh.cd(rootDir);
+		echo(`Working directory changed to ${rootDir}`);
+	}
+
+	let packageSettings = JSON.parse(sh.cat('package.json'));
+	for (let [command, script] of Object.entries(packageSettings.scripts)) {
+		program.command(command)
+			.description(`'package.json' script: \`${script.length > 80 ? script.substr(0, 80) + '…' : script}\``)
+			.action(options => { sh.exec(script); });
+	}
+}
+
 // set command line options
 program.version(VERSION)
 	.usage('[options] <command>')
@@ -320,25 +343,7 @@ program.command('setup')
 	.description('Setup project based on setting on \'setup.yml\' file')
 	.option('--reinstall', 'Reuse settings for previously setup project. \'setup.bak.yml\' will be used for configuration if \'setup.yml\' is not available.')
 	.action(setup);
-// check if we're inside a project
-let rootDir = path.dirname(findup('setup.bak.yml', {cwd: process.cwd()}));
-if (rootDir && (!sh.test('-f', `${rootDir}/docker-compose.yml`) || !sh.test('-f', `${rootDir}/package.json`))) {
-	rootDir = null;
-}
-if (rootDir) {
-	if (rootDir != process.cwd()) {
-		// change to project root folder and add `package.json` scripts to commands
-		sh.cd(rootDir);
-		echo(`Working directory changed to ${rootDir}`);
-	}
-
-	let packageSettings = JSON.parse(sh.cat('package.json'));
-	for (let [command, script] of Object.entries(packageSettings.scripts)) {
-		program.command(command)
-			.description(`'package.json' script: \`${script.length > 80 ? script.substr(0, 80) + '…' : script}\``)
-			.action(options => { sh.exec(script); });
-	}
-}
+addScriptCommands();
 // finalize `commander` config
 program.parse(process.argv);
 // show help if no arguments are passed
