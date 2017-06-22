@@ -239,30 +239,33 @@ let startContainersAndInstall = settings => {
 	}
 
 	// wait until `wp` container is up to install WordPress
-	let startTime = Date.now(), webPort;
+	let startTime = Date.now(), getting = false, webPort;
 	wait(`Waiting for '${settings['slug']}_wp' container...`, stopWaitInterval => {
 		// get port dynamically assigned by Docker to expose web container's port 80
 		webPort = webPort ||
 			sh.exec('docker-compose port web 80', {silent: true})
 				.stdout.replace(/^.*:(\d+)\n$/, '$1');
-		if (webPort) {
+		if (webPort || !getting) {
 			// check if WordPress is already available at the expected URL
+			getting = true;
 			http.get(`http://localhost:${webPort}/wp-admin/install.php`, response => {
-				if (response != 404) {
+				if (response == '200') {
 					// container is up
-					stopWaitInterval(response.statusCode);
+					getting = false;
+					stopWaitInterval(true);
 				}
 			}).on('error', error => {
 				// Ignore errors (container still not up)
+				getting = false;
 			});
 		}
 		if (Date.now() - startTime > WAIT_WP_CONTAINER_TIMEOUT) {
 			// timeout
-			stopWaitInterval('-1');
+			stopWaitInterval(false);
 		}
-	}).then(response => {
+	}).then(success => {
 		// wait is over: containers are up or timeout has expired
-		if (response != '200') {
+		if (success != '200') {
 			halt(`More than ${WAIT_WP_CONTAINER_TIMEOUT / 1000} seconds elapsed while waiting for WordPress container to start.`);
 		}
 		echo(`Web server running at port ${webPort}`);
