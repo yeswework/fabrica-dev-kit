@@ -245,17 +245,17 @@ let startContainersAndInstall = settings => {
 		webPort = webPort ||
 			sh.exec('docker-compose port web 80', {silent: true})
 				.stdout.replace(/^.*:(\d+)\n$/, '$1');
-		if (webPort || !getting) {
+		if (webPort && !getting) {
 			// check if WordPress is already available at the expected URL
 			getting = true;
 			http.get(`http://localhost:${webPort}/wp-admin/install.php`, response => {
-				if (response == '200') {
+				getting = false;
+				if (response.statusCode == '200') {
 					// container is up
-					getting = false;
 					stopWaitInterval(true);
 				}
 			}).on('error', error => {
-				// Ignore errors (container still not up)
+				// ignore errors (container still not up)
 				getting = false;
 			});
 		}
@@ -265,7 +265,7 @@ let startContainersAndInstall = settings => {
 		}
 	}).then(success => {
 		// wait is over: containers are up or timeout has expired
-		if (success != '200') {
+		if (!success) {
 			halt(`More than ${WAIT_WP_CONTAINER_TIMEOUT / 1000} seconds elapsed while waiting for WordPress container to start.`);
 		}
 		echo(`Web server running at port ${webPort}`);
@@ -322,18 +322,20 @@ program.command('setup')
 	.action(setup);
 // check if we're inside a project
 let rootDir = path.dirname(findup('setup.bak.yml', {cwd: process.cwd()}));
-if (rootDir && (!sh.test('-f', path.join(rootDir, 'docker-compose.yml')) || !sh.test('-f', path.join(rootDir, 'package.json')))) {
+if (rootDir && (!sh.test('-f', `${rootDir}/docker-compose.yml`) || !sh.test('-f', `${rootDir}/package.json`))) {
 	rootDir = null;
 }
 if (rootDir) {
-	// change to project root folder and add `package.json` scripts to commands
-	sh.cd(rootDir);
-	echo(`Working directory changed to ${rootDir}`);
+	if (rootDir != process.cwd()) {
+		// change to project root folder and add `package.json` scripts to commands
+		sh.cd(rootDir);
+		echo(`Working directory changed to ${rootDir}`);
+	}
 
 	let packageSettings = JSON.parse(sh.cat('package.json'));
 	for (let [command, script] of Object.entries(packageSettings.scripts)) {
 		program.command(command)
-			.description('\'package.json\' script')
+			.description(`'package.json' script: \`${script.length > 80 ? script.substr(0, 80) + '…' : script}\``)
 			.action(options => { sh.exec(script); });
 	}
 }

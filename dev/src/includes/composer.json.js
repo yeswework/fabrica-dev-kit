@@ -1,10 +1,10 @@
 module.exports = (data) => {
 	// Composer field for URL is 'homepage'
-	data = Object.assign({}, data, {homepage: data.author.url});
-	delete data.author.url;
+	author = Object.assign({}, data.author, {homepage: data.author.url});
+	delete author.url;
 	return `
 {
-	"authors": [${JSON.stringify(data.author)}],
+	"authors": [${JSON.stringify(author)}],
 	"require": {
 		"timber/timber":"1.*",
 		"Upstatement/routes": "*"
