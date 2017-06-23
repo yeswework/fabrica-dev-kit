@@ -24,7 +24,8 @@ let halt = message => {
 	console.error(`\x1b[1m\x1b[41m[Fabrica]\x1b[0m ⚠️  ${message}`);
 	process.exit(1)
 };
-let wait = (message, callback, delay=500) => {
+let wait = (message, callback, delay) => {
+	delay = delay || 500;
 	return new Promise((resolve, reject) => {
 		console.log();
 		let spinner = ['🕐', '🕑', '🕒', '🕓', '🕔', '🕕', '🕖', '🕗', '🕘', '🕙', '🕚', '🕛'],
@@ -68,7 +69,8 @@ if (packageManager == '') {
 }
 
 // load all settings files
-let loadSettings = (reinstall = false) => {
+let loadSettings = (reinstall) => {
+	reinstall = reinstall || false
 	echo('Reading settings...');
 	let settings = {};
 	// auxiliar method to get settings from the files
@@ -147,7 +149,9 @@ let createFolders = settings => {
 		}
 		let projectSettings = JSON.parse(sh.cat('src/package.json'));
 		echo('Existing project \'src/package.json\' found. Overriding the following settings in \'setup.yml\' with those in this file  (old \'setup.yml\' value → new value):');
-		for (let [projectKey, settingKey] of Object.entries({name: 'slug', description: 'title', author: 'author'})) {
+		let keys = {name: 'slug', description: 'title', author: 'author'};
+		for (let projectKey of Object.keys(keys)) {
+			let settingKey = keys[projectKey];
 			echo(` ◦ ${settingKey} / ${projectKey}: '${settings[settingKey]}' → '${projectSettings[projectKey]}'`);
 			settings[settingKey] = projectSettings[projectKey];
 		}
@@ -221,7 +225,8 @@ let installWordPress = (webPort, settings) => {
 		wp(`theme delete "twentyseventeen" "twentysixteen" "twentyfifteen"`);
 	}
 	// WordPress options
-	for (let [option, value] of Object.entries(settings.wp.options || {})) {
+	for (let option of Object.keys(settings.wp.options || {})) {
+		let value = settings.wp.options[option];
 		wp(`option update ${option} "${value}"`);
 	}
 	// Default post
@@ -316,12 +321,13 @@ let addScriptCommands = () => {
 	}
 
 	let packageSettings = JSON.parse(sh.cat('package.json'));
-	for (let [command, script] of Object.entries(packageSettings.scripts)) {
+	for (let command of Object.keys(packageSettings.scripts)) {
+		let script = packageSettings.scripts[command];
 		program.command(command)
 			.description(`'package.json' script: \`${script.length > 80 ? script.substr(0, 80) + '…' : script}\``)
-			.action(options => { sh.exec(script); });
+			.action(() => { sh.exec(`npm run ${command}`); });
 	}
-}
+};
 
 // set command line options
 program.version(VERSION)
