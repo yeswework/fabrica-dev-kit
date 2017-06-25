@@ -107,6 +107,15 @@ let loadSettings = (reinstall) => {
 	}
 	mergeSettings(setupSettingsFilename);
 
+	// check if there's already a Docker container for the project slug
+	if (shelljs.exec(`docker ps -aqf name=${settings.slug}_wp`).output) {
+		if (options.reinstall) {
+			echo(`Docker container with '${settings.slug}_wp' found but ignored because '--reinstall' flag is set`);
+		} else {
+			halt(`There's already a Docker container called '${settings.slug}_wp'. If this container belongs to another project remove all containers for that project or rename this one before running setup. Otherwise run \'fdk setup --reinstall\' to ignore already existing Docker containers for this project.`);
+		}
+	}
+
  	// rename/backup 'setup.yml'
 	sh.mv(setupSettingsFilename, setupSettingsBakFilename);
 
@@ -175,65 +184,79 @@ let installDependencies = () => {
 	sh.cd('../..');
 };
 
-
 // install and configure WordPress in the Docker container
 let installWordPress = (webPort, settings) => {
 	echo('Installing WordPress...');
-	let wpContainer = `${settings['slug']}_wp`,
-		wp = command => {
-			if (sh.exec(`docker exec ${wpContainer} wp ${command}`).code != 0) {
-				halt(`Failed to execute: 'docker exec ${wpContainer} wp ${command}'`);
-			}
-		};
+	let wpContainer = `${settings['slug']}_wp`;
+	let wp = command => {
+		if (sh.exec(`docker exec ${wpContainer} wp ${command}`).code != 0) {
+			halt(`Failed to execute: 'docker exec ${wpContainer} wp ${command}'`);
+		}
+	};
 
-	wp(['core install',
+	// use stdout stream to filter out known WP CLI warning
+	let install = sh.exec([`docker exec ${wpContainer} wp core install`,
 		`--url=localhost:${webPort}`,
 		`--title="${settings.title}"`,
 		`--admin_user=${settings.wp.admin.user}`,
 		`--admin_password=${settings.wp.admin.pass}`,
-		`--admin_email="${settings.wp.admin.email}"`].join(' '));
-	wp(`rewrite structure "${settings.wp.rewrite_structure}"`);
-	if (settings.wp.lang == 'ja') {
-		// activate multibyte patch for Japanese language
-		wp('plugin activate wp-multibyte-patch');
-	}
+		`--admin_email="${settings.wp.admin.email}"`].join(' '),
+		{ silent: true, async: true });
+	install.stdout.on('data', data => {
+		let output = data.toString('utf8');
+		// filter out WP CLI warning
+		process.stdout.write(output.replace('sh: 1: -t: not found', ''));
+	}).on('error', error => {
+		halt(`Failed to install WordPress:\n${error}`);
+	}).on('end', () => {
+		if (install.exitCode && install.exitCode) {
+			halt(`Failed to install WordPress`);
+		}
 
-	// run our gulp build task and build the WordPress theme
-	echo('Building WordPress theme...');
-	if (sh.exec('gulp build').code != 0) {
-		halt('Gulp \'build\' task failed');
-	}
-	// create symlink to theme folder for quick access
-	sh.ln('-s', `../www/wp-content/themes/${settings.slug}/`, 'build');
-	// activate theme
-	wp(`theme activate "${settings.slug}"`);
+		// WordPress installed succesfully: proceed with configuration
+		wp(`rewrite structure "${settings.wp.rewrite_structure}"`);
+		if (settings.wp.lang == 'ja') {
+			// activate multibyte patch for Japanese language
+			wp('plugin activate wp-multibyte-patch');
+		}
 
-	// install and activate WordPress plugins
-	for (let plugin of (settings.wp.plugins || [])) {
-		wp(`plugin install "${plugin}" --activate`);
-	}
-	if (settings.wp.acf_pro_key) {
-		let execCode = sh.exec([`docker exec ${wpContainer} bash -c 'curl "http://connect.advancedcustomfields.com/index.php?p=pro&a=download&k=${settings.wp.acf_pro_key}" > /tmp/acf-pro.zip`,
-			`&& wp plugin install /tmp/acf-pro.zip --activate`
-			`&& rm /tmp/acf-pro.zip'`].join(' ')).code;
-	}
-	// remove default WordPress plugins and themes
-	if (settings.wp.skip_default_plugins) {
-		wp(`plugin delete "hello" "akismet"`);
-	}
-	if (settings.wp.skip_default_themes) {
-		wp(`theme delete "twentyseventeen" "twentysixteen" "twentyfifteen"`);
-	}
-	// WordPress options
-	for (let option of Object.keys(settings.wp.options || {})) {
-		let value = settings.wp.options[option];
-		wp(`option update ${option} "${value}"`);
-	}
-	// Default post
-	wp(`post update 1 --post_name='welcome-to-fabrica-dev-kit' --post_title='Welcome to Fabrica Dev Kit' --post_content='For more information about developing with Fabrica Dev Kit, <a href="https://github.com/fabrica-wp/fabrica-dev-kit">see the documentation</a>.'`);
+		// run our gulp build task and build the WordPress theme
+		echo('Building WordPress theme...');
+		if (sh.exec('gulp build').code != 0) {
+			halt('Gulp \'build\' task failed');
+		}
+		// create symlink to theme folder for quick access
+		sh.ln('-s', `../www/wp-content/themes/${settings.slug}/`, 'build');
+		// activate theme
+		wp(`theme activate "${settings.slug}"`);
 
-	// the site will be ready to run and develop locally
-	echo('Setup complete. To develop locally, \'cd dev\' then run \'gulp\'.');
+		// install and activate WordPress plugins
+		for (let plugin of (settings.wp.plugins || [])) {
+			wp(`plugin install "${plugin}" --activate`);
+		}
+		if (settings.wp.acf_pro_key) {
+			let execCode = sh.exec([`docker exec ${wpContainer} bash -c 'curl "http://connect.advancedcustomfields.com/index.php?p=pro&a=download&k=${settings.wp.acf_pro_key}" > /tmp/acf-pro.zip`,
+				`&& wp plugin install /tmp/acf-pro.zip --activate`
+				`&& rm /tmp/acf-pro.zip'`].join(' ')).code;
+		}
+		// remove default WordPress plugins and themes
+		if (settings.wp.skip_default_plugins) {
+			wp(`plugin delete "hello" "akismet"`);
+		}
+		if (settings.wp.skip_default_themes) {
+			wp(`theme delete "twentyseventeen" "twentysixteen" "twentyfifteen"`);
+		}
+		// WordPress options
+		for (let option of Object.keys(settings.wp.options || {})) {
+			let value = settings.wp.options[option];
+			wp(`option update ${option} "${value}"`);
+		}
+		// Default post
+		wp(`post update 1 --post_name='welcome-to-fabrica-dev-kit' --post_title='Welcome to Fabrica Dev Kit' --post_content='For more information about developing with Fabrica Dev Kit, <a href="https://github.com/fabrica-wp/fabrica-dev-kit">see the documentation</a>.'`);
+
+		// the site will be ready to run and develop locally
+		echo('Setup complete. To develop locally, run \'gulp\'.');
+	});
 }
 
 let startContainersAndInstall = settings => {
@@ -299,7 +322,6 @@ let init = (slug, options) => {
 
 let setup = options => {
 	let settings = loadSettings(options.reinstall);
-
 	createFolders(settings);
 	installDependencies();
 	startContainersAndInstall(settings);
@@ -325,7 +347,7 @@ let addScriptCommands = () => {
 		let script = packageSettings.scripts[command];
 		program.command(command)
 			.description(`'package.json' script: \`${script.length > 80 ? script.substr(0, 80) + '…' : script}\``)
-			.action(() => { sh.exec(`npm run ${command}`); });
+			.action(() => { sh.exec(`${packageManager} run ${command}`); });
 	}
 };
 
@@ -347,9 +369,13 @@ program.command('init <slug>')
 // `setup` command
 program.command('setup')
 	.description('Setup project based on setting on \'setup.yml\' file')
-	.option('--reinstall', 'Reuse settings for previously setup project. \'setup.bak.yml\' will be used for configuration if \'setup.yml\' is not available.')
+	.option('--reinstall', 'Reuse settings for previously setup project and ignore if Docker containers are already in use. \'setup.bak.yml\' will be used for configuration if \'setup.yml\' is not available.')
 	.action(setup);
+// `package.json` scripts
 addScriptCommands();
+// default
+program.command('*')
+	.action(() => { program.help(); });
 // finalize `commander` config
 program.parse(process.argv);
 // show help if no arguments are passed

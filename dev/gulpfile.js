@@ -258,7 +258,7 @@ function fonts() {
 
 // Imports: extra folders to be copied
 function imports(cb) {
-	let importsPipes = [];
+	var importsPipes = [];
 	settings.imports.plugins.forEach(function(plugin) {
 		importsPipes.push(
 			gulp.src(plugin.src, { base: path.dirname(plugin.path) })
