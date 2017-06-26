@@ -108,8 +108,8 @@ let loadSettings = (reinstall) => {
 	mergeSettings(setupSettingsFilename);
 
 	// check if there's already a Docker container for the project slug
-	if (shelljs.exec(`docker ps -aqf name=${settings.slug}_wp`).output) {
-		if (options.reinstall) {
+	if (sh.exec(`docker ps -aqf name=${settings.slug}_wp`, {silent: true}).stdout) {
+		if (reinstall) {
 			echo(`Docker container with '${settings.slug}_wp' found but ignored because '--reinstall' flag is set`);
 		} else {
 			halt(`There's already a Docker container called '${settings.slug}_wp'. If this container belongs to another project remove all containers for that project or rename this one before running setup. Otherwise run \'fdk setup --reinstall\' to ignore already existing Docker containers for this project.`);
@@ -201,7 +201,7 @@ let installWordPress = (webPort, settings) => {
 		`--admin_user=${settings.wp.admin.user}`,
 		`--admin_password=${settings.wp.admin.pass}`,
 		`--admin_email="${settings.wp.admin.email}"`].join(' '),
-		{ silent: true, async: true });
+		{silent: true, async: true});
 	install.stdout.on('data', data => {
 		let output = data.toString('utf8');
 		// filter out WP CLI warning
@@ -259,8 +259,8 @@ let installWordPress = (webPort, settings) => {
 	});
 }
 
+// start Docker containers and wait for them to be up to start installing and configuring WP
 let startContainersAndInstall = settings => {
-	// start docker
 	echo('Bringing Docker containers up...');
 	if (sh.exec('docker-compose up -d').code != 0) {
 		halt('Docker containers provision failed.');
@@ -369,12 +369,12 @@ program.command('init <slug>')
 // `setup` command
 program.command('setup')
 	.description('Setup project based on setting on \'setup.yml\' file')
-	.option('--reinstall', 'Reuse settings for previously setup project and ignore if Docker containers are already in use. \'setup.bak.yml\' will be used for configuration if \'setup.yml\' is not available.')
+	.option('--reinstall', 'Reuse settings for previously setup project and ignore if Docker containers are already in use for project <slug>. \'setup.bak.yml\' will be used for configuration if \'setup.yml\' is not available.')
 	.action(setup);
 // `package.json` scripts
 addScriptCommands();
 // default
-program.command('*')
+program.command('*', null, {noHelp: true})
 	.action(() => { program.help(); });
 // finalize `commander` config
 program.parse(process.argv);
