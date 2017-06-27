@@ -79,7 +79,7 @@ settings.imports.plugins = settings.imports.plugins.map(function(pluginOrPath) {
 var base = {
 	dev: './',
 	src: './src/',
-	acfRelativeSrc: '../../../../' + settings.slug + '/src/',
+	acfRelativeSrc: '../../../../src/',
 	theme: './www/wp-content/themes/' + settings.slug + '/',
 	plugins: './www/wp-content/plugins/'
 };
