@@ -9,10 +9,20 @@
   "private": true,
   "author": "Fabrica <info@fabri.ca> (http://fabri.ca/)",
   "scripts": {
+    "dc": "docker-compose",
     "sh": "docker-compose exec wp /bin/bash",
     "wp": "docker-compose exec -T wp wp",
     "logs": "docker-compose logs -f --tail='24' wp | sed -e \"s/ WARNING: .* into stderr: \\\"\\[[a-zA-Z0-9 :\\-]\\{1,\\}\\] \\(.*\\)\\\"/ ⚠️  $(tput setaf 3)\\1$(tput sgr0)/\"",
     "shutdown": "docker-compose down --volumes --rmi local"
+  },
+  "fabrica_dev_kit": {
+    "scripts_info": {
+      "dc": "Run 'docker-compose', eg. 'npm run ds ps -a'.",
+      "sh": "Start shell on WP container.",
+      "wp": "Run WP Cli. eg. 'npm run wp option list' or 'npm run wp -- --info'",
+      "logs": "Tail WP container logs.",
+      "shutdown": "Stop all project containers, remove their volumes and WP project image."
+    }
   },
   "devDependencies": {
     "autoprefixer": "^6.5.1",

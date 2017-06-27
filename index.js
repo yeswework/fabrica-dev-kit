@@ -346,9 +346,12 @@ let addScriptCommands = () => {
 	let packageSettings = JSON.parse(sh.cat('package.json'));
 	for (let command of Object.keys(packageSettings.scripts)) {
 		let script = packageSettings.scripts[command];
+		let scriptsInfo = (packageSettings.fabrica_dev_kit || {}).scripts_info || {};
 		program.command(command)
-			.description(`'package.json' script: \`${script.length > 80 ? script.substr(0, 80) + '…' : script}\``)
-			.action(() => { sh.exec(`${packageManager} run ${command}`); });
+			.description(`'package.json' script: ${scriptsInfo[command] || '`' + (script.length > 80 ? script.substr(0, 80) + '…' : script) + '`'}`)
+			.action(() => {
+				spawn(packageManager, ['run', ...process.argv.splice(2)], { stdio: 'inherit' });
+			});
 	}
 };
 
