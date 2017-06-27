@@ -9,6 +9,9 @@ const findup = require('findup-sync'),
 	program = require('commander'),
 	Promise = require('promise'),
 	sh = require('shelljs'),
+	// `shelljs.exec` doesn't handle color and animations yet
+	// https://github.com/shelljs/shelljs/issues/86
+	spawn = require('child_process').spawnSync,
 	yaml = require('js-yaml');
 
 // Fabrica Dev Kit version
@@ -128,9 +131,8 @@ let createFolders = settings => {
 	sh.mkdir('-p', 'www');
 	// create 'src' folder if not existing
 	if (!sh.test('-d', 'src')) {
-		// new project: copy starter 'provision' and 'dev' folders
-		sh.cp('-r', `${__dirname}/provision`, './provision');
-		sh.cp('-r', `${__dirname}/dev/*`, '.');
+		// new project: copy starter development folder
+		sh.cp('-r', [`${__dirname}/dev/*`, `${__dirname}/dev/.*`], '.');
 
 		// set configuration data in source and Wordmove files
 		let templateFilenames = [
@@ -170,9 +172,6 @@ let createFolders = settings => {
 // install build dependencies (Gulp + extensions)
 let installDependencies = () => {
 	echo('Installing build dependencies...');
-	// `shelljs.exec` doesn't handle color and animations yet
-	// https://github.com/shelljs/shelljs/issues/86
-	let spawn = require('child_process').spawnSync;
 	spawn(`${packageManager}`, ['install'], { stdio: 'inherit' });
 
 	// install initial front-end dependencies
@@ -222,11 +221,13 @@ let installWordPress = (webPort, settings) => {
 
 		// run our gulp build task and build the WordPress theme
 		echo('Building WordPress theme...');
-		if (sh.exec('gulp build').code != 0) {
+		// `shelljs.exec` doesn't handle color and animations yet
+		// https://github.com/shelljs/shelljs/issues/86
+		if (spawn('gulp', ['build'], { stdio: 'inherit' }).status != 0) {
 			halt('Gulp \'build\' task failed');
 		}
 		// create symlink to theme folder for quick access
-		sh.ln('-s', `../www/wp-content/themes/${settings.slug}/`, 'build');
+		sh.ln('-s', `./www/wp-content/themes/${settings.slug}/`, 'build');
 		// activate theme
 		wp(`theme activate "${settings.slug}"`);
 
@@ -308,7 +309,7 @@ let startContainersAndInstall = settings => {
 
 let init = (slug, options) => {
 	if (sh.test('-e', slug)) {
-		halt(`There's already a file or folder called ${slug}.`);
+		halt(`There's already a file or folder called '${slug}'.`);
 	}
 	echo(`Creating '${slug}' folder and the 'setup.yml' file...`);
 	let data = Object.assign({ slug: slug }, options),
