@@ -98,14 +98,14 @@ let loadSettings = (reinstall) => {
 	mergeSettings(`${__dirname}/default.yml`);
 	mergeSettings(`${process.env.HOME}/.fabrica/settings.yml`);
 	let setupSettingsFilename = './setup.yml',
-		setupSettingsBakFilename = './setup.bak.yml';
+		setupSettingsBakFilename = './config/setup.yml';
 	if (!sh.test('-f', setupSettingsFilename)) {
 		if (reinstall && !sh.test('-f', setupSettingsFilename)) {
 			sh.mv(setupSettingsBakFilename, setupSettingsFilename);
 		} else if (reinstall) {
-			halt('Could not find \'setup.yml\' or \'setup.bak.yml\'. Please use the \'fdk init <slug>\' command to create a new project folder and \'setup.yml\'.');
+			halt('Could not find \'setup.yml\' or \'config/setup.yml\'. Please use the \'fdk init <slug>\' command to create a new project folder and \'setup.yml\'.');
 		} else {
-			halt('Could not find \'setup.yml\'. Please use the \'fdk init <slug>\' command to create a new project folder and \'setup.yml\'. If the current project has been set up previously, you can run \'fdk setup --reinstall\' and \'setup.bak.yml\' will be used to bring the Docker containers back up and reconfigure them.');
+			halt('Could not find \'setup.yml\'. Please use the \'fdk init <slug>\' command to create a new project folder and \'setup.yml\'. If the current project has been set up previously, you can run \'fdk setup --reinstall\' and \'config/setup.yml\' will be used to bring the Docker containers back up and reconfigure them.');
 		}
 	}
 	mergeSettings(setupSettingsFilename);
@@ -119,7 +119,8 @@ let loadSettings = (reinstall) => {
 		}
 	}
 
- 	// rename/backup 'setup.yml'
+ 	// move/backup 'setup.yml'
+	sh.mkdir('-p', 'config');
 	sh.mv(setupSettingsFilename, setupSettingsBakFilename);
 
 	return settings;
@@ -349,9 +350,9 @@ let setup = options => {
 // add commands for project's root `package.json` if current path is part of a project
 let addScriptCommands = () => {
 	// check if we're inside a project
-	let rootDir = findup('setup.bak.yml', {cwd: process.cwd()});
+	let rootDir = findup('config/setup.yml', {cwd: process.cwd()});
 	if (!rootDir) { return; }
-	rootDir = path.dirname(rootDir);
+	rootDir = path.normalize(path.join(path.dirname(rootDir), '..'));
 	if (!sh.test('-f', `${rootDir}/docker-compose.yml`) || !sh.test('-f', `${rootDir}/package.json`)) {
 		return;
 	}
@@ -392,7 +393,7 @@ program.command('init [slug]')
 // `setup` command
 program.command('setup')
 	.description('Setup project based on setting on \'setup.yml\' file')
-	.option('--reinstall', 'Reuse settings for previously setup project and ignore if Docker containers are already in use for project <slug>. \'setup.bak.yml\' will be used for configuration if \'setup.yml\' is not available.')
+	.option('--reinstall', 'Reuse settings for previously setup project and ignore if Docker containers are already in use for project <slug>. \'config/setup.yml\' will be used for configuration if \'setup.yml\' is not available.')
 	.action(setup);
 // `package.json` scripts
 addScriptCommands();

@@ -55,7 +55,7 @@ try {
 
 // Load optional imports file
 try {
-	settings.imports = yaml.safeLoad(fs.readFileSync('./imports.yml', 'utf8'));
+	settings.imports = yaml.safeLoad(fs.readFileSync('./config/imports.yml', 'utf8'));
 } catch (ex) {
 	settings.imports = {}; // ignore
 }
@@ -275,9 +275,15 @@ function imports(cb) {
 
 // Wordmove: add full Wordpress path to the final Movefile with the almost complete template
 function wordmove(cb) {
+	// Load Wordmove settings file
 	try {
-		var movefileContent = require('./Movefile.js')(settings);
-		fs.writeFileSync('Movefile', movefileContent);
+		var wordmove = yaml.safeLoad(fs.readFileSync('./config/wordmove.yml', 'utf8'));
+		wordmove.local = wordmove.local || {};
+		wordmove.local.vhost = `localhost:${settings.webPort}`;
+		wordmove.local.wordpress_path = path.resolve(`${__dirname}/www/`);
+		wordmove.local.database = wordmove.local.database || {};
+		wordmove.local.database.port = settings.dbPort;
+		fs.writeFileSync('Movefile', yaml.safeDump(wordmove));
 	} catch (ex) {
 		console.error('Error generating Movefile:', ex);
 	}

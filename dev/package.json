@@ -17,9 +17,9 @@
   },
   "fabrica_dev_kit": {
     "scripts_info": {
-      "dc": "Run 'docker-compose', eg. 'npm run ds ps -a'.",
+      "dc": "Run 'docker-compose', eg. 'fdk dc ps -a'.",
       "sh": "Start shell on WP container.",
-      "wp": "Run WP Cli. eg. 'npm run wp option list' or 'npm run wp -- --info'",
+      "wp": "Run WP Cli. eg. 'fdk wp option list' or 'fdk wp -- --info'",
       "logs": "Tail WP container logs.",
       "remove": "Stop all project containers, remove their volumes and WP project image."
     }
