@@ -53,15 +53,16 @@ Optional but strongly recommended:
 
 ## Getting started
 
-### Installation
-First make sure you have all the required dependencies (see above). Then:
+### Installing Fabrica Dev Kit
+First make sure you have all the required dependencies (see above). Then run `npm install -g fabrica-dev-kit` to install Fabrica Dev Kit onto your system ready to use.
 
-1. Clone the repo into a folder for your project, eg. `git clone https://github.com/fabrica-wp/fabrica-dev-kit.git fabricaproject` (replace `fabricaproject` with a project-specific name or slug).
-1. In the new folder, make a copy of `setup-example.yml` called `setup.yml`, and edit this file to set the basic parameters for the development site. Any plugins you want to be automatically installed can be listed here.
-1. Run `./setup.rb`. This will set up your virtual machine and install everything required: Nginx, PHP-FPM, WordPress, your chosen plugins and our suite of build tools.
+## Starting a new project with FDK
+1. Create a folder for your project. In this folder run `fdk init`. This will create a template `setup.yml` file for your basic project settings.
+1. Edit `setup.yml` to configure basic parameters for your project. Plugins you want to be installed automatically can be listed here.
+1. Run `fdk setup` from the same folder. This will set up your virtual machine and install everything required: Nginx, PHP-FPM, WordPress, your chosen plugins and our suite of build tools.
 
 ### Running the build script + watch during active development
-* To work on the project, run a Gulp watch with `gulp` from the `dev/` folder. This will compile / preprocess / optimize your source files and actively watch for changes.
+* To work on the project, run a Gulp watch with `gulp` from the project folder. This will compile / preprocess / optimize your source files and actively watch for changes.
 * Following its initial build, Gulp will tell you which dynamic port the site front-end and admin are accessible at, as well as the Browsersync proxy you can use for live-editing of markup and styles without needing to refresh:
  ```
  Fabrica Dev Kit Project (fabricaproject) access URLs:
@@ -76,29 +77,29 @@ First make sure you have all the required dependencies (see above). Then:
  Local: http://localhost:3000
  External: http://172.17.3.50:3000
  ```
-* Theme development takes place in the `dev/src/` folder (see below for information about what goes where).
+* Theme development takes place in the `src/` folder (see below for information about what goes where).
 * You can escape Gulp with Ctrl + c. While Gulp is not running, changes to source files will not be reflected in the active theme.
 * You can also run `gulp build` to compile the current source code into the active theme folder without starting a watch (eg. if you've made a tiny change and want to deploy it without needing to check on development site).
 
 ### Deployment
-1. Once you have a staging or production server set up, edit the `dev/Movefile.erb` with your FTP (or SSH details).
+1. Once you have a staging or production server set up, edit the `Movefile.js` with your FTP (or SSH details).
 1. To deploy your theme, make sure the latest source code is compiled (if a watch isn't running, do a `gulp build`), then type `wordmove push --themes`. Wordmove will push the new / modified files to the server.
 1. If you are using ACF (whether normal or Pro), ACF-JSON will take care of synching your fields automatically, but it's a good idea to [synchronize the fields on the remote site](https://www.advancedcustomfields.com/resources/synchronized-json/) once you have deployed changes, so that the new fields are saved (from the files in the `acf-json` folder) into the production database.
 
 ### Version control
-To begin version control on your project run `git init` in the `dev/` folder. This will track not only your source code but also the corresponding build script and names of the modules needed to compile it into an active theme.
+To begin version control on your project run `git init` in the project folder. This will track not only your source code but also the corresponding build script and names of the modules needed to compile it into an active theme.
 
 ### Local database access
 For direct MySQL access to the development database, we recommend using [Sequel Pro](https://www.sequelpro.com/) to access it while the development machine is up. The database server is accessible at `127.0.0.1`, and with the dynamic port which you'll be told when you run `gulp` (see example output above). The username, password and database name are are `wordpress`.
 
 ### Housekeeping
-If you have finished working on a project and want to free up the space used by its development environment, run `docker-compose down --volumes --rmi all` from the `dev/` folder. This will remove the Docker containers and images used for the project (so your development database will be deleted). You can delete the `www/` folder too, but this removes all files from the WP installation, so make sure to save any files in `www/wp-content/` you might need (such as secondary themes, plugins or uploads).
+If you have finished working on a project and want to free up the space used by its development environment, run `fdk shutdown` from the project folder. This will remove the Docker containers and images used for the project (so your development database will be deleted). You can delete the `www/` folder too, but this removes all files from the WP installation, so make sure to save any files in `www/wp-content/` you might need (such as secondary themes, plugins or uploads).
 
 ## Active development
 
-Theme source files live in the `dev/src/` folder – while Gulp is running your changes will be live-compiled from here into the virtual machine's active theme folder (in `www/wp-content/themes/`). The `dev/build/` folder is a shortcut symlink to the active theme folder: no editing should be done here, but it may occasionally be useful for checking compiled code in case of problems.
+Theme source files live in the `src/` folder – while Gulp is running your changes will be live-compiled from here into the virtual machine's active theme folder (in `www/wp-content/themes/`). The `build/` folder is a shortcut symlink to the active theme folder: no editing should be done here, but it may occasionally be useful for checking compiled code in case of problems.
 
-File paths in this section refer to the `dev/src/` (unless specified relative to `dev/`).
+File paths in this section refer to the `src/`.
 
 ### Templates
 * If you want to make use of Timber (and you would be insane not to), the PHP files live in `templates/controllers/` and the corresponding Twig views in `templates/views/`. See the [Timber documentation](http://timber.github.io/timber/) and the MVC section of code examples below for more information.
@@ -121,9 +122,9 @@ There are several predefined files (all in the `includes/` folder) to help keep 
 * `models.php` is where to extend Post / Term / User objects by assigning extra properties to them when instantiated: see MVC section in code examples below.
 
 ### Installing additional dependencies
-* Additional build tools (eg. PostCSS plugins): use `npm install` in the `dev/` folder, and modify the `gulpfile.js` accordingly to sequence them.
-* Front-end JS libraries: use `npm install` in the `dev/src/` folder and then either included (thanks to [Webpack](https://webpack.github.io/)) via `require` statements in `assets/js/main.js`,
-* Front-end CSS libraries: use `npm install` in the `dev/src/` folder and included via `@import` statements in `assets/css/main.pcss`. The PostCSS Import plugin automatically searches `node_modules` so a statement like `@import 'library.css'` doesn't require an explicit path.
+* Additional build tools (eg. PostCSS plugins): use `npm install` in the project folder, and modify the `gulpfile.js` accordingly to sequence them.
+* Front-end JS libraries: use `npm install` in the `src/` folder and then either included (thanks to [Webpack](https://webpack.github.io/)) via `require` statements in `assets/js/main.js`,
+* Front-end CSS libraries: use `npm install` in the `src/` folder and included via `@import` statements in `assets/css/main.pcss`. The PostCSS Import plugin automatically searches `node_modules` so a statement like `@import 'library.css'` doesn't require an explicit path.
 * PHP modules: you can install / require Composer modules from within the `includes/` folder.
 
 ## Code examples
@@ -202,7 +203,7 @@ The BEM methodology provides a conceptual framework which makes it easy to build
 
 The inclusion of PostHTML, PostCSS, and specific plugins for these, in Fabrica Dev Kit make the process of actually writing BEM markup and styles quicker, easier and less error-prone.
 
-As an example, let's take some vanilla BEM markup and styles. We're using `__` notation for elements and `--` notation for modifiers. (If you prefer an alternative notation, you can configure it in `dev/gulpfile.js` by modifying the `posthtmlBem` property of the `options` hash.)
+As an example, let's take some vanilla BEM markup and styles. We're using `__` notation for elements and `--` notation for modifiers. (If you prefer an alternative notation, you can configure it in `gulpfile.js` by modifying the `posthtmlBem` property of the `options` hash.)
 
 #### Before...
 
