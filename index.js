@@ -115,7 +115,7 @@ let loadSettings = (reinstall) => {
 		if (reinstall) {
 			echo(`Docker container with '${settings.slug}_wp' found but ignored because '--reinstall' flag is set`);
 		} else {
-			halt(`There's already a Docker container called '${settings.slug}_wp'. If this container belongs to another project remove all containers for that project or rename this one before running setup. Otherwise run \'fdk setup --reinstall\' to ignore already existing Docker containers for this project.`);
+			halt(`There's already a Docker container called '${settings.slug}_wp'. If this container belongs to another project remove all containers for that project or rename this one before running setup. Otherwise run \'fdk setup --reinstall\' to re-use already existing Docker containers for this project.`);
 		}
 	}
 
@@ -308,17 +308,35 @@ let startContainersAndInstall = settings => {
 // Commands
 
 let init = (slug, options) => {
-	if (sh.test('-e', slug)) {
-		halt(`There's already a file or folder called '${slug}'.`);
+	if (options.createDir) {
+		if (!slug) {
+			halt(`If the flag to create project folder is set, a <slug> must be provided.`);
+		}
+		if (sh.test('-e', slug)) {
+			halt(`There's already a file or folder called '${slug}'.`);
+		}
+		echo(`Creating '${slug}' folder...`);
+
+		sh.mkdir(slug);
+		sh.cd(slug);
 	}
-	echo(`Creating '${slug}' folder and the 'setup.yml' file...`);
+
+	if (!slug) {
+		slug = path.basename(path.resolve()).toLowerCase()
+			.replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+			.replace(/\-*\s+\-*/g, '-')     // Replace spaces with -
+			.replace(/^\-+|\-+$/g, '')      // Trim
+		echo(`No <slug> parameter was provided, using '${slug}' as project slug. You can edit this setting in 'setup.yml'.`);
+	}
+
+	if (sh.test('-e', 'setup.yml')) {
+		halt(`'setup.yml' already exists. File was not changed. Edit settings in this file with a text editor to setup the project.`);
+	}
+	echo(`Creating the 'setup.yml' file...`);
 	let data = Object.assign({ slug: slug }, options),
 		generatedFile = require(`${__dirname}/setup.yml.js`)(data);
-
-	sh.mkdir(slug);
-	sh.cd(slug);
 	sh.ShellString(generatedFile).to(`./setup.yml`);
-	echo(`Project '${slug}' folder and initial 'setup.yml' file created. Edit this file and run 'fdk setup' to setup the project.`);
+	echo(`Project initial 'setup.yml' file created. Edit settings in this file and run 'fdk setup' to setup the project.`);
 };
 
 let setup = options => {
@@ -358,10 +376,11 @@ let addScriptCommands = () => {
 // set command line options
 program.version(VERSION)
 	.usage('[options] <command>')
-	.description(`Run 'init <slug>' to start a new project.\n\n    fdk <command> -h\tquick help on <command>`);
+	.description(`Run 'init [slug]' to start a new project.\n\n    fdk <command> -h\tquick help on <command>`);
 // `init` command
-program.command('init <slug>')
+program.command('init [slug]')
 	.description('Start a new project folder called <slug> containing the \'setup.yml\' configuration file. <slug> must be unique and no other Docker Compose project should share this name. All optional arguments will be set in the \'setup.yml\' file and can be modified there.')
+	.option('-d, --create-dir', 'create folder for project with <slug> name (current folder will be used for new project if not passed)')
 	.option('-t, --title <title>', 'project title')
 	.option('--author_name <name>', 'project author\'s name')
 	.option('--author_email <email>', 'project author\'s email')
