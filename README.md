@@ -11,7 +11,7 @@ A development environment and build toolkit to accelerate and optimize every sta
 ## Changelog
 
 **2.0**
-* Fabrica Dev Kit is now installed globally via `npm`, rather than cloned for each project, and accessible as `fdk` shell command - see below for instructions. Also includes options for plugin development and easier Wordmove configuration.
+* Fabrica Dev Kit is now installed globally via `npm`, rather than cloned for each project, and accessible as `fdk` shell command – see below for instructions. Also includes options for plugin development and easier Wordmove configuration. Ruby is no longer a dependency.
 
 ## All features
 
