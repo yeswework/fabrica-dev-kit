@@ -282,6 +282,10 @@ function wordmove(cb) {
 		wordmove.local.vhost = `localhost:${settings.webPort}`;
 		wordmove.local.wordpress_path = path.resolve(`${__dirname}/www/`);
 		wordmove.local.database = wordmove.local.database || {};
+		wordmove.local.name = 'wordpress';
+		wordmove.local.user = 'wordpress';
+		wordmove.local.password = 'wordpress';
+		wordmove.local.host = '127.0.0.1';
 		wordmove.local.database.port = settings.dbPort;
 		fs.writeFileSync('Movefile', yaml.safeDump(wordmove));
 	} catch (ex) {
