@@ -8,7 +8,10 @@ A development environment and build toolkit to accelerate and optimize every sta
 * Version control for custom fields (using ACF-JSON)
 * Instant deployment (using Wordmove)
 
-You can watch a [video of new project setup](https://www.youtube.com/watch?v=C0c0gkTZV90) and basic features.
+## Changelog
+
+13/07/17 - v2.0
+* Now available globally as `fdk` shell command, with one-time install via `npm` - see below for instructions. Also includes options for plugin development and easier Wordmove configuration.
 
 ## All features
 
@@ -54,9 +57,9 @@ Optional but strongly recommended:
 ## Getting started
 
 ### Installing Fabrica Dev Kit
-First make sure you have all the required dependencies (see above). Then run `npm install -g fabrica-dev-kit` to install Fabrica Dev Kit onto your system ready to use.
+First make sure you have all the required dependencies (see above). Then run `npm install fabrica-dev-kit -g` to install Fabrica Dev Kit onto your system ready to use globally via the `fdk` shell command.
 
-## Starting a new project with FDK
+### Starting a new project
 1. Create a folder for your project. In this folder run `fdk init`. This will create a template `setup.yml` file for your basic project settings.
 1. Edit `setup.yml` to configure basic parameters for your project. Plugins you want to be installed automatically can be listed here.
 1. Run `fdk setup` from the same folder. This will set up your virtual machine and install everything required: Nginx, PHP-FPM, WordPress, your chosen plugins and our suite of build tools.
@@ -81,8 +84,11 @@ First make sure you have all the required dependencies (see above). Then run `np
 * You can escape Gulp with Ctrl + c. While Gulp is not running, changes to source files will not be reflected in the active theme.
 * You can also run `gulp build` to compile the current source code into the active theme folder without starting a watch (eg. if you've made a tiny change and want to deploy it without needing to check on development site).
 
+### Plugin development
+* To aid with plugin development across multiple installations, FDK can import plugin files from any location on your local file system. Edit the `config/imports.yml` to specify paths, and the files will be copied whenever you run `gulp` (which will also watch for changes and update modified files, so you can develop and debug actively).
+
 ### Deployment
-1. Once you have a staging or production server set up, edit the `Movefile.js` with your FTP (or SSH details).
+1. Once you have a staging or production environment set up, edit the `config/wordmove.yml` file with the corresponding FTP or SSH details.
 1. To deploy your theme, make sure the latest source code is compiled (if a watch isn't running, do a `gulp build`), then type `wordmove push --themes`. Wordmove will push the new / modified files to the server.
 1. If you are using ACF (whether normal or Pro), ACF-JSON will take care of synching your fields automatically, but it's a good idea to [synchronize the fields on the remote site](https://www.advancedcustomfields.com/resources/synchronized-json/) once you have deployed changes, so that the new fields are saved (from the files in the `acf-json` folder) into the production database.
 
