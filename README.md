@@ -1,4 +1,4 @@
-# <img src="https://fabri.ca/_static/fdk-logo.png" height="60" alt="Fabrica Dev Kit for WordPress">
+# <img src="https://fabri.ca/_static/fdk-logo.png" height="120" alt="Fabrica Dev Kit for WordPress" title="Fabrica Dev Kit for WordPress">
 A development environment and build toolkit to accelerate and optimize every stage of the WordPress development process. For custom theme (or plugin) developers, especially those with complex CMS-type requirements. Its main features are:
 
 * Instant setup of project-specific fast local development server (using [Docker](https://www.docker.com/))
