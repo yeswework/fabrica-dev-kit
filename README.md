@@ -10,7 +10,7 @@ A development environment and build toolkit to accelerate and optimize every sta
 
 ## Changelog
 
-*2.0*
+**2.0**
 * Now available globally as `fdk` shell command, with one-time install via `npm` - see below for instructions. Also includes options for plugin development and easier Wordmove configuration.
 
 ## All features
