@@ -10,7 +10,7 @@ A development environment and build toolkit to accelerate and optimize every sta
 
 ## Changelog
 
-13/07/17 - v2.0
+*2.0*
 * Now available globally as `fdk` shell command, with one-time install via `npm` - see below for instructions. Also includes options for plugin development and easier Wordmove configuration.
 
 ## All features
@@ -102,7 +102,6 @@ For direct MySQL access to the development database, we recommend using [Sequel 
 If you have finished working on a project and want to free up the space used by its development environment, run `fdk shutdown` from the project folder. This will remove the Docker containers and images used for the project (so your development database will be deleted). You can delete the `www/` folder too, but this removes all files from the WP installation, so make sure to save any files in `www/wp-content/` you might need (such as secondary themes, plugins or uploads).
 
 ## Active development
-
 Theme source files live in the `src/` folder – while Gulp is running your changes will be live-compiled from here into the virtual machine's active theme folder (in `www/wp-content/themes/`). The `build/` folder is a shortcut symlink to the active theme folder: no editing should be done here, but it may occasionally be useful for checking compiled code in case of problems.
 
 File paths in this section refer to the `src/`.
