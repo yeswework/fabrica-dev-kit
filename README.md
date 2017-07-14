@@ -1,4 +1,4 @@
-# Fabrica Dev Kit for WordPress
+# ![Fabrica Dev Kit for WordPress](https://fabri.ca/_static/fdk-logo.png)
 A development environment and build toolkit to accelerate and optimize every stage of the WordPress development process. For custom theme (or plugin) developers, especially those with complex CMS-type requirements. Its main features are:
 
 * Instant setup of project-specific fast local development server (using [Docker](https://www.docker.com/))
@@ -138,7 +138,7 @@ All of the techniques below are optional in Fabrica Dev Kit and vanilla HTML / C
 ### Achieving a [Model-View-Controller](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller) (MVC) paradigm with Timber + ACF
 The magic combination of Timber and Advanced Custom Fields means we can render even complex data in our templates without carrying out any data retrieval or decision logic at all. Take for example this [Repeater field](https://www.advancedcustomfields.com/add-ons/repeater-field/) setup:
 
-![Repeater Field Example](http://assets.yeswework.com/acf-repeater-example.png)
+![Repeater Field Example](https://fabri.ca/_static/acf-repeater-example.png)
 
 With Twig (via Timber) we can display this data in a template as follows, without having to write any PHP.
 
