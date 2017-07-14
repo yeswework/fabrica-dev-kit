@@ -277,7 +277,7 @@ function imports(cb) {
 function wordmove(cb) {
 	// Load Wordmove settings file
 	try {
-		var wordmove = yaml.safeLoad(fs.readFileSync('./config/wordmove.yml', 'utf8'));
+		var wordmove = yaml.safeLoad(fs.readFileSync('./config/wordmove.yml', 'utf8')) || {};
 		wordmove.local = wordmove.local || {};
 		wordmove.local.vhost = `localhost:${settings.webPort}`;
 		wordmove.local.wordpress_path = path.resolve(`${__dirname}/www/`);
