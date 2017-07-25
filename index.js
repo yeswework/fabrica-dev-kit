@@ -134,6 +134,8 @@ let createFolders = settings => {
 	if (!sh.test('-d', 'src')) {
 		// new project: copy starter development folder
 		sh.cp('-r', [`${__dirname}/dev/*`, `${__dirname}/dev/.*`], '.');
+		// npm publish doesn't include .gitignore: https://github.com/npm/npm/issues/3763
+		sh.mv('gitignore', '.gitignore');
 
 		// set configuration data in source and Wordmove files
 		let templateFilenames = [
