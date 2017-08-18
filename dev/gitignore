@@ -2,6 +2,7 @@ build
 Movefile
 yarn.lock
 node_modules/
+www/
 src-starter/
 src/.env
 src/includes/vendor/
