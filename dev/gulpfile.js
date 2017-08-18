@@ -116,7 +116,7 @@ var options = {
 	imagemin: {optimizationLevel: 7, progressive: true, interlaced: true, multipass: true},
 	postcss: [
 		stylelint(),
-		postcssReporter({clearMessages: true}),
+		postcssImport,
 		postcssMixins,
 		postcssEach,
 		postcssSimpleVars({
@@ -127,7 +127,7 @@ var options = {
 		postcssNestedProps,
 		postcssNested,
 		postcssFontpath,
-		postcssImport,
+		postcssReporter({clearMessages: true}),
 		lost,
 		autoprefixer({browsers: ['last 3 versions']})
 	],
