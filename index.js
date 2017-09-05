@@ -1,4 +1,5 @@
-#!/usr/bin/env node --harmony
+#!/bin/sh
+":" //# https://fabri.ca/; exec /usr/bin/env node --noharmony "$0" "$@"
 
 'use strict';
 
