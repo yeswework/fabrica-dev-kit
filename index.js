@@ -241,7 +241,7 @@ let installWordPress = (webPort, settings) => {
 		}
 		if (settings.wp.acf_pro_key) {
 			let execCode = sh.exec([`docker exec ${wpContainer} bash -c 'curl "http://connect.advancedcustomfields.com/index.php?p=pro&a=download&k=${settings.wp.acf_pro_key}" > /tmp/acf-pro.zip`,
-				`&& wp plugin install /tmp/acf-pro.zip --activate`
+				`&& wp plugin install /tmp/acf-pro.zip --activate`,
 				`&& rm /tmp/acf-pro.zip'`].join(' ')).code;
 		}
 		// remove default WordPress plugins and themes

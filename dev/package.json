@@ -12,7 +12,7 @@
     "dc": "docker-compose",
     "sh": "docker-compose exec wp /bin/bash",
     "wp": "docker-compose exec -T wp wp",
-    "logs": "docker-compose logs -f --tail='24' wp | sed -e \"s/ WARNING: .* into stderr: \\\"\\[[a-zA-Z0-9 :\\-]\\{1,\\}\\] \\(.*\\)\\\"/ ⚠️  $(tput setaf 3)\\1$(tput sgr0)/\"",
+    "logs": "docker-compose logs -f --tail='24' wp | sed -e \"s/ WARNING: .* into stderr: \\\"\\(\\[[a-zA-Z0-9 :\\-]\\{1,\\}\\]\\)\\{0,1\\} \\{0,1\\}\\(.*\\)\\\"/ ⚠️  $(tput setaf 3)\\2$(tput sgr0)/\"",
     "remove": "docker-compose down --volumes --rmi local"
   },
   "fabrica_dev_kit": {
