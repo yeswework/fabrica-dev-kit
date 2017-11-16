@@ -297,7 +297,7 @@ function wordmove(cb) {
 // Update WP config URLs with access port dynamically assigned by Docker to expose Web container port 80
 function wpconfig(cb) {
 	// Get current port in WordPress to check if it matches the current Web container port
-	var dockerCmd = 'docker exec ' + settings.slug + '_wp',
+	var dockerCmd = 'docker-compose exec -u www-data -T wp',
 		wpPort = exec(dockerCmd + ' wp option get siteurl').toString().replace(/^.*:(\d+)\n$/g, '$1');
 	if (wpPort != settings.webPort) {
 		// Ports needs to be updated

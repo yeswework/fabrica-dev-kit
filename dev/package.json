@@ -11,8 +11,9 @@
   "scripts": {
     "run": "gulp",
     "dc": "docker-compose",
-    "sh": "docker-compose exec wp /bin/bash",
-    "wp": "docker-compose exec -T wp wp",
+    "sh": "docker-compose exec -u www-data wp /bin/bash",
+    "shroot": "docker-compose exec wp /bin/bash",
+    "wp": "docker-compose exec -u www-data -T wp wp",
     "logs": "docker-compose logs -f --tail='24' wp | sed -e \"s/ WARNING: .* into stderr: \\\"\\(\\[[a-zA-Z0-9 :\\-]\\{1,\\}\\]\\)\\{0,1\\} \\{0,1\\}\\(.*\\)\\\"/ ⚠️  $(tput setaf 3)\\2$(tput sgr0)/\"",
     "remove": "docker-compose down --volumes --rmi local"
   },
@@ -21,6 +22,7 @@
       "run": "Run 'gulp'. Default task will watch and process source files.",
       "dc": "Run 'docker-compose', eg. 'fdk dc ps'.",
       "sh": "Start shell on WP container.",
+      "shroot": "Start shell as root on WP container.",
       "wp": "Run WP Cli. eg. 'fdk wp option list' or 'fdk wp -- --info'",
       "logs": "Tail WP container logs.",
       "remove": "Stop all project containers, remove their volumes and WP project image."

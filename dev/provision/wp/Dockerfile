@@ -14,6 +14,9 @@ RUN pecl -q install xdebug \
     && echo "xdebug.remote_enable=on" >> /usr/local/etc/php/conf.d/xdebug.ini \
     && echo "xdebug.remote_autostart=off" >> /usr/local/etc/php/conf.d/xdebug.ini
 
+# Install sendmail
+RUN apt-get -qq -o=Dpkg::Use-Pty=0 install -y sendmail > /dev/null 2>&1
+
 # Cleanup
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -28,4 +31,7 @@ RUN CONTAINER_GROUP_OLD=`getent group ${GID} | cut -d: -f1` && \
     if [ -n "$CONTAINER_GROUP_OLD" ]; then groupmod -o -g 21001 $CONTAINER_GROUP_OLD; fi
 RUN groupmod -o -g ${GID} www-data
 
-USER www-data
+# Set entrypoint script to update hosts for sendmail before calling Wordpress image original entrypoint script
+COPY provision/wp/wp-entrypoint.sh /usr/local/bin/
+ENTRYPOINT ["wp-entrypoint.sh"]
+CMD ["php-fpm"]

@@ -91,8 +91,8 @@ let loadSettings = (reinstall) => {
 
 	// get user's UID/GID to match on container's user
 	settings.user = {
-		uid: sh.exec('id -u $(whoami)', {silent: true}).stdout,
-		gid: sh.exec('id -g $(whoami)', {silent: true}).stdout,
+		uid: sh.exec('id -u $(whoami)', {silent: true}).stdout.trim(),
+		gid: sh.exec('id -g $(whoami)', {silent: true}).stdout.trim(),
 	}
 
 	// load default, user and project/site settings, in that order
@@ -190,15 +190,15 @@ let installDependencies = () => {
 // install and configure WordPress in the Docker container
 let installWordPress = (webPort, settings) => {
 	echo('Installing WordPress...');
-	let wpContainer = `${settings['slug']}_wp`;
-	let wp = command => {
-		if (sh.exec(`docker exec ${wpContainer} wp ${command}`).code != 0) {
-			halt(`Failed to execute: 'docker exec ${wpContainer} wp ${command}'`);
-		}
-	};
+	let dockerCmd = 'docker-compose exec -u www-data wp',
+		wp = command => {
+			if (sh.exec(`${dockerCmd} wp ${command}`).code != 0) {
+				halt(`Failed to execute: '${dockerCmd} wp ${command}'`);
+			}
+		};
 
 	// use stdout stream to filter out known WP CLI warning
-	let install = sh.exec([`docker exec ${wpContainer} wp core install`,
+	let install = sh.exec([`${dockerCmd} wp core install`,
 		`--url=localhost:${webPort}`,
 		`--title="${settings.title}"`,
 		`--admin_user=${settings.wp.admin.user}`,
@@ -240,7 +240,7 @@ let installWordPress = (webPort, settings) => {
 			wp(`plugin install "${plugin}" --activate`);
 		}
 		if (settings.wp.acf_pro_key) {
-			let execCode = sh.exec([`docker exec ${wpContainer} bash -c 'curl "http://connect.advancedcustomfields.com/index.php?p=pro&a=download&k=${settings.wp.acf_pro_key}" > /tmp/acf-pro.zip`,
+			let execCode = sh.exec([`${dockerCmd} bash -c 'curl "http://connect.advancedcustomfields.com/index.php?p=pro&a=download&k=${settings.wp.acf_pro_key}" > /tmp/acf-pro.zip`,
 				`&& wp plugin install /tmp/acf-pro.zip --activate`,
 				`&& rm /tmp/acf-pro.zip'`].join(' ')).code;
 		}
@@ -303,6 +303,8 @@ let startContainersAndInstall = settings => {
 		}
 		echo(`Web server running at port ${webPort}`);
 
+		// set WordPress folder owner
+		sh.exec('docker-compose exec wp sh -c "chown -R www-data:www-data ."');
 		installWordPress(webPort, settings);
 	}).catch(error => {
 		halt(`Error installing or configuring WordPress:\n${error}`);
