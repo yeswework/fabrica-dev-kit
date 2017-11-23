@@ -1,7 +1,7 @@
 {
-  "name": "fabrica-dev-kit",
-  "version": "1.0.0",
-  "description": "Fabrica Dev Kit for Wordpress",
+  "name": "fdk-project",
+  "version": "1.0.1",
+  "description": "Fabrica Dev Kit for Wordpress Project",
   "repository": {
     "type": "git",
     "url": "https://github.com/fabrica-wp/dev-kit"
