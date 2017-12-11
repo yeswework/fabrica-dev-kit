@@ -167,7 +167,7 @@ let createFolders = settings => {
 		let keys = {name: 'slug', description: 'title', author: 'author'};
 		for (let projectKey of Object.keys(keys)) {
 			let settingKey = keys[projectKey];
-			echo(` ◦ ${settingKey} / ${projectKey}: '${settings[settingKey]}' → '${projectSettings[projectKey]}'`);
+			echo(` ◦ ${settingKey} / ${projectKey}: ${JSON.stringify(settings[settingKey])} → ${JSON.stringify(projectSettings[projectKey])}`);
 			settings[settingKey] = projectSettings[projectKey];
 		}
 	}
