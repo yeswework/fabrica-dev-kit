@@ -320,7 +320,8 @@ function watch() {
 	console.log('Starting BrowserSync...');
 	browserSync.init({
 		proxy: 'localhost:' + settings.webPort,
-		open: false
+		open: false,
+		logPrefix: settings.slug + ' http://localhost:' + settings.webPort
 	});
 	gulp.watch(glob.functions, gulp.series(functions));
 	gulp.watch(glob.includes, gulp.series(includes));
