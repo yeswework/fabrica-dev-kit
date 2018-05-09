@@ -16,7 +16,7 @@ const findup = require('findup-sync'),
 	yaml = require('js-yaml');
 
 // Fabrica Dev Kit version
-const VERSION = '1.0.1',
+const VERSION = sh.exec('npm view fabrica-dev-kit version', {silent: true}).stdout.trim(),
 // maximum time (in milliseconds) to wait for wp container to be up and running
 	WAIT_WP_CONTAINER_TIMEOUT = 360 * 1000;
 
@@ -379,6 +379,8 @@ let addScriptCommands = () => {
 	}
 };
 
+// fabrica-wp/fabrica-dev-kit#34 / docker/compose#5696 fix
+sh.env['COMPOSE_INTERACTIVE_NO_CLI'] = 1;
 // set command line options
 program.version(VERSION)
 	.usage('[options] <command>')
