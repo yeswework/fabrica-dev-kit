@@ -16,7 +16,7 @@ const findup = require('findup-sync'),
 	yaml = require('js-yaml');
 
 // Fabrica Dev Kit version
-const VERSION = sh.exec('npm view fabrica-dev-kit version', {silent: true}).stdout.trim(),
+const VERSION = sh.exec('npm list fabrica-dev-kit --depth=0 -g', {silent: true}).stdout.trim().replace(/^[^@]*@([^\s]*)\s.*$/, '$1'),
 // maximum time (in milliseconds) to wait for wp container to be up and running
 	WAIT_WP_CONTAINER_TIMEOUT = 360 * 1000;
 
