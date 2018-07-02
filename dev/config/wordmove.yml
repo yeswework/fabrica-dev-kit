@@ -3,6 +3,9 @@
 
 # Fabrica Dev Kit will configure local settings automatically
 
+global:
+  sql_adapter: "default"
+
 # Production site settings - uncomment and specify for your staging/production environments as required
 # production:
 #   vhost: "url" # production URL - only needed if you plan to pull/push the database
