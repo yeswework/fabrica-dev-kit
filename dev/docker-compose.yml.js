@@ -18,7 +18,7 @@ services:
     image: mysql:5.7
     container_name: ${data.slug}_db
     volumes:
-      - db-data:/var/lib/mysql
+      - ./db:/var/lib/mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: wordpress
@@ -47,7 +47,4 @@ services:
       WORDPRESS_DEBUG: "true"
     links:
       - db:mysql
-
-volumes:
-  db-data:
 `;
