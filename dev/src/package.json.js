@@ -1,9 +1,9 @@
-module.exports = (data) => `
+module.exports = (settings) => `
 {
-  "name": "${data.slug}",
+  "name": "${settings.slug}",
   "version": "0.1.0",
-  "description": "${data.title}",
-  "author": ${JSON.stringify(data.author)},
+  "description": "${settings.title}",
+  "author": ${JSON.stringify(settings.author)},
   "private": true,
   "dependencies": {
     "expose-loader": "^0.7.3",

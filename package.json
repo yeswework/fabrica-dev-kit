@@ -8,19 +8,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fabrica-wp/fabrica-dev-kit.git"
+    "url": "git+https://github.com/yeswework/fabrica-dev-kit.git"
   },
   "keywords": [
     "wordpress",
     "docker",
     "toolkit"
   ],
-  "author": "Fabrica <info@fabri.ca> (http://fabri.ca/)",
+  "author": "Yes We Work <info@yeswework.com> (http://yeswework.com/)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/fabrica-wp/fabrica-dev-kit/issues"
+    "url": "https://github.com/yeswework/fabrica-dev-kit/issues"
   },
-  "homepage": "https://github.com/fabrica-wp/fabrica-dev-kit#readme",
+  "homepage": "https://github.com/yeswework/fabrica-dev-kit#readme",
   "bin": {
     "fdk": "./index.js"
   },

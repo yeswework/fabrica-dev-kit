@@ -1,10 +1,10 @@
-module.exports = (data) => `
+module.exports = (settings) => `
 version: '2'
 
 services:
   web:
     image: nginx:latest
-    container_name: ${data.slug}_web
+    container_name: ${settings.slug}_web
     restart: unless-stopped
     volumes:
       - ./www:/var/www/html
@@ -16,7 +16,7 @@ services:
       - wp
   db:
     image: mysql:5.7
-    container_name: ${data.slug}_db
+    container_name: ${settings.slug}_db
     volumes:
       - ./db:/var/lib/mysql
     restart: unless-stopped
@@ -32,9 +32,9 @@ services:
       context: .
       dockerfile: provision/wp/Dockerfile
       args:
-        UID: ${data.user.uid}
-        GID: ${data.user.gid}
-    container_name: ${data.slug}_wp
+        UID: ${settings.user.uid}
+        GID: ${settings.user.gid}
+    container_name: ${settings.slug}_wp
     restart: unless-stopped
     volumes:
       - ./www:/var/www/html
@@ -43,7 +43,7 @@ services:
     environment:
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_PASSWORD: wordpress
-      WORDPRESS_DB_PREFIX: ${data.db.prefix}
+      WORDPRESS_DB_PREFIX: ${settings.db.prefix}
       WORDPRESS_DEBUG: "true"
     links:
       - db:mysql

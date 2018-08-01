@@ -260,7 +260,7 @@ let installWordPress = (webPort, settings) => {
 		wp(`post update 1 --post_name='welcome-to-fabrica-dev-kit' --post_title='Welcome to Fabrica Dev Kit' --post_content='For more information about developing with Fabrica Dev Kit, <a href="https://github.com/fabrica-wp/fabrica-dev-kit">see the documentation</a>.'`);
 
 		// the site will be ready to run and develop locally
-		echo('Setup complete. To develop locally, run \'gulp\'.');
+		echo('Setup complete. To develop locally, run \'fdk run\'.');
 	});
 }
 
