@@ -2,6 +2,7 @@ build
 Movefile
 yarn.lock
 node_modules/
+db/
 www/
 src-starter/
 src/.env
