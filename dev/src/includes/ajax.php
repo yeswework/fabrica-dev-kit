@@ -11,7 +11,7 @@ class Ajax extends Singleton {
 
 	public function __construct() {
 		// Namespaced tags
-		$this->postNonce = Project::$projectNamespace . '-post-nonce';
+		$this->postNonce = Project::$namespace . '-post-nonce';
 	}
 
 	public function init() {

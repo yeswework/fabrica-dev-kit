@@ -15,7 +15,7 @@ if (!isset($content_width)) {
 class Project extends Singleton {
 
 	// Namespace for this project
-	public static $projectNamespace = '${settings.slug}';
+	public static $namespace = '${settings.slug}';
 
 	// Project scripts main handle
 	public static $mainHandle = '${settings.slug}-main';

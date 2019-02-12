@@ -47,7 +47,7 @@ class Base extends Singleton {
 		$scriptVars = array();
 		$scriptVars = apply_filters(Project::$varsTag, $scriptVars);
 		if (!empty($scriptVars)) {
-			wp_localize_script(Project::$mainHandle, Project::$projectNamespace, $scriptVars);
+			wp_localize_script(Project::$mainHandle, Project::$namespace, $scriptVars);
 		}
 
 		// Repeat for stylesheets, first libraries, then theme-specific
@@ -83,7 +83,7 @@ class Base extends Singleton {
 		add_theme_support('title-tag');
 
 		// Translation
-		load_theme_textdomain(Project::$projectNamespace, get_stylesheet_directory() . '/language');
+		load_theme_textdomain(Project::$namespace, get_stylesheet_directory() . '/language');
 
 		// Clean up wp_head output() - based on https://scotch.io/quick-tips/removing-wordpress-header-junk
 		remove_action('wp_head', 'rsd_link');
@@ -110,7 +110,7 @@ class Base extends Singleton {
 	public function registerMenus() {
 		$locations = array();
 		foreach (Project::$menus as $slug => $name) {
-			$locations[$slug] = __($name, Project::$projectNamespace);
+			$locations[$slug] = __($name, Project::$namespace);
 		}
 		register_nav_menus($locations);
 	}

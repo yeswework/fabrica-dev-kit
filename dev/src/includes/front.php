@@ -27,8 +27,8 @@ class Front extends Singleton {
 		if (is_single()) {
 			$scriptVars = array_merge($scriptVars, array(
 				'nameSpaced' => array(
-					'key1' => __('value one', Project::$projectNamespace),
-					'key2' => __('value two', Project::$projectNamespace)
+					'key1' => __('value one', Project::$namespace),
+					'key2' => __('value two', Project::$namespace)
 				)
 			));
 		}
