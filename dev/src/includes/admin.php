@@ -6,6 +6,7 @@
 namespace Fabrica\Devkit;
 
 require_once('singleton.php');
+require_once('project.php');
 
 class Admin extends Singleton {
 
@@ -14,7 +15,7 @@ class Admin extends Singleton {
 		if (!is_admin()) { return; }
 
 		add_theme_support('editor-styles');
-		add_editor_style('css/editor' . self::$styleSuffix . '.css');
+		add_editor_style('css/editor' . Project::$styleSuffix . '.css');
 		add_action('admin_enqueue_scripts', array($this, 'enqueueAssets'));
 
 		// Hooks that need to run for both AJAX + admin requests
@@ -30,12 +31,7 @@ class Admin extends Singleton {
 	}
 
 	public function enqueueAssets() {
-		wp_enqueue_style(
-			'${settings.slug}-admin',
-			get_stylesheet_directory_uri() . '/css/admin' . self::$styleSuffix . '.css',
-			array(),
-			null
-		);
+		wp_enqueue_style('${settings.slug}-admin', get_stylesheet_directory_uri() . '/css/admin' . Project::$styleSuffix . '.css', array(), null);
 	}
 }
 
