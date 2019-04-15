@@ -1,6 +1,6 @@
 {
   "name": "fabrica-dev-kit",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Fabrica Dev Kit for Wordpress",
   "main": "index.js",
   "scripts": {
