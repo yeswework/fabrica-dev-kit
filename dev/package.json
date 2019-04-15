@@ -10,6 +10,7 @@
   "author": "Fabrica <info@fabri.ca> (http://fabri.ca/)",
   "scripts": {
     "run": "gulp",
+    "deploy": "gulp deploy",
     "dc": "docker-compose",
     "sh": "docker-compose exec -u www-data wp /bin/bash",
     "shroot": "docker-compose exec wp /bin/bash",

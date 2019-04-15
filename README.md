@@ -1,14 +1,21 @@
 # <img src="https://fabri.ca/_static/fdk-logo-large.png" width="254" height="60" alt="Fabrica Dev Kit for WordPress" title="Fabrica Dev Kit for WordPress">
-A development environment and build toolkit to accelerate and optimize every stage of the WordPress development process. For custom theme (or plugin) developers, especially those with complex CMS-type requirements. Its main features are:
+A WordPress 5-ready development environment and build toolkit to accelerate and optimize every stage of the WordPress development process. For custom theme (or plugin) developers, especially those with complex CMS-type requirements. Its main features are:
 
 * Instant setup of project-specific fast local development server (using [Docker](https://www.docker.com/))
 * Tools for coding leaner, cleaner themes (using Twig, PostCSS, MVC and BEM)
-* Build script to preprocess, lint and optimize assets
+* Build script to preprocess, lint and optimize assets, including WP 5 / Gutenberg Blocks
 * Live browser testing, synchronized across devices (using Browsersync)
 * Version control for custom fields (using ACF-JSON)
 * Instant deployment (using Wordmove)
 
 ## Changelog
+
+**2.1**
+* New Webpack/Babel build pipeline to compile theme-based WP 5/Gutenberg blocks (default filename `assets/js/blocks.js`)
+* New Gutenberg-ready common / front / editor boilerplate structure for CSS
+* Automatic timestamp-based fingerprinting on production assets, for cache-busting where needed
+* New `fdk deploy` task recompiles and runs Wordmove, so you can deploy in a new tab without having to stop the build process
+* General spring-cleaning, upgrading and tweaking (NB. no longer including Lost Grid prefer CSS Grid)
 
 **2.0**
 * Fabrica Dev Kit is now installed globally via `npm`, rather than cloned for each project, and accessible as `fdk` shell command – see below for instructions. Also includes options for plugin development and easier Wordmove configuration. Ruby is no longer a dependency.
@@ -25,7 +32,6 @@ A development environment and build toolkit to accelerate and optimize every sta
 * ... with templates written in [Twig](http://twig.sensiolabs.org/) rather than directly in PHP. Installs the revolutionary [Timber](https://upstatement.com/timber/) to bring MVC-like separation of concerns to WordPress development, separating data processing and analytical logic from presentation, allowing you to write more elegant, legible and maintainable templates, eradicating `<?php` `?>` tag-itis forever. A genuine 'never go back' improvement. See the MVC section in code examples below for more.
 * ... with [BEM syntax](http://csswizardry.com/2013/01/mindbemding-getting-your-head-round-bem-syntax/). Uses the [PostHTML-bem](https://github.com/rajdee/posthtml-bem/) plugin for [PostHTML](https://github.com/posthtml/posthtml) which allows you to write much less repetitive BEM markup (see code examples below), and which in turn reflects your (Post)CSS structure more closely.
 * ... with [PostCSS](https://github.com/postcss/postcss) for variables, mixins and other CSS preprocessing enhancements (it can compile your SASS or LESS code no problem).
-* ... with the [LostGrid](https://github.com/peterramsing/lost) grid system / preprocessor, which allows you to build fluid, responsive, nested grids without using presentational classes, with or without [Flexbox](https://github.com/peterramsing/lost).
 * ... making use of the fantastic [Advanced Custom Fields](https://www.advancedcustomfields.com/) plugin, which is deeply supported by Timber (see above). Fabrica Dev Kit can automatically install ACF Pro if you supply your licence key at setup.
 
 ### Reduces friction in the development process
@@ -295,58 +301,3 @@ Second, the PostCSS, where we can make use of the `&` token both to nest element
 	}
 }
 ```
-
-### Semantic grids with LostGrid
-
-The following markup is representative of how many layout frameworks implement a responsive design:
-
-```
-<div class="row">
-	<div class="col-xs-12 col-sm-6 col-md-8">wide cell</div>
-	<div class="col-xs-6 col-md-4">normal cell</div>
-</div>
-<div class="row">
-	<div class="col-xs-6 col-sm-4">normal cell</div>
-	<div class="col-xs-6 col-sm-4">normal cell</div>
-	<div class="col-xs-6 col-sm-4">normal cell</div>
-</div>
-```
-
-The multiple classes are to specify size / styles at different breakpoints via media queries, but they make the code bloated and hard to read – and the CSS rules to target all the options across all the different breakpoints are hundreds of lines long. And none of the styles are semantic...
-
-With LostGrid (a PostCSS plugin included with Fabrica Dev Kit), we can move all the presentational rules where they belong – in our stylesheet – and make our classes semantic. We'll also make use of PostHTML-bem syntax for maximum conciseness (see above). Here's a quick example for comparison:
-
-```
-<div block="row">
-	<div elem="cell" mods="featured">wide cell</div>
-	<div elem="cell">normal cell</div>
-</div>
-<div block="row">
-	<div elem="cell">normal cell</div>
-	<div elem="cell">normal cell</div>
-	<div elem="cell">normal cell</div>
-</div>
-```
-
-And our CSS will look something like this:
-
-```
-.row {
-	lost-flex-container: row;
-
-	&__cell {
-		@media (max-width: 540px) {
-			lost-column: 1;
-		}
-		@media (min-width: 541px) {
-			lost-column: 1/3 3;
-		}
-
-		&--featured {
-			lost-column: 2/3 2;
-		}
-	}
-}
-```
-
-For more information about the power and flexibility of LostGrid see its [website and documentation](http://lostgrid.org/).
