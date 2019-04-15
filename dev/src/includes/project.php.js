@@ -7,18 +7,10 @@ namespace Fabrica\\Devkit;
 
 require_once('singleton.php');
 
-// Set content width value based on the theme's design
-if (!isset($content_width)) {
-	$content_width = 1440;
-}
-
 class Project extends Singleton {
 
 	// Namespace for this project
 	public static $namespace = '${settings.slug}';
-
-	// Tag for sending variables to front-end's script
-	public static $varsTag = '${settings.slug}_script_vars';
 
 	// Menus required
 	public static $menus = array('main' => 'Main menu');
@@ -27,23 +19,21 @@ class Project extends Singleton {
 	public static $googleAnalyticsId = '${settings.google_analytics_id || ''}';
 
 	// Assets timestamp + environment suffixes
-	public static $scriptSuffix, $styleSuffix;
+	public static $scriptSuffix, $styleSuffix = '';
 
 	public function init() {
 
-		// Load uncompressed scripts when debug mode is on
-		if (WP_DEBUG === true) {
-			self::$scriptSuffix = '';
-			self::$styleSuffix = '';
-		} else {
+		// If in production mode, load minified timestamped assets
+		if (WP_DEBUG !== true) {
 			self::$scriptSuffix = '.' . SCRIPT_BUILD_TIME . '.min';
 			self::$styleSuffix = '.' . STYLE_BUILD_TIME . '.min';
 		}
 
-		// Setup hooks
+		// Extra theme support options
 		add_theme_support('align-wide');
 		add_theme_support('align-full');
-		add_action('enqueue_block_editor_assets', array($this, 'enqueueAssets'));
+
+		// Setup hooks
 		add_action('init', array($this, 'registerStructure'));
 
 		// Project-specific tags, hooks and initialisations
@@ -55,24 +45,6 @@ class Project extends Singleton {
 	public function registerStructure() {
 
 		// http://generatewp.com/ has a useful generator
-	}
-
-	public function enqueueAssets() {
-		// Front-end script
-		wp_enqueue_script('${settings.slug}-front', get_stylesheet_directory_uri() . '/js/main' . self::$scriptSuffix . '.js', array(), null, true);
-
-		// Pass variables to JavaScript at runtime
-		$scriptVars = array();
-		$scriptVars = apply_filters(self::$varsTag, $scriptVars);
-		if (!empty($scriptVars)) {
-			wp_localize_script('${settings.slug}', 'data', $scriptVars);
-		}
-
-		// Front-end stylesheet
-		wp_enqueue_style('${settings.slug}-front', get_stylesheet_directory_uri() . '/css/front' . self::$styleSuffix . '.css', array(), null);
-
-		// Block script
-		wp_enqueue_script('${settings.slug}-blocks', get_stylesheet_directory_uri() .  '/js/blocks' . self::$scriptSuffix . '.js', array('wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor'), null);
 	}
 }
 
