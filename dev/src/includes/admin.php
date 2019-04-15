@@ -16,7 +16,8 @@ class Admin extends Singleton {
 
 		add_theme_support('editor-styles');
 		add_editor_style('css/editor' . Project::$styleSuffix . '.css');
-		add_action('admin_enqueue_scripts', array($this, 'enqueueAssets'));
+		add_action('admin_enqueue_scripts', array($this, 'enqueueAdminAssets'));
+		add_action('enqueue_block_editor_assets', array($this, 'enqueueBlockAssets'));
 
 		// Hooks that need to run for both AJAX + admin requests
 		// add_action('action_name', array($this, 'memberFunction'));
@@ -30,8 +31,11 @@ class Admin extends Singleton {
 		// add_filter('filter_name', array($this, 'memberFunction'));
 	}
 
-	public function enqueueAssets() {
+	public function enqueueAdminAssets() {
 		wp_enqueue_style(Project::$namespace . '-admin', get_stylesheet_directory_uri() . '/css/admin' . Project::$styleSuffix . '.css', array(), null);
+	}
+
+	public function enqueueBlockAssets() {
 		wp_enqueue_script(Project::$namespace . '-blocks', get_stylesheet_directory_uri() .  '/js/blocks' . Project::$scriptSuffix . '.js', array('wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor'), null);
 	}
 }
