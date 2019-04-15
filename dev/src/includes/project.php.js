@@ -12,6 +12,12 @@ class Project extends Singleton {
 	// Namespace for this project
 	public static $namespace = '${settings.slug}';
 
+	// Tag for passing data to front-end scripts
+	public static $varsTag = '${settings.slug}_script_vars';
+
+	// Handle for front-end assets
+	public static $frontHandle = '${settings.slug}-front';
+
 	// Menus required
 	public static $menus = array('main' => 'Main menu');
 
