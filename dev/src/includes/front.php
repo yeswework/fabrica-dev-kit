@@ -22,7 +22,7 @@ class Front extends Singleton {
 	}
 
 	public function enqueueAssets() {
-		wp_enqueue_script(Project::$frontHandle, get_stylesheet_directory_uri() . '/js/main' . Project::$scriptSuffix . '.js', array(), null, true);
+		wp_enqueue_script(Project::$frontHandle, get_stylesheet_directory_uri() . '/js/front' . Project::$scriptSuffix . '.js', array(), null, true);
 
 		// Pass variables to JavaScript at runtime
 		$scriptVars = array();
