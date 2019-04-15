@@ -1,6 +1,6 @@
 <?php
 /* =========================================================================
-   Basic configuration for all projects - you should not need to edit this
+   Basic configuration
    ========================================================================= */
 
 namespace Fabrica\Devkit;
@@ -18,7 +18,6 @@ class Base extends Singleton {
 
 	public function init() {
 		// Assets
-		add_action('wp_enqueue_scripts', array($this, 'enqueueAssets'));
 		add_action('wp_footer', array($this, 'injectAnalytics'));
 
 		// Features
@@ -27,24 +26,6 @@ class Base extends Singleton {
 		// Menus
 		add_action('init', array($this, 'registerMenus'));
 		add_filter('timber_context', array($this, 'exposeMenus'));
-	}
-
-	// Register front-end scripts
-	public function enqueueAssets() {
-
-		// Load third-party libraries and project code
-		wp_deregister_script('jquery');
-		wp_enqueue_script(Project::$mainHandle . '-front', get_stylesheet_directory_uri() . '/js/main' . Project::$scriptSuffix . '.js', array(), null, true);
-
-		// Pass variables to JavaScript at runtime
-		$scriptVars = array();
-		$scriptVars = apply_filters(Project::$varsTag, $scriptVars);
-		if (!empty($scriptVars)) {
-			wp_localize_script(Project::$mainHandle, Project::$namespace, $scriptVars);
-		}
-
-		// Repeat for stylesheets, first libraries, then theme-specific
-		wp_enqueue_style(Project::$mainHandle . '-front', get_stylesheet_directory_uri() . '/css/front' . Project::$styleSuffix . '.css', array(), null);
 	}
 
 	// Output Google Analytics tracking code

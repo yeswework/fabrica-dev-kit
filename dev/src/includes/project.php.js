@@ -17,9 +17,6 @@ class Project extends Singleton {
 	// Namespace for this project
 	public static $namespace = '${settings.slug}';
 
-	// Project scripts main handle
-	public static $mainHandle = '${settings.slug}-main';
-
 	// Tag for sending variables to front-end's script
 	public static $varsTag = '${settings.slug}_script_vars';
 
@@ -61,12 +58,21 @@ class Project extends Singleton {
 	}
 
 	public function enqueueAssets() {
-		wp_enqueue_script(
-			'${settings.slug}-blocks',
-			get_stylesheet_directory_uri() .  '/js/blocks' . self::$scriptSuffix . '.js',
-			array('wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor'),
-			null
-		);
+		// Front-end script
+		wp_enqueue_script('${settings.slug}-front', get_stylesheet_directory_uri() . '/js/main' . self::$scriptSuffix . '.js', array(), null, true);
+
+		// Pass variables to JavaScript at runtime
+		$scriptVars = array();
+		$scriptVars = apply_filters(self::$varsTag, $scriptVars);
+		if (!empty($scriptVars)) {
+			wp_localize_script('${settings.slug}', 'data', $scriptVars);
+		}
+
+		// Front-end stylesheet
+		wp_enqueue_style('${settings.slug}-front', get_stylesheet_directory_uri() . '/css/front' . self::$styleSuffix . '.css', array(), null);
+
+		// Block script
+		wp_enqueue_script('${settings.slug}-blocks', get_stylesheet_directory_uri() .  '/js/blocks' . self::$scriptSuffix . '.js', array('wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor'), null);
 	}
 }
 

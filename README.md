@@ -14,8 +14,9 @@ A WordPress 5-ready development environment and build toolkit to accelerate and 
 * New Webpack/Babel build pipeline to compile theme-based WP 5/Gutenberg blocks (default filename `assets/js/blocks.js`)
 * New Gutenberg-ready common / front / editor boilerplate structure for CSS
 * Automatic timestamp-based fingerprinting on production assets, for cache-busting where needed
+* Use [sanitize.css](https://csstools.github.io/sanitize.css/) in boilerplate theme theme (switched from normalize.css)
 * New `fdk deploy` task recompiles and runs Wordmove, so you can deploy in a new tab without having to stop the build process
-* General spring-cleaning, upgrading and tweaking (NB. no longer including Lost Grid prefer CSS Grid)
+* General spring-cleaning, upgrading and tweaking (NB. no longer including Lost Grid in favour of CSS Grid; no longer including jQuery by default.)
 
 **2.0**
 * Fabrica Dev Kit is now installed globally via `npm`, rather than cloned for each project, and accessible as `fdk` shell command – see below for instructions. Also includes options for plugin development and easier Wordmove configuration. Ruby is no longer a dependency.
@@ -43,7 +44,7 @@ A WordPress 5-ready development environment and build toolkit to accelerate and 
 	* Optimizes / losslessly compresses image assets.
 	* Pipes all changes (to CSS or templates) directly to the browser, without requiring a page refresh, using [Browsersync](https://www.browsersync.io/), so you can finally give your clapped-out `F5` key a break (OK, `Cmd` + `R`… no Windows version yet).
 * Allows simultaneous testing on multiple devices (with synchronized scrolling and keystrokes!), also via Browsersync.
-* Combines [NPM](https://www.npmjs.com/) support with [Webpack](https://webpack.github.io/) allowing super-fast installation and inclusion of front-end modules such as jQuery plugins / other JS libraries. (We include [jQuery](https://jquery.com/) and [normalize.css](https://necolas.github.io/normalize.css/) by default.)
+* Combines [NPM](https://www.npmjs.com/) support with [Webpack](https://webpack.github.io/) allowing super-fast installation and inclusion of front-end modules such as jQuery plugins / other JS libraries. (We include [jQuery](https://jquery.com/) and [sanitize.css](https://csstools.github.io/sanitize.css/) by default.)
 * Includes PHP [Composer](https://getcomposer.org/) support in the starter theme for super-fast installation and automatic inclusion of back-end extensions.
 * Allows one-command deployment (ie. with a single terminal command) to staging or production servers using [Wordmove](https://github.com/welaika/wordmove).
 * Automatically activates [ACF-JSON](https://www.advancedcustomfields.com/resources/local-json/) for ‘database’ version-control (tracks and synchronizes field settings for the Advanced Custom Fields plugin across multiple environments).
