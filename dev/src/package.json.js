@@ -6,7 +6,7 @@ module.exports = (settings) => `
   "author": ${JSON.stringify(settings.author)},
   "private": true,
   "dependencies": {
-    "normalize.css": "^8.0.1"
+    "sanitize.css": "^8.0.0"
   }
 }
 `;

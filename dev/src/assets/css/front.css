@@ -1,10 +1,10 @@
-@import 'shared/variables.css';
-@import 'shared/text.css';
-@import 'normalize.css';
-@import 'shared/fonts.css';
+@import 'common/variables.css';
+@import 'common/text.css';
+@import 'sanitize.css';
+@import 'common/fonts.css';
 @import 'front/defaults.css';
 @import 'front/furniture.css';
-@import 'shared/content.css';
-@import 'shared/images.css';
-@import 'shared/utility.css';
+@import 'common/content.css';
+@import 'common/images.css';
+@import 'common/utility.css';
 @import 'front/print.css';

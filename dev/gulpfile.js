@@ -133,8 +133,8 @@ var options = {
 		postcssNestedProps,
 		postcssNested,
 		postcssFontpath,
-		postcssReporter,
 		autoprefixer({ browsers: ['last 3 versions'] }),
+		postcssReporter({ clearReportedMessages: true })
 	],
 	posthtmlBem: {
 		elemPrefix: '__',
