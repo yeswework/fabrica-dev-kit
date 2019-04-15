@@ -22,7 +22,7 @@ class Front extends Singleton {
 	}
 
 	public function enqueueAssets() {
-		wp_enqueue_script($Project::$frontHandle, get_stylesheet_directory_uri() . '/js/main' . Project::$scriptSuffix . '.js', array(), null, true);
+		wp_enqueue_script(Project::$frontHandle, get_stylesheet_directory_uri() . '/js/main' . Project::$scriptSuffix . '.js', array(), null, true);
 
 		// Pass variables to JavaScript at runtime
 		$scriptVars = array();
@@ -32,7 +32,7 @@ class Front extends Singleton {
 		}
 
 		// Front-end stylesheet
-		wp_enqueue_style($Project::$frontHandle, get_stylesheet_directory_uri() . '/css/front' . Project::$styleSuffix . '.css', array(), null);
+		wp_enqueue_style(Project::$frontHandle, get_stylesheet_directory_uri() . '/css/front' . Project::$styleSuffix . '.css', array(), null);
 	}
 
 	// Send script variables to front end
