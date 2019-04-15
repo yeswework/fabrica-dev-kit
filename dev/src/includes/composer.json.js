@@ -7,7 +7,7 @@ module.exports = (settings) => {
 	"authors": [${JSON.stringify(author)}],
 	"require": {
 		"timber/timber":"1.*",
-		"Upstatement/routes": "*"
+		"upstatement/routes": "*"
 	}
 }
 `};

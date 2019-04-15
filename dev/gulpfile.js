@@ -1,23 +1,20 @@
-var gulp = require('gulp'),
-	autoprefixer = require('autoprefixer'),
+var autoprefixer = require('autoprefixer'),
 	browserSync = require('browser-sync').create(),
-	concat = require('gulp-concat'),
 	changed = require('gulp-changed'),
 	cssnano = require('gulp-cssnano'),
 	del = require('del'),
 	exec = require('child_process').execSync,
-	mergeStream = require('merge-stream'),
 	fs = require('fs'),
+	gulp = require('gulp'),
 	imagemin = require('gulp-imagemin'),
-	jshint = require('gulp-jshint'),
-	lost = require('lost'),
-	rename = require('gulp-rename'),
-	sourcemaps = require('gulp-sourcemaps'),
+	mergeStream = require('merge-stream'),
+	named = require('vinyl-named');
 	path = require('path'),
 	postcss = require('gulp-postcss'),
-	postcssImport = require('postcss-import'),
-	postcssFontpath = require('postcss-fontpath'),
 	postcssEach = require('postcss-each'),
+	postcssEasyMediaQuery = require('postcss-easy-media-query'),
+	postcssFontpath = require('postcss-fontpath'),
+	postcssImport = require('postcss-import'),
 	postcssMixins = require('postcss-mixins'),
 	postcssNested = require('postcss-nested'),
 	postcssNestedProps = require('postcss-nested-props'),
@@ -25,12 +22,16 @@ var gulp = require('gulp'),
 	postcssSimpleVars = require('postcss-simple-vars'),
 	posthtml = require('gulp-posthtml'),
 	posthtmlBem = require('posthtml-bem'),
+	rename = require('gulp-rename'),
+	sourcemaps = require('gulp-sourcemaps'),
 	stylelint = require('stylelint'),
 	tap = require('gulp-tap'),
 	uglify = require('gulp-uglify'),
-	webpackStream = require('webpack-stream'),
-	webpack = require('webpack'),
+	webpack = require('webpack-stream'),
 	yaml = require('js-yaml');
+
+// Initialise assets timestamps, later set by respective functions, and used by functions()
+var scriptBuildTime, styleBuildTime;
 
 // Load project settings
 var packageData;
@@ -84,18 +85,18 @@ var base = {
 	plugins: './www/wp-content/plugins/'
 };
 
-// Globs for each file type
-var glob = {
+// Source files for compilation
+var src = {
 	functions: base.src + 'includes/*.php',
-	includes: base.src + 'includes/**/*',
+	includes: base.src + 'includes/**/*.php',
 	controllers: base.src + 'templates/controllers/**/*.php',
 	views: base.src + 'templates/views/**/*.twig',
-	styles: base.src + 'assets/css/**/*.{css,pcss}',
-	scripts: base.src + 'assets/js/**/*.js',
 	images: base.src + 'assets/img/**/*',
 	fonts: base.src + 'assets/fonts/**/*',
-	styleMain: base.src + 'assets/css/main.pcss',
-	scriptMain: base.src + 'assets/js/main.js',
+	styles: base.src + 'assets/css/*.css',
+	stylesGlob: base.src + 'assets/css/**/*.css', /* also watch included files */
+	scripts: base.src + 'assets/js/*.js',
+	scriptsGlob: base.src + 'assets/js/**/*.js' /* also watch included files */
 };
 
 // Build folder slugs
@@ -112,11 +113,16 @@ var dest = {
 
 // Plugin options
 var options = {
-	uglify: {mangle: false},
-	imagemin: {optimizationLevel: 7, progressive: true, interlaced: true, multipass: true},
+	uglify: { mangle: false },
+	imageminPlugins: imagemin.svgo({
+		plugins: [
+			{ cleanupIDs: false }
+		]
+	}),
+	imagemin: { optimizationLevel: 7, progressive: true, interlaced: true, multipass: true },
 	postcss: [
-		stylelint(),
-		postcssImport,
+		postcssImport({ plugins: [stylelint()] }),
+		postcssEasyMediaQuery,
 		postcssMixins,
 		postcssEach,
 		postcssSimpleVars({
@@ -127,9 +133,8 @@ var options = {
 		postcssNestedProps,
 		postcssNested,
 		postcssFontpath,
-		postcssReporter({clearMessages: true}),
-		lost,
-		autoprefixer({browsers: ['last 3 versions']})
+		postcssReporter,
+		autoprefixer({ browsers: ['last 3 versions'] }),
 	],
 	posthtmlBem: {
 		elemPrefix: '__',
@@ -163,20 +168,9 @@ function acf(cb) {
 	fs.symlinkSync(base.acfRelativeSrc + dest.acf, base.theme + dest.acf);
 	cb();
 }
-
-// Functions: auto-create functions.php with root level PHP includes
-function functions(cb) {
-	fs.writeFileSync(base.theme + 'functions.php', '<?php\r\n');
-	return gulp.src(glob.functions)
-		.pipe(tap(function(file) {
-			fs.appendFileSync(base.theme + 'functions.php', "require_once(get_stylesheet_directory() . '/" + dest.includes + '/' + file.path.replace(file.base, '') + "');\r\n");
-		}));
-	cb();
-}
-
 // Includes: copy all project and vendor includes
 function includes() {
-	return gulp.src(glob.includes)
+	return gulp.src(src.includes)
 		.pipe(changed(base.theme + dest.includes))
 		.pipe(gulp.dest(base.theme + dest.includes))
 		.pipe(browserSync.stream());
@@ -184,7 +178,7 @@ function includes() {
 
 // Controllers: copy PHP files
 function controllers() {
-	return gulp.src(glob.controllers)
+	return gulp.src(src.controllers)
 		.pipe(changed(base.theme + dest.controllers))
 		.pipe(gulp.dest(base.theme + dest.controllers))
 		.pipe(browserSync.stream());
@@ -192,65 +186,79 @@ function controllers() {
 
 // Views: copy Twig files
 function views() {
-	return gulp.src(glob.views)
+	return gulp.src(src.views)
 		.pipe(changed(base.theme + dest.views))
 		.pipe(posthtml([posthtmlBem(options.posthtmlBem)]))
 		.pipe(gulp.dest(base.theme + dest.views))
 		.pipe(browserSync.stream());
 }
 
-// Styles (CSS): lint, concatenate into one file, write source map, preprocess, save full and minified versions, then copy
+// Styles (CSS): lint write source map, preprocess, save full and minified versions, then copy
 function styles() {
-	return gulp.src(glob.styleMain)
-		.pipe(postcss(options.postcss)
-			.on('error', function(error) {
-				console.error(error.message);
-				this.emit('end');
-			})
-		)
-		.pipe(concat('main.css'))
+	styleBuildTime = Date.now();
+	return gulp.src(src.styles)
+		.pipe(named())
+		.pipe(postcss(options.postcss))
+		.on('error', function(error) {
+			console.error(error.message);
+			this.emit('end');
+		})
 		.pipe(sourcemaps.init())
 		.pipe(gulp.dest(base.theme + dest.styles))
-		.pipe(browserSync.stream({match: '**/*.css'}))
+		.pipe(browserSync.stream())
 		.pipe(cssnano())
-		.pipe(rename('main.min.css'))
+		.pipe(rename(function(path){
+			path.basename += '.' + styleBuildTime + ".min";
+		}))
 		.pipe(sourcemaps.write('.'))
-		.pipe(changed(base.theme + dest.styles))
 		.pipe(gulp.dest(base.theme + dest.styles))
-		.pipe(browserSync.stream({match: '**/*.css'}));
+		.pipe(browserSync.stream());
 }
 
 // Scripts (JS): get third-party dependencies, concatenate all scripts into one file, save full and minified versions, then copy
-function scripts(done) {
-	return gulp.src(glob.scriptMain)
-		.pipe(jshint())
-		.pipe(jshint.reporter())
-		.pipe(webpackStream({output: {filename: 'main.js'}}, webpack)
-			.on('error', function(error) { this.emit('end'); })
-		)
+function scripts() {
+	scriptBuildTime = Date.now();
+	return gulp.src(src.scripts)
+		.pipe(named())
+		.pipe(webpack(require('./webpack.config.js')))
+		.on('error', function(error) {
+			console.error(error.message);
+			this.emit('end');
+		})
 		.pipe(sourcemaps.init({loadMaps: true}))
 		.pipe(gulp.dest(base.theme + dest.scripts))
 		.pipe(browserSync.stream())
 		.pipe(uglify(options.uglify))
-		.pipe(rename('main.min.js'))
+		.pipe(rename(function(path){
+			path.basename += '.' + scriptBuildTime + ".min";
+		}))
 		.pipe(sourcemaps.write('.'))
-		.pipe(changed(base.theme + dest.scripts))
 		.pipe(gulp.dest(base.theme + dest.scripts))
 		.pipe(browserSync.stream());
 }
 
+// Functions: auto-create functions.php with root level PHP includes and assets timestamp constants
+function functions(cb) {
+	fs.writeFileSync(base.theme + 'functions.php', '<?php\r\ndefine(\'SCRIPT_BUILD_TIME\', \'' + scriptBuildTime + '\');\r\ndefine(\'STYLE_BUILD_TIME\', \'' + styleBuildTime + '\');\r\n');
+	return gulp.src(src.functions)
+		.pipe(tap(function(file) {
+			fs.appendFileSync(base.theme + 'functions.php', "require_once(get_stylesheet_directory() . '/" + dest.includes + file.path.replace(file.base, '') + "');\r\n");
+		}));
+	cb();
+}
+
 // Images: optimise and copy, maintaining tree
 function images() {
-	return gulp.src(glob.images)
+	return gulp.src(src.images)
 		.pipe(changed(base.theme + dest.images))
-		.pipe(imagemin(options.imagemin))
+		.pipe(imagemin([options.imageminPlugins, options.imagemin]))
 		.pipe(gulp.dest(base.theme + dest.images))
 		.pipe(browserSync.stream());
 }
 
 // Fonts: just copy, maintaining tree
 function fonts() {
-	return gulp.src(glob.fonts)
+	return gulp.src(src.fonts)
 		.pipe(changed(base.theme + dest.fonts))
 		.pipe(gulp.dest(base.theme + dest.fonts))
 		.pipe(browserSync.stream());
@@ -323,24 +331,32 @@ function watch() {
 		open: false,
 		logPrefix: settings.slug + ' http://localhost:' + settings.webPort
 	});
-	gulp.watch(glob.functions, gulp.series(functions));
-	gulp.watch(glob.includes, gulp.series(includes));
-	gulp.watch(glob.controllers, gulp.series(controllers));
-	gulp.watch(glob.views, gulp.series(views));
-	gulp.watch(glob.styles, gulp.series(styles));
-	gulp.watch(glob.scripts, gulp.series(scripts));
-	gulp.watch(glob.images, gulp.series(images));
-	gulp.watch(glob.fonts, gulp.series(fonts));
+	gulp.watch(src.functions, gulp.series(functions));
+	gulp.watch(src.includes, gulp.series(includes));
+	gulp.watch(src.controllers, gulp.series(controllers));
+	gulp.watch(src.views, gulp.series(views));
+	gulp.watch(src.stylesGlob, gulp.series(styles, functions));
+	gulp.watch(src.scriptsGlob, gulp.series(scripts, functions));
+	gulp.watch(src.images, gulp.series(images));
+	gulp.watch(src.fonts, gulp.series(fonts));
 	settings.imports.plugins.forEach(function(plugin) {
 		gulp.watch(plugin.watchPath, gulp.series(imports));
 	});
 }
 
+function deploy(cb) {
+	exec('wordmove push --themes', { stdio: 'inherit' });
+	cb();
+}
+
 // Build: sequences all the other tasks
-gulp.task('build', gulp.series(clean, gulp.parallel(header, acf, functions, includes, controllers, views, styles, scripts, images, fonts, imports, wordmove)));
+gulp.task('build', gulp.series(clean, gulp.parallel(header, acf, includes, controllers, views, styles, scripts, functions, images, fonts, imports, wordmove)));
 
 // Wpconfig: update Docker dynamic ports in Wordpress config
 gulp.task('wpconfig', wpconfig);
 
 // Watch: fire build, then watch for changes
 gulp.task('default', gulp.series('build', 'wpconfig', watch));
+
+// Deploy: run another build (clean folders etc) and then wordmove
+gulp.task('deploy', gulp.series('build', deploy));

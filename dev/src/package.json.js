@@ -6,9 +6,7 @@ module.exports = (settings) => `
   "author": ${JSON.stringify(settings.author)},
   "private": true,
   "dependencies": {
-    "expose-loader": "^0.7.3",
-    "jquery": "^3.1.1",
-    "normalize.css": "^5.0.0"
+    "normalize.css": "^8.0.1"
   }
 }
 `;

@@ -18,7 +18,7 @@ class Base extends Singleton {
 
 	public function init() {
 		// Assets
-		add_action('wp_enqueue_scripts', array($this, 'enqueueScripts'));
+		add_action('wp_enqueue_scripts', array($this, 'enqueueAssets'));
 		add_action('wp_footer', array($this, 'injectAnalytics'));
 
 		// Features
@@ -30,18 +30,11 @@ class Base extends Singleton {
 	}
 
 	// Register front-end scripts
-	public function enqueueScripts() {
-
-		// Load uncompressed scripts when debug mode is on
-		if (WP_DEBUG === true) {
-			$suffix = '';
-		} else {
-			$suffix = '.min';
-		}
+	public function enqueueAssets() {
 
 		// Load third-party libraries and project code
 		wp_deregister_script('jquery');
-		wp_enqueue_script('jquery', get_stylesheet_directory_uri() . '/js/main' . $suffix . '.js', array(), filemtime(get_template_directory() . '/js/main' . $suffix . '.js'), true);
+		wp_enqueue_script(Project::$mainHandle . '-front', get_stylesheet_directory_uri() . '/js/main' . Project::$scriptSuffix . '.js', array(), null, true);
 
 		// Pass variables to JavaScript at runtime
 		$scriptVars = array();
@@ -51,7 +44,7 @@ class Base extends Singleton {
 		}
 
 		// Repeat for stylesheets, first libraries, then theme-specific
-		wp_enqueue_style(Project::$mainHandle, get_stylesheet_directory_uri() . '/css/main' . $suffix . '.css', array(), filemtime(get_template_directory() . '/css/main' . $suffix . '.css'));
+		wp_enqueue_style(Project::$mainHandle . '-front', get_stylesheet_directory_uri() . '/css/front' . Project::$styleSuffix . '.css', array(), null);
 	}
 
 	// Output Google Analytics tracking code
