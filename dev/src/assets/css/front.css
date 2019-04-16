@@ -1,10 +1,12 @@
-@import 'common/variables.css';
-@import 'common/text.css';
 @import 'sanitize.css';
+/*
+@import 'common/variables.css';
 @import 'common/fonts.css';
-@import 'front/defaults.css';
+@import 'common/tags.css';
+@import 'common/blocks.css';
+@import 'front/tags.css';
 @import 'front/furniture.css';
-@import 'common/content.css';
-@import 'common/images.css';
-@import 'common/utility.css';
+@import 'front/content.css';
+@import 'front/utility.css';
 @import 'front/print.css';
+*/
