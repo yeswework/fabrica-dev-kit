@@ -14,17 +14,16 @@ class Admin extends Singleton {
 		// Exit now for non-admin requests
 		if (!is_admin()) { return; }
 
-		add_theme_support('editor-styles');
-		add_editor_style('css/editor' . Project::$styleSuffix . '.css');
-		add_action('admin_enqueue_scripts', array($this, 'enqueueAdminAssets'));
-		add_action('enqueue_block_editor_assets', array($this, 'enqueueBlockAssets'));
-
 		// Hooks that need to run for both AJAX + admin requests
 		// add_action('action_name', array($this, 'memberFunction'));
 		// add_filter('filter_name', array($this, 'memberFunction'));
 
 		// Exit now if AJAX request, to register pure admin-only requests after
 		if (wp_doing_ajax()) { return; }
+
+		add_editor_style('css/editor' . Project::$styleSuffix . '.css');
+		add_action('admin_enqueue_scripts', array($this, 'enqueueAdminAssets'));
+		add_action('enqueue_block_editor_assets', array($this, 'enqueueBlockAssets'));
 
 		// Hooks that only need to run in pure admin mode
 		// add_action('action_name', array($this, 'memberFunction'));

@@ -35,7 +35,6 @@ class Front extends Singleton {
 		wp_enqueue_style(Project::$frontHandle, get_stylesheet_directory_uri() . '/css/front' . Project::$styleSuffix . '.css', array(), null);
 	}
 
-	// Send script variables to front end
 	public function updateScriptVars($scriptVars = array()) {
 
 		// Non-destructively merge script variables according to page or query conditions
