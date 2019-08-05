@@ -7,3 +7,7 @@ plugins:
 #  watch: **/*.{php,png,jpg} # glob for files to watch
 #  include: ** # glob for files to copy
 #  exclude: **/.git* # glob for files to ignore
+
+themes:
+# extra themes to import independently from main theme
+# same format as `plugins`

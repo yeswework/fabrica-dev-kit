@@ -44,7 +44,7 @@ try {
 var settings = {
 	slug: packageData.name,
 	title: packageData.description,
-	author: packageData.author
+	author: packageData.author,
 };
 try {
 	settings.webPort = exec('docker-compose port web 80').toString().replace(/^.*:(\d+)\n$/g, '$1');
@@ -60,21 +60,24 @@ try {
 } catch (ex) {
 	settings.imports = {}; // ignore
 }
-settings.imports.plugins = settings.imports.plugins || [];
-settings.imports.plugins = settings.imports.plugins.map(function(pluginOrPath) {
-	var plugin = (pluginOrPath instanceof Object) ? pluginOrPath : { path: pluginOrPath };
+var processImportData = function(dataOrPath) {
+	var importData = (dataOrPath instanceof Object) ? dataOrPath : { path: dataOrPath };
 
-	plugin.path = path.resolve(plugin.path.replace(/^~/, require('os').homedir()));
-	plugin.watch = plugin.watch || '**/*.{php,css,js}';
-	plugin.watchPath = path.join(plugin.path, plugin.watch);
-	plugin.include = plugin.include || '**';
-	plugin.src = [path.join(plugin.path, plugin.include)];
-	if (plugin.exclude) {
-		plugin.src.push('!' + path.join(plugin.path, plugin.exclude));
+	importData.path = path.resolve(importData.path.replace(/^~/, require('os').homedir()));
+	importData.watch = importData.watch || '**/*.{php,css,js}';
+	importData.watchPath = path.join(importData.path, importData.watch);
+	importData.include = importData.include || '**';
+	importData.src = [path.join(importData.path, importData.include)];
+	if (importData.exclude) {
+		importData.src.push('!' + path.join(importData.path, importData.exclude));
 	}
 
-	return plugin;
-});
+	return importData;
+};
+settings.imports.plugins = settings.imports.plugins || [];
+settings.imports.plugins = settings.imports.plugins.map(processImportData);
+settings.imports.themes = settings.imports.themes || [];
+settings.imports.themes = settings.imports.themes.map(processImportData);
 
 // Paths for remapping
 var base = {
@@ -82,7 +85,8 @@ var base = {
 	src: './src/',
 	acfRelativeSrc: '../../../../src/',
 	theme: './www/wp-content/themes/' + settings.slug + '/',
-	plugins: './www/wp-content/plugins/'
+	themes: './www/wp-content/themes/',
+	plugins: './www/wp-content/plugins/',
 };
 
 // Source files for compilation
@@ -96,7 +100,7 @@ var src = {
 	styles: base.src + 'assets/css/*.css',
 	stylesGlob: base.src + 'assets/css/**/*.css', /* also watch included files */
 	scripts: base.src + 'assets/js/*.js',
-	scriptsGlob: base.src + 'assets/js/**/*.js' /* also watch included files */
+	scriptsGlob: base.src + 'assets/js/**/*.js', /* also watch included files */
 };
 
 // Build folder slugs
@@ -108,7 +112,7 @@ var dest = {
 	styles: 'css',
 	scripts: 'js',
 	images: 'img',
-	fonts: 'fonts'
+	fonts: 'fonts',
 };
 
 // Plugin options
@@ -264,14 +268,31 @@ function fonts() {
 		.pipe(browserSync.stream());
 }
 
-// Imports: extra folders to be copied
-function imports(cb) {
+// Import plugins: external plugins to be copied when changed
+function importPlugins(cb) {
 	var importsPipes = [];
 	settings.imports.plugins.forEach(function(plugin) {
 		importsPipes.push(
 			gulp.src(plugin.src, { base: path.dirname(plugin.path) })
 				.pipe(changed(base.plugins))
 				.pipe(gulp.dest(base.plugins))
+				.pipe(browserSync.stream())
+		)
+	});
+	if (importsPipes.length > 0) {
+		return mergeStream(importsPipes);
+	}
+	cb();
+}
+
+// Import themes: external themes to be copied when changed
+function importThemes(cb) {
+	var importsPipes = [];
+	settings.imports.themes.forEach(function(theme) {
+		importsPipes.push(
+			gulp.src(theme.src, { base: path.dirname(theme.path) })
+				.pipe(changed(base.themes))
+				.pipe(gulp.dest(base.themes))
 				.pipe(browserSync.stream())
 		)
 	});
@@ -340,7 +361,10 @@ function watch() {
 	gulp.watch(src.images, gulp.series(images));
 	gulp.watch(src.fonts, gulp.series(fonts));
 	settings.imports.plugins.forEach(function(plugin) {
-		gulp.watch(plugin.watchPath, gulp.series(imports));
+		gulp.watch(plugin.watchPath, gulp.series(importPlugins));
+	});
+	settings.imports.themes.forEach(function(theme) {
+		gulp.watch(theme.watchPath, gulp.series(importThemes));
 	});
 }
 
@@ -350,7 +374,7 @@ function deploy(cb) {
 }
 
 // Build: sequences all the other tasks
-gulp.task('build', gulp.series(clean, gulp.parallel(header, acf, includes, controllers, views, styles, scripts, functions, images, fonts, imports, wordmove)));
+gulp.task('build', gulp.series(clean, gulp.parallel(header, acf, includes, controllers, views, styles, scripts, functions, images, fonts, importPlugins, importThemes, wordmove)));
 
 // Wpconfig: update Docker dynamic ports in Wordpress config
 gulp.task('wpconfig', wpconfig);
