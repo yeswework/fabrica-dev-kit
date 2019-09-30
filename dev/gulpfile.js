@@ -273,9 +273,9 @@ function importPlugins(cb) {
 	var importsPipes = [];
 	settings.imports.plugins.forEach(function(plugin) {
 		importsPipes.push(
-			gulp.src(plugin.src, { base: path.dirname(plugin.path) })
-				.pipe(changed(base.plugins))
-				.pipe(gulp.dest(base.plugins))
+			gulp.src(plugin.src)
+				.pipe(changed(base.plugins + path.basename(plugin.path)))
+				.pipe(gulp.dest(base.plugins + path.basename(plugin.path)))
 				.pipe(browserSync.stream())
 		)
 	});
@@ -290,9 +290,9 @@ function importThemes(cb) {
 	var importsPipes = [];
 	settings.imports.themes.forEach(function(theme) {
 		importsPipes.push(
-			gulp.src(theme.src, { base: path.dirname(theme.path) })
-				.pipe(changed(base.themes))
-				.pipe(gulp.dest(base.themes))
+			gulp.src(theme.src)
+				.pipe(changed(base.themes + path.basename(theme.path)))
+				.pipe(gulp.dest(base.themes + path.basename(theme.path)))
 				.pipe(browserSync.stream())
 		)
 	});
