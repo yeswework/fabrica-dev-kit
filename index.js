@@ -74,9 +74,10 @@ if (packageManager == '') {
 
 // load all settings files
 let loadSettings = (reinstall) => {
-	reinstall = reinstall || false
 	echo('Reading settings...');
-	let settings = {};
+	let settings = {
+		reinstall: reinstall || false,
+	};
 	// auxiliar method to get settings from the files
 	let mergeSettings = (filename) => {
 		if (!sh.test('-f', filename)) { return; }
@@ -101,9 +102,9 @@ let loadSettings = (reinstall) => {
 	let setupSettingsFilename = './setup.yml',
 		setupSettingsBakFilename = './config/setup.yml';
 	if (!sh.test('-f', setupSettingsFilename)) {
-		if (reinstall && !sh.test('-f', setupSettingsFilename)) {
+		if (settings.reinstall && !sh.test('-f', setupSettingsFilename)) {
 			sh.mv(setupSettingsBakFilename, setupSettingsFilename);
-		} else if (reinstall) {
+		} else if (settings.reinstall) {
 			halt('Could not find \'setup.yml\' or \'config/setup.yml\'. Please use the \'fdk init <slug>\' command to create a new project folder and \'setup.yml\'.');
 		} else {
 			halt('Could not find \'setup.yml\'. Please use the \'fdk init <slug>\' command to create a new project folder and \'setup.yml\'. If the current project has been set up previously, you can run \'fdk setup --reinstall\' and \'config/setup.yml\' will be used to bring the Docker containers back up and reconfigure them.');
@@ -113,7 +114,7 @@ let loadSettings = (reinstall) => {
 
 	// check if there's already a Docker container for the project slug
 	if (sh.exec(`docker ps -aqf name=${settings.slug}_wp`, {silent: true}).stdout) {
-		if (reinstall) {
+		if (settings.reinstall) {
 			echo(`Docker container with '${settings.slug}_wp' found but ignored because '--reinstall' flag is set`);
 		} else {
 			halt(`There's already a Docker container called '${settings.slug}_wp'. If this container belongs to another project remove all containers for that project or rename this one before running setup. Otherwise run \'fdk setup --reinstall\' to re-use already existing Docker containers for this project.`);
@@ -257,7 +258,9 @@ let installWordPress = (webPort, settings) => {
 			wp(`option update ${option} "${value}"`);
 		}
 		// Default post
-		wp(`post update 1 --post_name='welcome-to-fabrica-dev-kit' --post_title='Welcome to Fabrica Dev Kit' --post_content='For more information about developing with Fabrica Dev Kit, <a href="https://github.com/fabrica-wp/fabrica-dev-kit">see the documentation</a>.'`);
+		if (!settings.reinstall) {
+			wp(`post update 1 --post_name='welcome-to-fabrica-dev-kit' --post_title='Welcome to Fabrica Dev Kit' --post_content='For more information about developing with Fabrica Dev Kit, <a href="https://github.com/fabrica-wp/fabrica-dev-kit">see the documentation</a>.'`);
+		}
 
 		// the site will be ready to run and develop locally
 		echo('Setup complete. To develop locally, run \'fdk run\'.');
