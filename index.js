@@ -166,9 +166,23 @@ let createFolders = settings => {
 		let projectSettings = JSON.parse(sh.cat('src/package.json'));
 		echo('Existing project \'src/package.json\' found. Overriding the following settings in \'setup.yml\' with those in this file  (old \'setup.yml\' value → new value):');
 		let keys = {name: 'slug', description: 'title', author: 'author'};
+		const simpleDiff = (value1, value2) => {
+			if (value1 == value2) {
+				return `${JSON.stringify(value1)} (unchanged)`;
+			}
+			return `${JSON.stringify(value1)} → ${JSON.stringify(value2)}`;
+		}
 		for (let projectKey of Object.keys(keys)) {
-			let settingKey = keys[projectKey];
-			echo(` ◦ ${settingKey} / ${projectKey}: ${JSON.stringify(settings[settingKey])} → ${JSON.stringify(projectSettings[projectKey])}`);
+			let settingKey = keys[projectKey],
+				diffMessage = ` ◦ ${settingKey}${settingKey != projectKey ? ` / ${projectKey}` : ''}: `;
+			if (typeof projectSettings[projectKey] == 'object') {
+				echo(`${diffMessage}`);
+				Object.keys(projectSettings[projectKey]).forEach((key) =>
+					echo(`   • ${key}: ${simpleDiff(settings[settingKey][key], projectSettings[projectKey][key])}`)
+				);
+			} else {
+				echo(`${diffMessage} ${simpleDiff(settings[settingKey], projectSettings[projectKey])}`);
+			}
 			settings[settingKey] = projectSettings[projectKey];
 		}
 	}
