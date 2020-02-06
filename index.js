@@ -15,10 +15,16 @@ const findup = require('findup-sync'),
 	spawn = require('child_process').spawnSync,
 	yaml = require('js-yaml');
 
+let execGet = cmd => sh.exec(cmd, { silent: true }).stdout.trim();
+
 // Fabrica Dev Kit version
-const VERSION = sh.exec('npm list fabrica-dev-kit --depth=0 -g', {silent: true}).stdout.trim().replace(/^[^@]*@([^\s]*)\s.*$/, '$1'),
+const VERSION = execGet('npm list fabrica-dev-kit --depth=0 -g').replace(/^[^@]*@([^\s]*)\s.*$/, '$1'),
 // maximum time (in milliseconds) to wait for wp container to be up and running
 	WAIT_WP_CONTAINER_TIMEOUT = 360 * 1000;
+
+let project = {
+	isInstalled: false, // command executed inside an already setup project?	
+};
 
 // output functions
 let echo = message => {
@@ -95,8 +101,8 @@ let loadSettings = (reinstall) => {
 
 	// get user's UID/GID to match on container's user
 	settings.user = {
-		uid: sh.exec('id -u $(whoami)', {silent: true}).stdout.trim(),
-		gid: sh.exec('id -g $(whoami)', {silent: true}).stdout.trim(),
+		uid: execGet('id -u $(whoami)'),
+		gid: execGet('id -g $(whoami)'),
 	}
 
 	// load default, user and project/site settings, in that order
@@ -116,7 +122,7 @@ let loadSettings = (reinstall) => {
 	mergeSettings(setupSettingsFilename);
 
 	// check if there's already a Docker container for the project slug
-	if (sh.exec(`docker ps -aqf name=${settings.slug}_wp`, {silent: true}).stdout) {
+	if (execGet(`docker ps -aqf name=${settings.slug}_wp`)) {
 		if (settings.reinstall) {
 			echo(`Docker container with '${settings.slug}_wp' found but ignored because '--reinstall' flag is set`);
 		} else {
@@ -291,11 +297,11 @@ let setupMultisiteCustomDomain = settings => {
 
 	echo(`Setting up custom local domain '${settings.slug}.local' in /etc/hosts...`);
 	try {
-		if (sh.exec(`cat /etc/hosts | grep "${settings.slug}.local"`, { silent: true }).stdout.trim()) {
+		if (execGet(`cat /etc/hosts | grep "${settings.slug}.local"`)) {
 			echo(`'${settings.slug}.local' already found in /etc/hosts.`);
 		} else {
 			echo(`sudo access required to write to /etc/hosts`);
-			sh.exec(`echo "127.0.0.1 ${settings.slug}.local" | sudo tee -a /etc/hosts`, { silent: true });
+			execGet(`echo "127.0.0.1 ${settings.slug}.local" | sudo tee -a /etc/hosts`);
 		}
 	} catch (ex) {
 		warn(`Error setting up custom local domain '${settings.slug}.local' in /etc/hosts.`);
@@ -314,8 +320,7 @@ let startContainersAndInstall = settings => {
 	wait(`Waiting for '${settings['slug']}_wp' container...`, stopWaitInterval => {
 		// get port dynamically assigned by Docker to expose web container's port 80
 		webPort = webPort ||
-			sh.exec('docker-compose port web 80', {silent: true})
-				.stdout.replace(/^.*:(\d+)\n$/, '$1');
+			execGet('docker-compose port web 80').replace(/^.*:(\d+)$/, '$1');
 		if (webPort && !getting) {
 			// check if WordPress is already available at the expected URL
 			getting = true;
@@ -392,25 +397,69 @@ let setup = options => {
 	startContainersAndInstall(settings);
 };
 
-// add commands for project's root `package.json` if current path is part of a project
-let addScriptCommands = () => {
-	// check if we're inside a project
-	let rootDir = findup('config/setup.yml', {cwd: process.cwd()});
-	if (!rootDir) { return; }
-	rootDir = path.normalize(path.join(path.dirname(rootDir), '..'));
-	if (!sh.test('-f', `${rootDir}/docker-compose.yml`) || !sh.test('-f', `${rootDir}/package.json`)) {
-		return;
+// -- Project-specific commands ---
+
+// Get current site and port for WordPress to check if it matches the current Docker-assigned Web container port (in a singlesite project). Output current project access URLs and ports
+let urlConfig = () => {
+	const dockerCmd = 'docker-compose exec -u www-data -T wp',
+		dbPort = execGet('docker-compose port db 3306').replace(/^.*:(\d+)$/g, '$1'),
+		siteURL = execGet(dockerCmd + ' wp option get siteurl');
+
+	if (siteURL.indexOf('localhost:') >= 0 && siteURL.indexOf('127.0.0.1:') >= 0) {
+		// not in a multisite/custom domain project: check if automatic port set by Docker needs to be updated in the DB
+		const webPort = execGet('docker-compose port web 80').replace(/^.*:(\d+)$/g, '$1'),
+			wpPort = siteURL.replace(/^.*:(\d+)$/g, '$1');
+		if (wpPort != webPort) {
+			// port needs to be updated
+			console.log('Updating WordPress port from ' + wpPort + ' to ' + webPort + '...');
+			sh.exec(dockerCmd + ' wp search-replace --quiet "localhost:' + wpPort + '" "localhost:' + webPort + '"');
+			sh.exec(dockerCmd + ' bash -c \'wp option update home "http://localhost:' + webPort + '" && wp option update siteurl "http://localhost:' + webPort + '"\'');
+		}
 	}
+
+	// output site URLs and ports
+	let outputSeparator = ' \x1b[36m' + '-'.repeat(siteURL.length + 21) + '\x1b[0m';
+	console.log('\x1b[1m' + project.title + ' (' + project.slug + ') access URLs:\x1b[22m');
+	console.log(outputSeparator);
+	console.log(' 🌍  WordPress: \x1b[35m' + siteURL + '/\x1b[0m');
+	console.log(' 🔧  Admin: \x1b[35m' + siteURL + '/wp-admin/\x1b[0m');
+	console.log(' 🗃  Database: \x1b[35mlocalhost:' + dbPort + '\x1b[0m');
+	console.log(outputSeparator);
+};
+
+// check if FDK is being executed inside a project that's already been setup and load its settings
+let loadProjectSettings = () => {
+	let rootDir = findup('config/setup.yml', { cwd: process.cwd() });
+	if (!rootDir) { return; }
+
+	rootDir = path.normalize(path.join(path.dirname(rootDir), '..'));
+	if (!sh.test('-f', `${rootDir}/docker-compose.yml`)
+		|| !sh.test('-f', `${rootDir}/package.json`)) { return; }
+
 	if (rootDir != process.cwd()) {
 		// change to project root folder and add `package.json` scripts to commands
 		sh.cd(rootDir);
 		echo(`Working directory changed to ${rootDir}`);
 	}
 
-	let packageSettings = JSON.parse(sh.cat('package.json'));
-	for (let command of Object.keys(packageSettings.scripts)) {
-		let script = packageSettings.scripts[command];
-		let scriptsInfo = (packageSettings.fabrica_dev_kit || {}).scripts_info || {};
+	project.isInstalled = true;
+	project.rootDir = rootDir;
+	project.packages = {
+		root: require(`${rootDir}/package.json`),
+		src: require(`${rootDir}/src/package.json`),
+	};
+	project.slug = project.packages.src.name;
+	project.title = project.packages.src.description;
+};
+
+// add commands for project's root `package.json` if current path is part of a project
+let addScriptCommands = () => {
+	if (!project.isInstalled) { return; }
+
+	const scripts = project.packages.root.scripts;
+	for (let command of Object.keys(scripts)) {
+		let script = scripts[command];
+		let scriptsInfo = (project.packages.root.fabrica_dev_kit || {}).scripts_info || {};
 		program.command(command)
 			.description(`'package.json' script: ${scriptsInfo[command] || '`' + (script.length > 80 ? script.substr(0, 80) + '…' : script) + '`'}`)
 			.action(() => {
@@ -418,6 +467,17 @@ let addScriptCommands = () => {
 			});
 	}
 };
+
+// add project-specific commands (ie., not available on folders outside a project that hasn't been set up yet)
+let addProjectCommands = () => {
+	if (!project.isInstalled) { return; }
+
+	program.command('url-config')
+		.description('Update URLs in DB to match changes to WP container port set automatically by Docker (except for multisite projects, where a custom local host/domain is used). Output current access URLs and ports')
+		.action(urlConfig);
+	addScriptCommands();
+};
+
 
 // fabrica-wp/fabrica-dev-kit#34 / docker/compose#5696 fix
 sh.env['COMPOSE_INTERACTIVE_NO_CLI'] = 1;
@@ -443,8 +503,12 @@ program.command('setup')
 	.description('Setup project based on setting on \'setup.yml\' file')
 	.option('--reinstall', 'Reuse settings for previously setup project and ignore if Docker containers are already in use for project <slug>. \'config/setup.yml\' will be used for configuration if \'setup.yml\' is not available.')
 	.action(setup);
-// `package.json` scripts
-addScriptCommands();
+// load settings if executed in a project that's already been set up
+loadProjectSettings();
+if (project.isInstalled) {
+	// add project-specific scripts (including those in `package.json`)
+	addProjectCommands();
+}
 // default
 program.command('*', null, {noHelp: true})
 	.action(() => { program.help(); });

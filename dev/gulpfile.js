@@ -340,7 +340,7 @@ function wpconfig(cb) {
 		}
 	}
 
-	outputSeparator = ' \x1b[36m' + '-'.repeat(siteURL.length + 20) + '\x1b[0m';
+	outputSeparator = ' \x1b[36m' + '-'.repeat(siteURL.length + 21) + '\x1b[0m';
 	console.log('\x1b[1m' + settings.title + ' (' + settings.slug + ') access URLs:\x1b[22m');
 	console.log(outputSeparator);
 	console.log(' 🌍  WordPress: \x1b[35m' + siteURL + '/\x1b[0m');
