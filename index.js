@@ -24,8 +24,11 @@ const VERSION = sh.exec('npm list fabrica-dev-kit --depth=0 -g', {silent: true})
 let echo = message => {
 	console.log(`\x1b[7m[Fabrica]\x1b[27m 🏭  ${message}`);
 };
-let halt = message => {
+let warn = message => {
 	console.error(`\x1b[1m\x1b[41m[Fabrica]\x1b[0m ⚠️  ${message}`);
+}
+let halt = message => {
+	warn(message);
 	process.exit(1)
 };
 let wait = (message, callback, delay) => {
@@ -145,7 +148,8 @@ let createFolders = settings => {
 			'src/includes/composer.json',
 			'src/includes/project.php',
 			'src/templates/views/base.twig',
-			'docker-compose.yml'
+			'docker-compose.yml',
+			'provision/web/wordpress-fpm.conf'
 		];
 		for (let destFilename of templateFilenames) {
 			// load template file and generate final version
@@ -213,8 +217,8 @@ let installWordPress = (webPort, settings) => {
 		};
 
 	// use stdout stream to filter out known WP CLI warning
-	let install = sh.exec([`${dockerCmd} wp core install`,
-		`--url=localhost:${webPort}`,
+	let install = sh.exec([`${dockerCmd} wp core ${settings.wp.multisite ? 'multisite-' : ''}install`,
+		`--url=${settings.wp.multisite ? `${settings.slug}.local` : `localhost:${webPort}`}`,
 		`--title="${settings.title}"`,
 		`--admin_user=${settings.wp.admin.user}`,
 		`--admin_password=${settings.wp.admin.pass}`,
@@ -237,7 +241,7 @@ let installWordPress = (webPort, settings) => {
 			// activate multibyte patch for Japanese language
 			wp('plugin activate wp-multibyte-patch');
 		}
-
+		
 		// run our gulp build task and build the WordPress theme
 		echo('Building WordPress theme...');
 		// `shelljs.exec` doesn't handle color and animations yet
@@ -281,6 +285,23 @@ let installWordPress = (webPort, settings) => {
 	});
 }
 
+// add custom domain to /etc/hosts for multisite setups
+let setupMultisiteCustomDomain = settings => {
+	if (!settings.wp.multisite) { return; }
+
+	echo(`Setting up custom local domain '${settings.slug}.local' in /etc/hosts...`);
+	try {
+		if (sh.exec(`cat /etc/hosts | grep "${settings.slug}.local"`, { silent: true }).stdout.trim()) {
+			echo(`'${settings.slug}.local' already found in /etc/hosts.`);
+		} else {
+			echo(`sudo access required to write to /etc/hosts`);
+			sh.exec(`echo "127.0.0.1 ${settings.slug}.local" | sudo tee -a /etc/hosts`, { silent: true });
+		}
+	} catch (ex) {
+		warn(`Error setting up custom local domain '${settings.slug}.local' in /etc/hosts.`);
+	}
+}
+
 // start Docker containers and wait for them to be up to start installing and configuring WP
 let startContainersAndInstall = settings => {
 	echo('Bringing Docker containers up...');
@@ -322,6 +343,8 @@ let startContainersAndInstall = settings => {
 
 		// set WordPress folder owner
 		sh.exec('docker-compose exec wp sh -c "chown -R www-data:www-data ."');
+
+		setupMultisiteCustomDomain(settings);
 		installWordPress(webPort, settings);
 	}).catch(error => {
 		halt(`Error installing or configuring WordPress:\n${error}`);
@@ -413,6 +436,7 @@ program.command('init [slug]')
 	.option('--wp_admin_user <username>', 'WordPress admin username')
 	.option('--wp_admin_pass <password>', 'WordPress admin password')
 	.option('--wp_admin_email <email>', 'WordPress admin email')
+	.option('-m, --multisite', 'support multisite network')
 	.action(init);
 // `setup` command
 program.command('setup')

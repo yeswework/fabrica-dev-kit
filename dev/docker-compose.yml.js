@@ -10,10 +10,17 @@ services:
       - ./www:/var/www/html
       - ./provision/web/wordpress-fpm.conf:/etc/nginx/conf.d/default.conf
       - ./provision/web/global:/etc/nginx/global
+${settings.wp.multisite
+  ? `    environment:\n` +
+    `      VIRTUAL_HOST: ${settings.slug}.local`
+    : ''
+}
     ports:
       - "80"
     links:
       - wp
+${settings.wp.multisite ? '      - proxy' : ''
+}
   db:
     image: mysql:5.7
     container_name: ${settings.slug}_db
@@ -47,4 +54,13 @@ services:
       WORDPRESS_DEBUG: "true"
     links:
       - db:mysql
+${settings.wp.multisite
+  ? `  proxy:\n` +
+    `    image: jwilder/nginx-proxy:alpine\n` +
+    `    ports:\n` +
+    `      - "80:80"\n` +
+    `    volumes:\n` +
+    `      - /var/run/docker.sock:/tmp/docker.sock:ro\n` +
+    `    restart: unless-stopped`
+  : ''}
 `;

@@ -18,8 +18,10 @@ wp:
     email: ${data.wp_admin_email || 'admin@fdk.dev'}
   lang: en_US # dev site WP locale/language
   rewrite_structure: /%postname%/ # dev site permalink structure (can be changed later)
+  multisite: ${data.multisite || false}
   # acf_pro_key: # optional (if set will preinstall Advanced Custom Fields Pro)
   plugins: # optional (installs plugins at setup - use URL slugs from WP plugins directory)
+  - fabrica-dashboard
   # - advanced-custom-fields
   # - force-regenerate-thumbnails
 

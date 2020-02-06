@@ -327,18 +327,24 @@ function wordmove(cb) {
 function wpconfig(cb) {
 	// Get current port in WordPress to check if it matches the current Web container port
 	var dockerCmd = 'docker-compose exec -u www-data -T wp',
-		wpPort = exec(dockerCmd + ' wp option get siteurl').toString().replace(/^.*:(\d+)\n$/g, '$1');
-	if (wpPort != settings.webPort) {
-		// Ports needs to be updated
-		console.log('Updating WordPress port from ' + wpPort + ' to ' + settings.webPort + '...');
-		exec(dockerCmd + ' wp search-replace --quiet "localhost:' + wpPort + '" "localhost:' + settings.webPort + '"');
-		exec(dockerCmd + ' bash -c \'wp option update home "http://localhost:' + settings.webPort + '" && wp option update siteurl "http://localhost:' + settings.webPort + '"\'');
+		siteURL = exec(dockerCmd + ' wp option get siteurl').toString().replace("\n", '');
+	
+	if (siteURL.indexOf('localhost:') >= 0 && siteURL.indexOf('127.0.0.1:') >= 0) {
+		// Not in a custom domain: check if automatic port set by Docker needs to be updated in the DB
+		var wpPort = siteURL.replace(/^.*:(\d+)$/g, '$1');
+		if (wpPort != settings.webPort) {
+			// Ports needs to be updated
+			console.log('Updating WordPress port from ' + wpPort + ' to ' + settings.webPort + '...');
+			exec(dockerCmd + ' wp search-replace --quiet "localhost:' + wpPort + '" "localhost:' + settings.webPort + '"');
+			exec(dockerCmd + ' bash -c \'wp option update home "http://localhost:' + settings.webPort + '" && wp option update siteurl "http://localhost:' + settings.webPort + '"\'');
+		}
 	}
-	outputSeparator = ' \x1b[36m' + '-'.repeat(37 + settings.webPort.toString().length) + '\x1b[0m';
+
+	outputSeparator = ' \x1b[36m' + '-'.repeat(siteURL.length + 20) + '\x1b[0m';
 	console.log('\x1b[1m' + settings.title + ' (' + settings.slug + ') access URLs:\x1b[22m');
 	console.log(outputSeparator);
-	console.log(' 🌍  WordPress: \x1b[35mhttp://localhost:' + settings.webPort + '/\x1b[0m');
-	console.log(' 🔧  Admin: \x1b[35mhttp://localhost:' + settings.webPort + '/wp-admin/\x1b[0m');
+	console.log(' 🌍  WordPress: \x1b[35m' + siteURL + '/\x1b[0m');
+	console.log(' 🔧  Admin: \x1b[35m' + siteURL + '/wp-admin/\x1b[0m');
 	console.log(' 🗃  Database: \x1b[35mlocalhost:' + settings.dbPort + '\x1b[0m');
 	console.log(outputSeparator);
 	cb();
