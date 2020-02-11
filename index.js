@@ -15,34 +15,33 @@ const findup = require('findup-sync'),
 	spawn = require('child_process').spawnSync,
 	yaml = require('js-yaml');
 
-let execGet = cmd => sh.exec(cmd, { silent: true }).stdout.trim();
+const execGet = cmd => sh.exec(cmd, { silent: true }).stdout.trim();
 
 // Fabrica Dev Kit version
 const VERSION = execGet('npm list fabrica-dev-kit --depth=0 -g').replace(/^[^@]*@([^\s]*)\s.*$/, '$1'),
 // maximum time (in milliseconds) to wait for wp container to be up and running
-	WAIT_WP_CONTAINER_TIMEOUT = 360 * 1000;
-
-let project = {
-	isInstalled: false, // command executed inside an already setup project?	
-};
+	WAIT_WP_CONTAINER_TIMEOUT = 360 * 1000,
+	project = {
+		isInstalled: false, // command executed inside an already setup project?	
+	};
 
 // output functions
-let echo = message => {
+const echo = message => {
 	console.log(`\x1b[7m[Fabrica]\x1b[27m 🏭  ${message}`);
 };
-let warn = message => {
+const warn = message => {
 	console.error(`\x1b[1m\x1b[41m[Fabrica]\x1b[0m ⚠️  ${message}`);
 }
-let halt = message => {
+const halt = message => {
 	warn(message);
 	process.exit(1)
 };
-let wait = (message, callback, delay) => {
+const wait = (message, callback, delay) => {
 	delay = delay || 500;
 	return new Promise((resolve, reject) => {
 		console.log();
-		let spinner = ['🕐', '🕑', '🕒', '🕓', '🕔', '🕕', '🕖', '🕗', '🕘', '🕙', '🕚', '🕛'],
-			waitcounter = 0,
+		const spinner = ['🕐', '🕑', '🕒', '🕓', '🕔', '🕕', '🕖', '🕗', '🕘', '🕙', '🕚', '🕛'];
+		let waitcounter = 0,
 			handler,
 			stopWaitInterval = response => {
 				clearTimeout(handler);
@@ -63,26 +62,38 @@ let wait = (message, callback, delay) => {
 };
 
 // check Fabrica dependencies
-let dependencies = ['gulp', 'docker-compose', 'composer'];
-for (let dependency of dependencies) {
-	if (sh.exec(`hash ${dependency} 2>/dev/null`, {silent: true}).code != 0) {
-		halt(`Could not find dependency '${dependency}'.`);
+const checkDependencies = () => {
+	const dependencies = ['gulp', 'docker-compose', 'composer'];
+	for (let dependency of dependencies) {
+		if (sh.exec(`hash ${dependency} 2>/dev/null`, {silent: true}).code != 0) {
+			halt(`Could not find dependency '${dependency}'.`);
+		}
 	}
 }
-let packageManager = '';
-dependencies = ['yarn', 'npm'];
-for (let dependency of dependencies) {
-	if (sh.exec(`hash ${dependency} 2>/dev/null`, {silent: true}).code == 0) {
-		packageManager = dependency;
-		break;
+checkDependencies();
+
+const getSetupPackageManager = (settings) => {
+	let packageManager = '';
+
+	if (settings.package_manager && sh.exec(`hash ${settings.package_manager} 2>/dev/null`, {silent: true}).code == 0) {
+		return settings.package_manager;
 	}
-}
-if (packageManager == '') {
-	halt('Could not find any Node package manager (\'yarn\' or \'npm\').');
+
+	const dependencies = ['npm', 'yarn'];
+	for (let dependency of dependencies) {
+		if (sh.exec(`hash ${dependency} 2>/dev/null`, {silent: true}).code == 0) {
+			packageManager = dependency;
+			break;
+		}
+	}
+	if (packageManager == '') {
+		halt('Could not find any Node package manager (\'npm\' or \'yarn\').');
+	}
+	return packageManager;
 }
 
 // load all settings files
-let loadSettings = (reinstall) => {
+const loadSetupSettings = (reinstall) => {
 	echo('Reading settings...');
 	let settings = {
 		reinstall: reinstall || false,
@@ -106,9 +117,8 @@ let loadSettings = (reinstall) => {
 	}
 
 	// load default, user and project/site settings, in that order
-	mergeSettings(`${__dirname}/default.yml`);
 	mergeSettings(`${process.env.HOME}/.fabrica/settings.yml`);
-	let setupSettingsFilename = './setup.yml',
+	const setupSettingsFilename = './setup.yml',
 		setupSettingsBakFilename = './config/setup.yml';
 	if (!sh.test('-f', setupSettingsFilename)) {
 		if (settings.reinstall && !sh.test('-f', setupSettingsFilename)) {
@@ -138,7 +148,7 @@ let loadSettings = (reinstall) => {
 };
 
 // create and copy project folders
-let createFolders = settings => {
+const createFolders = settings => {
 	// create 'www' folder (to ensure its owner is the user running the script)
 	sh.mkdir('-p', 'www');
 	// create 'src' folder if not existing
@@ -199,7 +209,7 @@ let createFolders = settings => {
 };
 
 // install build dependencies (Gulp + extensions)
-let installDependencies = () => {
+const installDependencies = () => {
 	echo('Installing build dependencies...');
 	spawn(`${packageManager}`, ['install'], { stdio: 'inherit' });
 
@@ -292,7 +302,7 @@ let installWordPress = (webPort, settings) => {
 }
 
 // add custom domain to /etc/hosts for multisite setups
-let setupMultisiteCustomDomain = settings => {
+const setupMultisiteCustomDomain = settings => {
 	if (!settings.wp.multisite) { return; }
 
 	echo(`Setting up custom local domain '${settings.slug}.local' in /etc/hosts...`);
@@ -309,7 +319,7 @@ let setupMultisiteCustomDomain = settings => {
 }
 
 // start Docker containers and wait for them to be up to start installing and configuring WP
-let startContainersAndInstall = settings => {
+const startContainersAndInstall = settings => {
 	echo('Bringing Docker containers up...');
 	if (sh.exec('docker-compose up -d').code != 0) {
 		halt('Docker containers provision failed.');
@@ -358,7 +368,7 @@ let startContainersAndInstall = settings => {
 
 // Commands
 
-let init = (slug, options) => {
+const init = (slug, options) => {
 	if (options.createDir) {
 		if (!slug) {
 			halt(`If the flag to create project folder is set, a <slug> must be provided.`);
@@ -390,8 +400,9 @@ let init = (slug, options) => {
 	echo(`Project initial 'setup.yml' file created. Edit settings in this file and run 'fdk setup' to setup the project.`);
 };
 
-let setup = options => {
-	let settings = loadSettings(options.reinstall);
+const setup = options => {
+	let settings = loadSetupSettings(options.reinstall);
+	getSetupPackageManager(settings);
 	createFolders(settings);
 	installDependencies();
 	startContainersAndInstall(settings);
@@ -400,7 +411,7 @@ let setup = options => {
 // -- Project-specific commands ---
 
 // Get current site and port for WordPress to check if it matches the current Docker-assigned Web container port (in a singlesite project). Output current project access URLs and ports
-let urlConfig = () => {
+const urlConfig = () => {
 	const dockerCmd = 'docker-compose exec -u www-data -T wp',
 		dbPort = execGet('docker-compose port db 3306').replace(/^.*:(\d+)$/g, '$1'),
 		siteURL = execGet(dockerCmd + ' wp option get siteurl');
@@ -428,7 +439,7 @@ let urlConfig = () => {
 };
 
 // check if FDK is being executed inside a project that's already been setup and load its settings
-let loadProjectSettings = () => {
+const loadProjectSettings = () => {
 	let rootDir = findup('config/setup.yml', { cwd: process.cwd() });
 	if (!rootDir) { return; }
 
@@ -453,8 +464,10 @@ let loadProjectSettings = () => {
 };
 
 // add commands for project's root `package.json` if current path is part of a project
-let addScriptCommands = () => {
+const addScriptCommands = () => {
 	if (!project.isInstalled) { return; }
+
+	const packageManager = !sh.test('-f', `${project.rootDir}/yarn.json`) ? 'yarn' : 'npm';
 
 	const scripts = project.packages.root.scripts;
 	for (let command of Object.keys(scripts)) {
@@ -469,7 +482,7 @@ let addScriptCommands = () => {
 };
 
 // add project-specific commands (ie., not available on folders outside a project that hasn't been set up yet)
-let addProjectCommands = () => {
+const addProjectCommands = () => {
 	if (!project.isInstalled) { return; }
 
 	program.command('url-config')
