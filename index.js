@@ -26,8 +26,8 @@ const VERSION = execGet('npm list fabrica-dev-kit --depth=0 -g').replace(/^[^@]*
 	};
 
 // output functions
-const echo = message => {
-	console.log(`\x1b[7m[Fabrica]\x1b[27m 🏭  ${message}`);
+const echo = (message, icon='🏭') => {
+	console.log(`\x1b[7m[Fabrica]\x1b[27m ${icon}  ${message}`);
 };
 const warn = message => {
 	console.error(`\x1b[1m\x1b[41m[Fabrica]\x1b[0m ⚠️  ${message}`);
@@ -63,7 +63,7 @@ const wait = (message, callback, delay) => {
 
 // check Fabrica dependencies
 const checkDependencies = () => {
-	const dependencies = ['gulp', 'docker-compose', 'composer'];
+	const dependencies = ['docker-compose', 'composer'];
 	for (let dependency of dependencies) {
 		if (sh.exec(`hash ${dependency} 2>/dev/null`, {silent: true}).code != 0) {
 			halt(`Could not find dependency '${dependency}'.`);
@@ -208,8 +208,8 @@ const createFolders = settings => {
 	}
 };
 
-// install build dependencies (Gulp + extensions)
-const installDependencies = () => {
+// install build dependencies
+const installDependencies = (packageManager) => {
 	echo('Installing build dependencies...');
 	spawn(`${packageManager}`, ['install'], { stdio: 'inherit' });
 
@@ -258,18 +258,6 @@ let installWordPress = (webPort, settings) => {
 			wp('plugin activate wp-multibyte-patch');
 		}
 		
-		// run our gulp build task and build the WordPress theme
-		echo('Building WordPress theme...');
-		// `shelljs.exec` doesn't handle color and animations yet
-		// https://github.com/shelljs/shelljs/issues/86
-		if (spawn('gulp', ['build'], { stdio: 'inherit' }).status != 0) {
-			halt('Gulp \'build\' task failed');
-		}
-		// create symlink to theme folder for quick access
-		sh.ln('-s', `./www/wp-content/themes/${settings.slug}/`, 'build');
-		// activate theme
-		wp(`theme activate "${settings.slug}"`);
-
 		// install and activate WordPress plugins
 		for (let plugin of (settings.wp.plugins || [])) {
 			wp(`plugin install "${plugin}" --activate`);
@@ -297,7 +285,7 @@ let installWordPress = (webPort, settings) => {
 		}
 
 		// the site will be ready to run and develop locally
-		echo('Setup complete. To develop locally, run \'fdk run\'.');
+		echo('Setup complete. To develop locally, setup a project to import resources automatically in \'projects/\' and run \'fdk start [<project>]\'.');
 	});
 }
 
@@ -310,7 +298,7 @@ const setupMultisiteCustomDomain = settings => {
 		if (execGet(`cat /etc/hosts | grep "${settings.slug}.local"`)) {
 			echo(`'${settings.slug}.local' already found in /etc/hosts.`);
 		} else {
-			echo(`sudo access required to write to /etc/hosts`);
+			echo(`sudo access required to add '${settings.slug}.local' to /etc/hosts`, '🔐');
 			execGet(`echo "127.0.0.1 ${settings.slug}.local" | sudo tee -a /etc/hosts`);
 		}
 	} catch (ex) {
@@ -401,10 +389,10 @@ const init = (slug, options) => {
 };
 
 const setup = options => {
-	let settings = loadSetupSettings(options.reinstall);
-	getSetupPackageManager(settings);
+	const settings = loadSetupSettings(options.reinstall),
+		packageManager = getSetupPackageManager(settings);
 	createFolders(settings);
-	installDependencies();
+	installDependencies(packageManager);
 	startContainersAndInstall(settings);
 };
 

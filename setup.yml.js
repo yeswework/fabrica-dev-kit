@@ -10,10 +10,6 @@ author:
   email: ${data.author_email || 'admin@fdk.dev'}
   url: ${data.author_url || 'http://fdk.dev/'}
 
-# Database settings
-db:
-  prefix: wp_
-
 # WordPress settings
 wp:
   admin: # development site admin user credentials
@@ -32,6 +28,10 @@ wp:
   - fabrica-dashboard
   # - advanced-custom-fields
   # - force-regenerate-thumbnails
+
+# Database settings
+db:
+  prefix: wp_
 
 # Google Analytics - optional (will preset tracking code in theme, can be added manually later)
 # google_analytics_id:
