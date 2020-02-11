@@ -271,7 +271,7 @@ let installWordPress = (webPort, settings) => {
 		}
 
 		// the site will be ready to run and develop locally
-		echo('Setup complete. To develop locally, setup a project to import resources automatically in \'projects/\' and run \'fdk start [<project>]\'.');
+		echo('Setup complete. To develop locally, setup a project to import resources automatically in \'projects/\' and run \'fdk start [project]\'.');
 	});
 }
 
@@ -279,10 +279,9 @@ let installWordPress = (webPort, settings) => {
 const setupMultisiteCustomDomain = settings => {
 	if (!settings.wp.multisite) { return; }
 
-	echo(`Setting up custom local domain '${settings.slug}.local' in /etc/hosts...`);
 	try {
 		if (execGet(`cat /etc/hosts | grep "${settings.slug}.local"`)) {
-			echo(`'${settings.slug}.local' already found in /etc/hosts.`);
+			echo(`'${settings.slug}.local' already in in /etc/hosts.`);
 		} else {
 			echo(`sudo access required to add '${settings.slug}.local' to /etc/hosts`, '🔐');
 			execGet(`echo "127.0.0.1 ${settings.slug}.local" | sudo tee -a /etc/hosts`);
