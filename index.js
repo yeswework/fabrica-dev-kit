@@ -149,21 +149,18 @@ const loadSetupSettings = (reinstall) => {
 
 // create and copy project folders
 const createFolders = settings => {
-	// create 'www' folder (to ensure its owner is the user running the script)
-	sh.mkdir('-p', 'www');
-	// create 'src' folder if not existing
-	if (!sh.test('-d', 'src')) {
+	// set up folder content
+	if (!sh.test('-f', 'package.json')) {
 		// new project: copy starter development folder
 		sh.cp('-r', [`${__dirname}/dev/*`, `${__dirname}/dev/.*`], '.');
 		// npm publish doesn't include .gitignore: https://github.com/npm/npm/issues/3763
 		sh.mv('gitignore', '.gitignore');
+		// create 'www' folder (to ensure its owner is the user running the script)
+		sh.mkdir('-p', 'www');
 
 		// set configuration data in source and Wordmove files
 		let templateFilenames = [
-			'src/package.json',
-			'src/includes/composer.json',
-			'src/includes/project.php',
-			'src/templates/views/base.twig',
+			'package.json',
 			'docker-compose.yml',
 			'provision/web/wordpress-fpm.conf'
 		];
@@ -180,11 +177,8 @@ const createFolders = settings => {
 		}
 	} else {
 		// working on an existing project
-		if (!sh.test('-f', 'src/package.json')) {
-			halt('Folder \'src/\' already exists but no \'package.json\' found there.');
-		}
-		let projectSettings = JSON.parse(sh.cat('src/package.json'));
-		echo('Existing project \'src/package.json\' found. Overriding the following settings in \'setup.yml\' with those in this file  (old \'setup.yml\' value → new value):');
+		let projectSettings = JSON.parse(sh.cat('package.json'));
+		echo('Existing project \'package.json\' found. Overriding the following settings in \'setup.yml\' with those in this file  (old \'setup.yml\' value → new value):');
 		let keys = {name: 'slug', description: 'title', author: 'author'};
 		const simpleDiff = (value1, value2) => {
 			if (value1 == value2) {
@@ -212,14 +206,6 @@ const createFolders = settings => {
 const installDependencies = (packageManager) => {
 	echo('Installing build dependencies...');
 	spawn(`${packageManager}`, ['install'], { stdio: 'inherit' });
-
-	// install initial front-end dependencies
-	echo('Installing front-end dependencies...');
-	sh.cd('src');
-	spawn(`${packageManager}`, ['install'], { stdio: 'inherit' });
-	sh.cd('includes');
-	spawn('composer', ['install'], { stdio: 'inherit' });
-	sh.cd('../..');
 };
 
 // install and configure WordPress in the Docker container
@@ -443,12 +429,9 @@ const loadProjectSettings = () => {
 
 	project.isInstalled = true;
 	project.rootDir = rootDir;
-	project.packages = {
-		root: require(`${rootDir}/package.json`),
-		src: require(`${rootDir}/src/package.json`),
-	};
-	project.slug = project.packages.src.name;
-	project.title = project.packages.src.description;
+	project.package = require(`${rootDir}/package.json`);
+	project.slug = project.package.name;
+	project.title = project.package.description;
 };
 
 // add commands for project's root `package.json` if current path is part of a project
@@ -457,10 +440,10 @@ const addScriptCommands = () => {
 
 	const packageManager = !sh.test('-f', `${project.rootDir}/yarn.json`) ? 'yarn' : 'npm';
 
-	const scripts = project.packages.root.scripts;
+	const scripts = project.package.scripts;
 	for (let command of Object.keys(scripts)) {
 		let script = scripts[command];
-		let scriptsInfo = (project.packages.root.fabrica_dev_kit || {}).scripts_info || {};
+		let scriptsInfo = (project.package.fabrica_dev_kit || {}).scripts_info || {};
 		program.command(command)
 			.description(`'package.json' script: ${scriptsInfo[command] || '`' + (script.length > 80 ? script.substr(0, 80) + '…' : script) + '`'}`)
 			.action(() => {

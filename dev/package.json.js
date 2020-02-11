@@ -1,15 +1,12 @@
+module.exports = (settings) => `
 {
-  "name": "fdk-project",
-  "version": "2.1.9",
-  "description": "Fabrica Dev Kit for Wordpress Project",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/fabrica-wp/dev-kit"
-  },
+  "name": "${settings.slug}",
+  "version": "0.1.0",
+  "description": "${settings.title}",
+  "author": ${JSON.stringify(settings.author)},
   "private": true,
-  "author": "Fabrica <info@fabri.ca> (http://fabri.ca/)",
   "scripts": {
-    "start": "func() { fdk url-config && webpack --watch --mode=development --env.fdk_project=\"${1:-project}\"; }; func",
+    "start": "func() { fdk url-config && webpack --watch --mode=development --env.fdk_project=\\"\${1:-project}\\"; }; func",
     "start:clean": "$npm_execpath run start --clean",
     "dc": "docker-compose",
     "sh": "docker-compose exec -u www-data wp /bin/bash",
@@ -37,3 +34,4 @@
     "webpack-cli": "^3.3.10"
   }
 }
+`;

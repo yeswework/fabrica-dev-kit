@@ -33,7 +33,5 @@ wp:
 db:
   prefix: wp_
 
-# Google Analytics - optional (will preset tracking code in theme, can be added manually later)
-# google_analytics_id:
-package_manager: 'npm'
+package_manager: 'npm' # Node package manager to use: either 'npm' or 'yarn'
 `;
