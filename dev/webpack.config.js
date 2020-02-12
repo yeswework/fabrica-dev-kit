@@ -5,8 +5,8 @@ const path = require('path'),
 
 module.exports = env => {
 	// Set up
-	const project,
-		projectPath = `./projects/${env.fdk_project || 'project'}`;
+	let project;
+	const projectPath = `./projects/${env.fdk_project || 'project'}`;
 	try {
 		project = require(projectPath);
 	} catch (ex) {
