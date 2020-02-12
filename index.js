@@ -437,7 +437,7 @@ const loadProjectSettings = () => {
 const addScriptCommands = () => {
 	if (!project.isInstalled) { return; }
 
-	const packageManager = !sh.test('-f', `${project.rootDir}/yarn.json`) ? 'yarn' : 'npm';
+	const packageManager = sh.test('-f', `${project.rootDir}/yarn.json`) ? 'yarn' : 'npm';
 
 	const scripts = project.package.scripts;
 	for (let command of Object.keys(scripts)) {
