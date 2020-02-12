@@ -65,7 +65,7 @@ module.exports = env => {
 
 			// Assemble list of files to copy, pre-filtered for ignores
 			// (the `ignores` setting slows down the copy plugin/watch immensely)
-			const destPath = path.resolve(resourceType, resourceName);
+			const destPath = path.resolve(wpContentPath, resourceType, resourceName);
 			glob('*', { cwd: sourcePath, ignore: ignores }, (er, files) => {
 				files.forEach(file => {
 					copyList.push({ from: path.resolve(sourcePath, file), to: path.resolve(destPath, file) });
@@ -73,8 +73,8 @@ module.exports = env => {
 			});
 
 			// Empty resource folder ready for fresh version
-			console.log('FDK: emptying ' + path.resolve(wpContentPath, destPath));
-			del([path.resolve(wpContentPath, destPath)], { force: true });
+			console.log('FDK: emptying ' + path.resolve(destPath));
+			del([path.resolve(destPath)], { force: true });
 		});
 	});
 
