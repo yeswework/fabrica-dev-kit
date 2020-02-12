@@ -1,7 +1,8 @@
 const path = require('path'),
 	copyPlugin = require('copy-webpack-plugin'),
 	glob = require('glob'),
-	del = require('del');
+	del = require('del'),
+	fs = require('fs');
 
 module.exports = env => {
 	// Set up
@@ -40,6 +41,10 @@ module.exports = env => {
 			let resourceName = resourcePath.split('/').pop();
 			console.log('FDK: processing ' + resourceType + ': ' + resourceName);
 			const sourcePath = path.resolve(__dirname, resourcePath);
+			if (!fs.existsSync(sourcePath)) {
+				console.log('FDK: cannot find source folder');
+				return;
+			}
 
 			// If this resource has a webpack config, use it to build
 			// Change default relative paths to absolute ones where necessary
