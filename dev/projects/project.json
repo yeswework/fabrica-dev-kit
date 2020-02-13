@@ -1,9 +1,0 @@
-{
-	"entry": "index.js",
-	"resources": {
-		"plugins": [],
-		"themes": [
-			"../fdk-starter-theme"
-		]
-	}
-}

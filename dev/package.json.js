@@ -29,6 +29,7 @@ module.exports = (settings) => `
     "copy-webpack-plugin": "^5.1.1",
     "del": "^5.1.0",
     "glob": "^7.1.6",
+    "js-yaml": "^3.13.1",
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.10"
   }

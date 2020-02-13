@@ -2,14 +2,15 @@ const path = require('path'),
 	copyPlugin = require('copy-webpack-plugin'),
 	glob = require('glob'),
 	del = require('del'),
-	fs = require('fs');
+	fs = require('fs'),
+	yaml = require('js-yaml');
 
 module.exports = env => {
 	// Set up
 	let project;
-	const projectPath = `./projects/${env.fdk_project || 'project'}`;
+	const projectPath = `./resources/${env.fdk_project || 'index'}`;
 	try {
-		project = require(projectPath);
+		project = yaml.safeLoad(fs.readFileSync(projectPath));
 	} catch (ex) {
 		console.error(`Error loading project settings file at '${projectPath}'`);
 		process.exit(1);
@@ -80,7 +81,7 @@ module.exports = env => {
 
 	// Add extra config to copy all compiled files into active WP installation
 	configList.push({
-		entry: path.resolve(__dirname, 'projects', project.entry || 'index.js'),
+		entry: path.resolve(__dirname, 'resources', project.entry || 'index.js'),
 		output: { path: path.resolve(__dirname, wpContentPath) },
 		plugins: [new copyPlugin(copyList)],
 	});

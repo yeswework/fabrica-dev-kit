@@ -271,7 +271,7 @@ let installWordPress = (webPort, settings) => {
 		}
 
 		// the site will be ready to run and develop locally
-		echo('Setup complete. To develop locally, setup a project to import resources automatically in \'projects/\' and run \'fdk start [project]\'.');
+		echo('Setup complete. To develop locally, setup the resources to import automatically in \'resources/index.json\' and run \'fdk start\'.');
 	});
 }
 
