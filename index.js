@@ -179,7 +179,7 @@ const createFolders = settings => {
 		// working on an existing project
 		let projectSettings = JSON.parse(sh.cat('package.json'));
 		echo('Existing project \'package.json\' found. Overriding the following settings in \'setup.yml\' with those in this file  (old \'setup.yml\' value → new value):');
-		let keys = {name: 'slug', description: 'title', author: 'author'};
+		let keys = {name: 'slug', description: 'title'};
 		const simpleDiff = (value1, value2) => {
 			if (value1 == value2) {
 				return `${JSON.stringify(value1)} (unchanged)`;
@@ -474,9 +474,6 @@ program.command('init [slug]')
 	.description('Start a new project folder called <slug> containing the \'setup.yml\' configuration file. <slug> must be unique and no other Docker Compose project should share this name. All optional arguments will be set in the \'setup.yml\' file and can be modified there.')
 	.option('-d, --create-dir', 'create folder for project with <slug> name (current folder will be used for new project if not passed)')
 	.option('-t, --title <title>', 'project title')
-	.option('--author_name <name>', 'project author\'s name')
-	.option('--author_email <email>', 'project author\'s email')
-	.option('--author_url <url>', 'project author\'s url')
 	.option('--wp_admin_user <username>', 'WordPress admin username')
 	.option('--wp_admin_pass <password>', 'WordPress admin password')
 	.option('--wp_admin_email <email>', 'WordPress admin email')

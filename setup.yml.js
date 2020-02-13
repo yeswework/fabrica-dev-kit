@@ -5,10 +5,6 @@ module.exports = (data) => `
 # Project settings
 slug: ${data.slug || 'fdk-project'} # lowercase letters only (also used for theme slug and PHP namespacing)
 title: ${data.title || 'FDK Project'}
-author:
-  name: ${data.author_name || 'FDK Project Author'}
-  email: ${data.author_email || 'admin@fdk.dev'}
-  url: ${data.author_url || 'http://fdk.dev/'}
 
 # WordPress settings
 wp:

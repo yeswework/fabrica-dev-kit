@@ -3,7 +3,6 @@ module.exports = (settings) => `
   "name": "${settings.slug}",
   "version": "0.1.0",
   "description": "${settings.title}",
-  "author": ${JSON.stringify(settings.author)},
   "private": true,
   "scripts": {
     "start": "func() { fdk url-config && webpack --watch --mode=development --env.fdk_project=\\"\${1:-project}\\"; }; func",
