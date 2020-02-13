@@ -220,8 +220,7 @@ let installWordPress = (webPort, settings) => {
 
 	// use stdout stream to filter out known WP CLI warning
 	let install = sh.exec([`${dockerCmd} wp core ${settings.wp.multisite ? 'multisite-' : ''}install`,
-		`--url=${settings.wp.multisite ? `${settings.slug}.local` : `localhost:${webPort}`}`,
-		`--subdomains`,
+		`--url=${settings.wp.multisite ? `${settings.slug}.local --subdomains` : `localhost:${webPort}`}`,
 		`--title="${settings.title}"`,
 		`--admin_user=${settings.wp.admin.user}`,
 		`--admin_password=${settings.wp.admin.pass}`,

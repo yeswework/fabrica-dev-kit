@@ -6,7 +6,7 @@ module.exports = (settings) => `
   "private": true,
   "scripts": {
     "start": "func() { fdk url-config && webpack --watch --mode=development --env.fdk_project=\\"\${1:-project}\\"; }; func",
-    "start:clean": "$npm_execpath run start --clean",
+    "build": "func() { fdk url-config && webpack --mode=production --env.fdk_project=\\"\${1:-project}\\"; }; func",
     "dc": "docker-compose",
     "sh": "docker-compose exec -u www-data wp /bin/bash",
     "shroot": "docker-compose exec wp /bin/bash",
