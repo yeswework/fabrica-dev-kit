@@ -15,8 +15,7 @@ module.exports = env => {
 		console.error(`Error loading project settings file at '${resourcesConfigPath}'`);
 		process.exit(1);
 	}
-	const resourceTypes = Object.keys(resources),
-		configList = [],
+	const configList = [],
 		copyList = [],
 		wpContentPath = 'www/wp-content/',
 		ignores = [
@@ -34,12 +33,17 @@ module.exports = env => {
 	// Compile resource configs
 	const defaultEntryIndex = path.resolve(__dirname, 'src/index.js'),
 		defaultOutputPath = path.resolve(__dirname, 'build');
-	resourceTypes.forEach(resourceType => {
+	Object.entries(resources).forEach(([resourceType, resource]) => {
+
+		if (!resource) {
+			console.log(`No ${resourceType} found in the resource file.`);
+			return;
+		}
 
 		// Process each resource config
-		resources[resourceType].forEach(resourcePath => {
+		resource.forEach(resourcePath => {
 
-			let resourceName = resourcePath.split('/').pop();
+			let resourceName = resourcePath.replace(/\/$/, '').split('/').pop();
 			console.log('FDK: processing ' + resourceType + ': ' + resourceName);
 			const sourcePath = path.resolve(__dirname, resourcePath);
 			if (!fs.existsSync(sourcePath)) {
@@ -78,6 +82,10 @@ module.exports = env => {
 			del([path.resolve(destPath)], { force: true });
 		});
 	});
+
+	if (configList.length == 0) {
+		console.warn(`No resources found in the resource file. Setup resources to import in ${resourcesConfigPath}.`);
+	}
 
 	// Add extra config to copy all compiled files into active WP installation
 	configList.push({
