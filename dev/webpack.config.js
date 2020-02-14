@@ -7,15 +7,15 @@ const path = require('path'),
 
 module.exports = env => {
 	// Set up
-	let project;
-	const projectPath = `./resources/${env.fdk_project || 'index'}.yml`;
+	let resources;
+	const resourcesConfigPath = `./resources/${env.fdk_project || 'index'}.yml`;
 	try {
-		project = yaml.safeLoad(fs.readFileSync(projectPath));
+		resources = yaml.safeLoad(fs.readFileSync(resourcesConfigPath));
 	} catch (ex) {
-		console.error(`Error loading project settings file at '${projectPath}'`);
+		console.error(`Error loading project settings file at '${resourcesConfigPath}'`);
 		process.exit(1);
 	}
-	const resourceTypes = Object.keys(project.resources),
+	const resourceTypes = Object.keys(resources),
 		configList = [],
 		copyList = [],
 		wpContentPath = 'www/wp-content/',
@@ -37,7 +37,7 @@ module.exports = env => {
 	resourceTypes.forEach(resourceType => {
 
 		// Process each resource config
-		project.resources[resourceType].forEach(resourcePath => {
+		resources[resourceType].forEach(resourcePath => {
 
 			let resourceName = resourcePath.split('/').pop();
 			console.log('FDK: processing ' + resourceType + ': ' + resourceName);
