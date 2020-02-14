@@ -8,7 +8,7 @@ const path = require('path'),
 module.exports = env => {
 	// Set up
 	let project;
-	const projectPath = `./resources/${env.fdk_project || 'index'}`;
+	const projectPath = `./resources/${env.fdk_project || 'index'}.yml`;
 	try {
 		project = yaml.safeLoad(fs.readFileSync(projectPath));
 	} catch (ex) {
@@ -81,7 +81,7 @@ module.exports = env => {
 
 	// Add extra config to copy all compiled files into active WP installation
 	configList.push({
-		entry: path.resolve(__dirname, 'resources', project.entry || 'index.js'),
+		entry: path.resolve(__dirname, 'resources/index.js'),
 		output: { path: path.resolve(__dirname, wpContentPath) },
 		plugins: [new copyPlugin(copyList)],
 	});
