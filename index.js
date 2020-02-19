@@ -331,7 +331,7 @@ const startContainersAndInstall = settings => {
 
 		// set WordPress an WP cli cache folders owner
 		sh.exec('docker-compose exec wp sh -c "mkdir -p /var/www/.wp-cli/cache"');
-		sh.exec('docker-compose exec wp sh -c "chown -R www-data: www-data /var/www/.wp-cli"');
+		sh.exec('docker-compose exec wp sh -c "chown -R www-data:www-data /var/www/.wp-cli"');
 		sh.exec('docker-compose exec wp sh -c "chown -R www-data:www-data ."');
 
 		setupMultisiteCustomDomain(settings);
