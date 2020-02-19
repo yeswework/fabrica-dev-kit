@@ -45,7 +45,6 @@ ${settings.wp.multisite ? '      - proxy' : ''
     restart: unless-stopped
     volumes:
       - ./www:/var/www/html
-      - ./src:/var/www/src
       - ./provision/wp/zz-php.ini:/usr/local/etc/php/conf.d/zz-php.ini
     environment:
       WORDPRESS_DB_HOST: db:3306

@@ -29,5 +29,5 @@ wp:
 db:
   prefix: wp_
 
-package_manager: 'npm' # Node package manager to use: either 'npm' or 'yarn'
+package_manager: npm # Node package manager to use: either 'npm' or 'yarn'
 `;

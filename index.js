@@ -271,7 +271,7 @@ let installWordPress = (webPort, settings) => {
 		}
 
 		// the site will be ready to run and develop locally
-		echo('Setup complete. To develop locally, setup the resources to import automatically in \'resources/index.json\' and run \'fdk start\'.');
+		echo('Setup complete. To develop locally, setup the resources to import automatically in \'resources/index.yml\' and run \'fdk start\'.');
 	});
 }
 
@@ -329,7 +329,9 @@ const startContainersAndInstall = settings => {
 		}
 		echo(`Web server running at port ${webPort}`);
 
-		// set WordPress folder owner
+		// set WordPress an WP cli cache folders owner
+		sh.exec('docker-compose exec wp sh -c "mkdir -p /var/www/.wp-cli/cache"');
+		sh.exec('docker-compose exec wp sh -c "chown -R www-data: www-data /var/www/.wp-cli"');
 		sh.exec('docker-compose exec wp sh -c "chown -R www-data:www-data ."');
 
 		setupMultisiteCustomDomain(settings);
@@ -490,9 +492,12 @@ if (project.isInstalled) {
 	addProjectCommands();
 }
 // default
-program.command('*', null, {noHelp: true})
-	.action(() => { program.help(); });
+program.command('*', null, { noHelp: true })
+	.action(() => {
+		console.warn(`Invalid command: ${program.args.join(' ')}\n`);
+		program.help();
+	});
 // finalize `commander` config
 program.parse(process.argv);
 // show help if no arguments are passed
-if (program.args.length === 0) { program.help(); }
+if (!process.argv.slice(2).length) { program.help(); }
