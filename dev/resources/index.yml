@@ -1,4 +1,4 @@
 plugins:
-#  - ./src/fdk-starter-plugin
+# - ./src/fdk-starter-plugin
 themes:
-#  - ./src/fdk-starter-theme
+# - ./src/fdk-starter-theme

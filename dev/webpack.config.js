@@ -5,6 +5,13 @@ const path = require('path'),
 	fs = require('fs'),
 	yaml = require('js-yaml');
 
+const echo = (message) => console.log('FDK:', message);
+const warn = (message) => console.warn('FDK:', message);
+const error = (message, halt=true) => {
+	console.error('FDK:', message);
+	if (halt) { process.exit(1); }
+}
+
 module.exports = env => {
 	// Set up
 	let resources;
@@ -12,8 +19,7 @@ module.exports = env => {
 	try {
 		resources = yaml.safeLoad(fs.readFileSync(resourcesConfigPath));
 	} catch (ex) {
-		console.error(`Error loading project settings file at '${resourcesConfigPath}'`);
-		process.exit(1);
+		error(`Error loading project settings file at '${resourcesConfigPath}'`);
 	}
 	const configList = [],
 		copyList = [],
@@ -33,28 +39,31 @@ module.exports = env => {
 	// Compile resource configs
 	const defaultEntryIndex = path.resolve(__dirname, 'src/index.js'),
 		defaultOutputPath = path.resolve(__dirname, 'build');
+	let foundResources = false;
 	Object.entries(resources).forEach(([resourceType, resource]) => {
 
 		if (!resource) {
-			console.log(`No ${resourceType} found in the resource file.`);
+			echo(`No ${resourceType} found in the resource file.`);
 			return;
 		}
 
 		// Process each resource config
 		resource.forEach(resourcePath => {
 
-			let resourceName = resourcePath.replace(/\/$/, '').split('/').pop();
-			console.log('FDK: processing ' + resourceType + ': ' + resourceName);
-			const sourcePath = path.resolve(__dirname, resourcePath);
+			const resourceName = resourcePath.replace(/\/$/, '').split('/').pop(),
+				sourcePath = path.resolve(__dirname, resourcePath),
+				sourceConfigPath = path.resolve(sourcePath, 'webpack.config.js');
+			echo(`Processing ${resourceType}: ${resourceName}`);
 			if (!fs.existsSync(sourcePath)) {
-				console.log('FDK: cannot find source folder');
+				warn('Cannot find source folder');
 				return;
 			}
+			foundResources = true;
 
 			// If this resource has a webpack config, use it to build
 			// Change default relative paths to absolute ones where necessary
 			try {
-				const config = require(path.resolve(sourcePath, 'webpack.config.js'));
+				const config = require(sourceConfigPath);
 				if (config.entry.index == defaultEntryIndex) {
 					config.entry.index = path.resolve(sourcePath, 'src/index.js');
 				}
@@ -65,7 +74,11 @@ module.exports = env => {
 				config.resolveLoader = { modules: [path.resolve(sourcePath, 'node_modules')] };
 				configList.push(config);
 			} catch (e) { // No webpack config
-				console.log('FDK: ' + resourceName + ' does not have a webpack config, copying anyway');
+				if (fs.existsSync(sourceConfigPath)) {
+					warn(`Error loading webpack config for ${resourceName}. Copying content anyway`);
+				} else {
+					warn(`No webpack config found for ${resourceName}. Copying content anyway`);
+				}
 			}
 
 			// Assemble list of files to copy, pre-filtered for ignores
@@ -78,13 +91,13 @@ module.exports = env => {
 			});
 
 			// Empty resource folder ready for fresh version
-			console.log('FDK: emptying ' + path.resolve(destPath));
+			echo('Emptying ' + path.resolve(destPath));
 			del([path.resolve(destPath)], { force: true });
 		});
 	});
 
-	if (configList.length == 0) {
-		console.warn(`No resources found in the resource file. Setup resources to import in ${resourcesConfigPath}.`);
+	if (!foundResources) {
+		warn(`No resources found in the resource file. Setup resources to import in ${resourcesConfigPath}.`);
 	}
 
 	// Add extra config to copy all compiled files into active WP installation
