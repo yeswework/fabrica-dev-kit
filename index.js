@@ -448,7 +448,7 @@ const addScriptCommands = () => {
 		program.command(command)
 			.description(`'package.json' script: ${scriptsInfo[command] || '`' + (script.length > 80 ? script.substr(0, 80) + '…' : script) + '`'}`)
 			.action(() => {
-				spawn(packageManager, ['run', ...process.argv.splice(2)], { stdio: 'inherit' });
+				spawn(packageManager, ['run', ...process.argv.slice(2)], { stdio: 'inherit' });
 			});
 	}
 };
