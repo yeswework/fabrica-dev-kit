@@ -121,10 +121,10 @@ const loadSetupSettings = (reinstall) => {
 	const setupSettingsFilename = './setup.yml',
 		setupSettingsBakFilename = './config/setup.yml';
 	if (!sh.test('-f', setupSettingsFilename)) {
-		if (settings.reinstall && !sh.test('-f', setupSettingsFilename)) {
+		if (settings.reinstall && sh.test('-f', setupSettingsBakFilename)) {
 			sh.mv(setupSettingsBakFilename, setupSettingsFilename);
 		} else if (settings.reinstall) {
-			halt('Could not find \'setup.yml\' or \'config/setup.yml\'. Please use the \'fdk init <slug>\' command to create a new project folder and \'setup.yml\'.');
+			halt('Could not find \'setup.yml\' or \'config/setup.yml\' to reinstall project. Please use the \'fdk init <slug>\' command to create a new project folder and \'setup.yml\'.');
 		} else {
 			halt('Could not find \'setup.yml\'. Please use the \'fdk init <slug>\' command to create a new project folder and \'setup.yml\'. If the current project has been set up previously, you can run \'fdk setup --reinstall\' and \'config/setup.yml\' will be used to bring the Docker containers back up and reconfigure them.');
 		}
@@ -158,7 +158,7 @@ const createFolders = settings => {
 		// create 'www' folder (to ensure its owner is the user running the script)
 		sh.mkdir('-p', 'www');
 
-		// set configuration data in source and Wordmove files
+		// set configuration data in external files
 		let templateFilenames = [
 			'package.json',
 			'docker-compose.yml',
