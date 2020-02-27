@@ -16,6 +16,8 @@ const findup = require('findup-sync'),
 	yaml = require('js-yaml');
 
 const execGet = cmd => sh.exec(cmd, { silent: true }).stdout.trim();
+const execWP = (cmd, options) => sh.exec(`docker-compose exec -u www-data -T wp ${cmd}`, options);
+const execWPGet = cmd => execWP(cmd, { silent: true }).stdout.trim();
 
 // Fabrica Dev Kit version
 const VERSION = execGet('npm list fabrica-dev-kit --depth=0 -g').replace(/^[^@]*@([^\s]*)\s.*$/, '$1'),
@@ -211,15 +213,14 @@ const installDependencies = (packageManager) => {
 // install and configure WordPress in the Docker container
 let installWordPress = (webPort, settings) => {
 	echo('Installing WordPress...');
-	let dockerCmd = 'docker-compose exec -u www-data wp',
-		wp = command => {
-			if (sh.exec(`${dockerCmd} wp ${command}`).code != 0) {
-				halt(`Failed to execute: '${dockerCmd} wp ${command}'`);
-			}
-		};
+	let wp = command => {
+		if (execWP(`wp ${command}`).code != 0) {
+			halt(`Failed to execute: 'wp ${command}' on wp container`);
+		}
+	};
 
 	// use stdout stream to filter out known WP CLI warning
-	let install = sh.exec([`${dockerCmd} wp core ${settings.wp.multisite ? 'multisite-' : ''}install`,
+	let install = execWP([`wp core ${settings.wp.multisite ? 'multisite-' : ''}install`,
 		`--url=${settings.wp.multisite ? `${settings.slug}.local --subdomains` : `localhost:${webPort}`}`,
 		`--title="${settings.title}"`,
 		`--admin_user=${settings.wp.admin.user}`,
@@ -249,9 +250,11 @@ let installWordPress = (webPort, settings) => {
 			wp(`plugin install "${plugin}" --activate`);
 		}
 		if (settings.wp.acf_pro_key) {
-			let execCode = sh.exec([`${dockerCmd} bash -c 'curl "http://connect.advancedcustomfields.com/index.php?p=pro&a=download&k=${settings.wp.acf_pro_key}" > /tmp/acf-pro.zip`,
+			if (execWP([`bash -c 'curl "http://connect.advancedcustomfields.com/index.php?p=pro&a=download&k=${settings.wp.acf_pro_key}" > /tmp/acf-pro.zip`,
 				`&& wp plugin install /tmp/acf-pro.zip --activate`,
-				`&& rm /tmp/acf-pro.zip'`].join(' ')).code;
+				`&& rm /tmp/acf-pro.zip'`].join(' ')).code != 0) {
+				warn('Error installing or configuring ACF Pro.');
+			}
 		}
 		// remove default WordPress plugins and themes
 		if (settings.wp.skip_default_plugins) {
@@ -302,8 +305,7 @@ const startContainersAndInstall = settings => {
 	let startTime = Date.now(), getting = false, webPort;
 	wait(`Waiting for '${settings['slug']}_wp' container...`, stopWaitInterval => {
 		// get port dynamically assigned by Docker to expose web container's port 80
-		webPort = webPort ||
-			execGet('docker-compose port web 80').replace(/^.*:(\d+)$/, '$1');
+		webPort = webPort || getWebPort();
 		if (webPort && !getting) {
 			// check if WordPress is already available at the expected URL
 			getting = true;
@@ -341,7 +343,7 @@ const startContainersAndInstall = settings => {
 	});
 }
 
-// Commands
+// ——— Project initialization Commands ————
 
 const init = (slug, options) => {
 	if (options.createDir) {
@@ -383,35 +385,98 @@ const setup = options => {
 	startContainersAndInstall(settings);
 };
 
-// -- Project-specific commands ---
+// ——— Project-specific (post-initialization) commands ————
+
+// Get current web Docker container automatically assigned port
+const getWebPort = () => {
+	if (project && project.webPort) { return project.webPort; }
+	
+	const webPort = execGet('docker-compose port web 80').replace(/^.*:(\d+)$/g, '$1');
+	if (project) {
+		project.webPort = webPort;
+	}
+
+	return webPort;
+}
+
+// Get current db Docker container automatically assigned port
+const getDBPort = () => {
+	if (project && project.dbPort) { return project.dbPort; }
+	
+	const dbPort = execGet('docker-compose port db 3306').replace(/^.*:(\d+)$/g, '$1');
+	if (project) {
+		project.dbPort = dbPort;
+	}
+
+	return dbPort;
+}
+
+// Get current db Docker container automatically assigned port
+const getSiteURL = () => {
+	if (project && project.siteURL) { return project.siteURL; }
+
+	const siteURL = execWPGet('wp option get siteurl');
+	if (project) {
+		project.siteURL = siteURL;
+	}
+
+	return siteURL;
+}
 
 // Get current site and port for WordPress to check if it matches the current Docker-assigned Web container port (in a singlesite project). Output current project access URLs and ports
-const urlConfig = () => {
-	const dockerCmd = 'docker-compose exec -u www-data -T wp',
-		dbPort = execGet('docker-compose port db 3306').replace(/^.*:(\d+)$/g, '$1'),
-		siteURL = execGet(dockerCmd + ' wp option get siteurl');
+const configURL = () => {
+	const siteURL = getSiteURL(),
+		dbPort = getDBPort();
 
 	if (siteURL.indexOf('localhost:') >= 0 && siteURL.indexOf('127.0.0.1:') >= 0) {
 		// not in a multisite/custom domain project: check if automatic port set by Docker needs to be updated in the DB
-		const webPort = execGet('docker-compose port web 80').replace(/^.*:(\d+)$/g, '$1'),
+		const webPort = getWebPort(),
 			wpPort = siteURL.replace(/^.*:(\d+)$/g, '$1');
 		if (wpPort != webPort) {
 			// port needs to be updated
-			console.log('Updating WordPress port from ' + wpPort + ' to ' + webPort + '...');
-			sh.exec(dockerCmd + ' wp search-replace --quiet "localhost:' + wpPort + '" "localhost:' + webPort + '"');
-			sh.exec(dockerCmd + ' bash -c \'wp option update home "http://localhost:' + webPort + '" && wp option update siteurl "http://localhost:' + webPort + '"\'');
+			echo('Updating WordPress port from ' + wpPort + ' to ' + webPort + '...');
+			execWP(`wp search-replace --quiet "localhost:${wpPort}" "localhost:${webPort}"`);
+			execWP(`bash -c \'wp option update home "http://localhost:${webPort}" && wp option update siteurl "http://localhost:${webPort}"\'`);
 		}
 	}
 
 	// output site URLs and ports
-	let outputSeparator = ' \x1b[36m' + '-'.repeat(siteURL.length + 21) + '\x1b[0m';
-	console.log('\x1b[1m' + project.title + ' (' + project.slug + ') access URLs:\x1b[22m');
-	console.log(outputSeparator);
-	console.log(' 🌍  WordPress: \x1b[35m' + siteURL + '/\x1b[0m');
-	console.log(' 🔧  Admin: \x1b[35m' + siteURL + '/wp-admin/\x1b[0m');
-	console.log(' 🗃  Database: \x1b[35mlocalhost:' + dbPort + '\x1b[0m');
-	console.log(outputSeparator);
+	let outputSeparator = ` \x1b[36m${'-'.repeat(siteURL.length + 21)}\x1b[0m`;
+	echo(`\x1b[1m${project.title} (${project.slug}) access URLs:\x1b[22m`);
+	echo(outputSeparator);
+	echo(` 🌍  WordPress: \x1b[35m${siteURL}/\x1b[0m`);
+	echo(` 🔧  Admin: \x1b[35m${siteURL}/wp-admin/\x1b[0m`);
+	echo(` 🗃  Database: \x1b[35mlocalhost:${dbPort}\x1b[0m`);
+	echo(outputSeparator);
 };
+
+// Update Wordmove `Movefile` with web container port and project settings
+const configWordmove = () => {
+	const siteURL = getSiteURL();
+	if (siteURL.indexOf('localhost:') < 0 && siteURL.indexOf('127.0.0.1:') < 0) {
+		echo('Wordmove configuration file \'Movefile\' not generated because this is a multisite project');
+		return;
+	}
+
+	// Load Wordmove settings file
+	try {
+		var wordmove = yaml.safeLoad(sh.cat('./config/wordmove.yml')) || {};
+		wordmove.local = wordmove.local || {};
+		wordmove.local.vhost = `localhost:${getWebPort()}`;
+		wordmove.local.wordpress_path = path.resolve(`${__dirname}/www/`);
+		wordmove.local.database = wordmove.local.database || {};
+		wordmove.local.database.name = 'wordpress';
+		wordmove.local.database.user = 'wordpress';
+		wordmove.local.database.password = 'wordpress';
+		wordmove.local.database.host = '127.0.0.1';
+		wordmove.local.database.port = getDBPort();
+		sh.ShellString(yaml.safeDump(wordmove)).to('Movefile');
+	} catch (ex) {
+		warn('Error generating Movefile:', ex);
+	}
+
+	echo('Wordmove configuration file \'Movefile\' updated');
+}
 
 // check if FDK is being executed inside a project that's already been setup and load its settings
 const loadProjectSettings = () => {
@@ -457,9 +522,18 @@ const addScriptCommands = () => {
 const addProjectCommands = () => {
 	if (!project.isInstalled) { return; }
 
-	program.command('url-config')
+	program.command('config:url')
 		.description('Update URLs in DB to match changes to WP container port set automatically by Docker (except for multisite projects, where a custom local host/domain is used). Output current access URLs and ports')
-		.action(urlConfig);
+		.action(configURL);
+	program.command('config:wordmove')
+		.description('Automatically create Wordmove configuration file \'Movefile\' based on project settings and Docker\'s web and DB containers\' ports')
+		.action(configWordmove);
+	program.command('config:all')
+		.description('Run all project configuration tasks (config:url and config:wordmove)')
+		.action(() => {
+			configWordmove();
+			configURL();
+		});
 	addScriptCommands();
 };
 

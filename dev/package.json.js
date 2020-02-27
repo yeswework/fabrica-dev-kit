@@ -5,8 +5,8 @@ module.exports = (settings) => `
   "description": "${settings.title}",
   "private": true,
   "scripts": {
-    "start": "func() { fdk url-config && webpack --watch --mode=development --env.fdk_project=\\"\${1:-index}\\"; }; func",
-    "build": "func() { fdk url-config && webpack --mode=production --env.fdk_project=\\"\${1:-index}\\"; }; func",
+    "start": "func() { fdk config:all && webpack --watch --mode=development --env.fdk_project=\\"\${1:-index}\\"; }; func",
+    "build": "func() { fdk config:all && webpack --mode=production --env.fdk_project=\\"\${1:-index}\\"; }; func",
     "dc": "docker-compose",
     "sh": "docker-compose exec -u www-data wp /bin/bash",
     "shroot": "docker-compose exec wp /bin/bash",
