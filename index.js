@@ -429,12 +429,12 @@ const setupTheme = slug => {
 	echo(`Theme successfully downloaded and setup at ${slug}.`);
 }
 
-const setupBlog = slug => {
-	if (sh.exec(`git clone git@bitbucket.org:yeswework/fdk-starter-blog.git ${slug}`).code < 0) {
-		halt('Error cloning starter blog.')
+const setupBlock = slug => {
+	if (sh.exec(`git clone git@bitbucket.org:yeswework/fdk-starter-block.git ${slug}`).code < 0) {
+		halt('Error cloning starter block.')
 	}
 	sh.rm('-fr', `${slug}/.git`);
-	echo(`Blog successfully downloaded and setup at ${slug}.`);
+	echo(`Block successfully downloaded and setup at ${slug}.`);
 }
 
 // ——— Project-specific (post-initialization) commands ————
