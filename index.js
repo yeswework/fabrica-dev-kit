@@ -343,6 +343,42 @@ const startContainersAndInstall = settings => {
 	});
 }
 
+// Get current web Docker container automatically assigned port
+const getWebPort = () => {
+	if (project && project.webPort) { return project.webPort; }
+
+	const webPort = execGet('docker-compose port web 80').replace(/^.*:(\d+)$/g, '$1');
+	if (project) {
+		project.webPort = webPort;
+	}
+
+	return webPort;
+}
+
+// Get current db Docker container automatically assigned port
+const getDBPort = () => {
+	if (project && project.dbPort) { return project.dbPort; }
+
+	const dbPort = execGet('docker-compose port db 3306').replace(/^.*:(\d+)$/g, '$1');
+	if (project) {
+		project.dbPort = dbPort;
+	}
+
+	return dbPort;
+}
+
+// Get current db Docker container automatically assigned port
+const getSiteURL = () => {
+	if (project && project.siteURL) { return project.siteURL; }
+
+	const siteURL = execWPGet('wp option get siteurl');
+	if (project) {
+		project.siteURL = siteURL;
+	}
+
+	return siteURL;
+}
+
 // ——— Project initialization Commands ————
 
 const init = (slug, options) => {
@@ -385,43 +421,23 @@ const setup = options => {
 	startContainersAndInstall(settings);
 };
 
+const setupTheme = slug => {
+	if (sh.exec(`git clone git@bitbucket.org:yeswework/fdk-starter-theme.git ${slug}`).code < 0) {
+		halt('Error cloning starter theme.')
+	}
+	sh.rm('-fr', `${slug}/.git`);
+	echo(`Theme successfully downloaded and setup at ${slug}.`);
+}
+
+const setupBlog = slug => {
+	if (sh.exec(`git clone git@bitbucket.org:yeswework/fdk-starter-blog.git ${slug}`).code < 0) {
+		halt('Error cloning starter blog.')
+	}
+	sh.rm('-fr', `${slug}/.git`);
+	echo(`Blog successfully downloaded and setup at ${slug}.`);
+}
+
 // ——— Project-specific (post-initialization) commands ————
-
-// Get current web Docker container automatically assigned port
-const getWebPort = () => {
-	if (project && project.webPort) { return project.webPort; }
-	
-	const webPort = execGet('docker-compose port web 80').replace(/^.*:(\d+)$/g, '$1');
-	if (project) {
-		project.webPort = webPort;
-	}
-
-	return webPort;
-}
-
-// Get current db Docker container automatically assigned port
-const getDBPort = () => {
-	if (project && project.dbPort) { return project.dbPort; }
-	
-	const dbPort = execGet('docker-compose port db 3306').replace(/^.*:(\d+)$/g, '$1');
-	if (project) {
-		project.dbPort = dbPort;
-	}
-
-	return dbPort;
-}
-
-// Get current db Docker container automatically assigned port
-const getSiteURL = () => {
-	if (project && project.siteURL) { return project.siteURL; }
-
-	const siteURL = execWPGet('wp option get siteurl');
-	if (project) {
-		project.siteURL = siteURL;
-	}
-
-	return siteURL;
-}
 
 // Get current site and port for WordPress to check if it matches the current Docker-assigned Web container port (in a singlesite project). Output current project access URLs and ports
 const configURL = () => {
@@ -559,6 +575,14 @@ program.command('setup')
 	.description('Setup project based on setting on \'setup.yml\' file')
 	.option('--reinstall', 'Reuse settings for previously setup project and ignore if Docker containers are already in use for project <slug>. \'config/setup.yml\' will be used for configuration if \'setup.yml\' is not available.')
 	.action(setup);
+// `setup:theme` command
+program.command('setup:theme <slug>')
+	.description('Download the starter theme and prepare it for use. <slug> will be used to set the name of the theme folder.')
+	.action(setupTheme);
+// `setup:plugin` command
+program.command('setup:block <slug>')
+	.description('Download the starter block and prepare it for use. <slug> will be used to set the name of the block folder.')
+	.action(setupBlock);
 // load settings if executed in a project that's already been set up
 loadProjectSettings();
 if (project.isInstalled) {
