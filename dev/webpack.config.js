@@ -1,13 +1,13 @@
 const path = require('path'),
 	copyPlugin = require('copy-webpack-plugin'),
-	glob = require('glob'),
-	del = require('del'),
+	copy = require('copy-concurrently'),
+	rimraf = require('rimraf'),
 	fs = require('fs'),
 	yaml = require('js-yaml');
 
 const echo = (message) => console.log('FDK:', message);
 const warn = (message) => console.warn('FDK:', message);
-const error = (message, halt=true) => {
+const error = (message, halt = true) => {
 	console.error('FDK:', message);
 	if (halt) { process.exit(1); }
 }
@@ -25,9 +25,9 @@ module.exports = env => {
 		copyList = [],
 		wpContentPath = 'www/wp-content/',
 		ignores = [
-			'node_modules/**',
-			'.git/**',
-			'src/**',
+			{ dot: true, glob: 'node_modules/**' },
+			{ dot: true, glob: '.git/**' },
+			{ dot: true, glob: 'src/**' },
 			'.gitignore',
 			'.gitmodules',
 			'webpack.config.js',
@@ -48,11 +48,23 @@ module.exports = env => {
 		}
 
 		// Process each resource config
-		resource.forEach(resourcePath => {
+		resource.forEach(resourceData => {
 
-			const resourceName = resourcePath.replace(/\/$/, '').split('/').pop(),
-				sourcePath = path.resolve(__dirname, resourcePath),
-				sourceConfigPath = path.resolve(sourcePath, 'webpack.config.js');
+			if (typeof resourceData !== 'object') {
+				resourceData = { path: resourceData };
+			}
+			if (resourceData.ignore && !Array.isArray(resourceData.ignore)) {
+				resourceData.ignore = [resourceData.ignore];
+			}
+			if (resourceData.noWatch && !Array.isArray(resourceData.noWatch)) {
+				resourceData.noWatch = [resourceData.noWatch];
+			}
+
+			const resourceName = resourceData.path.replace(/\/$/, '').split('/').pop(),
+				resourceGlob = resourceData.glob || '**',
+				sourcePath = path.resolve(__dirname, resourceData.path),
+				sourceConfigPath = path.resolve(sourcePath, 'webpack.config.js'),
+				destPath = path.resolve(wpContentPath, resourceType, resourceName);
 			echo(`Processing ${resourceType}: ${resourceName}`);
 			if (!fs.existsSync(sourcePath)) {
 				warn('Cannot find source folder');
@@ -81,18 +93,34 @@ module.exports = env => {
 				}
 			}
 
-			// Assemble list of files to copy, pre-filtered for ignores
-			// (the `ignores` setting slows down the copy plugin/watch immensely)
-			const destPath = path.resolve(wpContentPath, resourceType, resourceName);
-			glob('*', { cwd: sourcePath, ignore: ignores }, (er, files) => {
-				files.forEach(file => {
-					copyList.push({ from: path.resolve(sourcePath, file), to: path.resolve(destPath, file) });
-				});
-			});
-
 			// Empty resource folder ready for fresh version
-			echo('Emptying ' + path.resolve(destPath));
-			del([path.resolve(destPath)], { force: true });
+			echo('Emptying ' + destPath);
+			rimraf.sync(destPath);
+
+			// Aggregate 'ignore' definitions from different sources and copy folders which won't be watched
+			let resourceIgnores = ignores;
+			if (resourceData.ignore) {
+				resourceIgnores.push(...resourceData.ignore);
+			}
+			if (resourceData.noWatch) {
+				fs.mkdirSync(destPath, { recursive: true });
+				for (let folder of resourceData.noWatch) {
+					// Folder will be copied now but won't be watched for changes
+					resourceIgnores.push({ dot: true, glob: `${folder}/**` });
+					copy(path.resolve(sourcePath, folder), path.resolve(destPath, folder))
+						.then(() => echo(`Copied folder ${folder}`))
+						.catch(err => warn(`Failed to copy folder ${folder}`));
+				}
+			}
+
+			// Add resource to be watched
+			copyList.push({
+				context: sourcePath,
+				from: resourceGlob,
+				to: destPath,
+				ignore: resourceIgnores,
+				cache: true
+			});
 		});
 	});
 
