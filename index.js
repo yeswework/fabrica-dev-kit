@@ -441,9 +441,8 @@ const setupBlock = slug => {
 
 // Get current site and port for WordPress to check if it matches the current Docker-assigned Web container port (in a singlesite project). Output current project access URLs and ports
 const configURL = () => {
-	const siteURL = getSiteURL(),
-		dbPort = getDBPort();
-	console.log('~~> siteURL:', siteURL, siteURL.indexOf('localhost:'), siteURL.indexOf('127.0.0.1:'));
+	let siteURL = getSiteURL();
+	const dbPort = getDBPort();
 
 	if (siteURL.indexOf('localhost:') >= 0 || siteURL.indexOf('127.0.0.1:') >= 0) {
 		// not in a multisite/custom domain project: check if automatic port set by Docker needs to be updated in the DB
@@ -454,6 +453,7 @@ const configURL = () => {
 			echo('Updating WordPress port from ' + wpPort + ' to ' + webPort + '...');
 			execWP(`wp search-replace --quiet "localhost:${wpPort}" "localhost:${webPort}"`);
 			execWP(`bash -c \'wp option update home "http://localhost:${webPort}" && wp option update siteurl "http://localhost:${webPort}"\'`);
+			siteURL = `http://localhost:${webPort}`;
 		}
 	}
 
