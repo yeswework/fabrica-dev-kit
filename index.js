@@ -207,7 +207,7 @@ const createFolders = settings => {
 // install build dependencies
 const installDependencies = (packageManager) => {
 	echo('Installing build dependencies...');
-	spawn(`${packageManager}`, ['install'], { stdio: 'inherit' });
+	spawn(packageManager, ['install'], { stdio: 'inherit' });
 };
 
 // install and configure WordPress in the Docker container
@@ -443,8 +443,9 @@ const setupBlock = slug => {
 const configURL = () => {
 	const siteURL = getSiteURL(),
 		dbPort = getDBPort();
+	console.log('~~> siteURL:', siteURL, siteURL.indexOf('localhost:'), siteURL.indexOf('127.0.0.1:'));
 
-	if (siteURL.indexOf('localhost:') >= 0 && siteURL.indexOf('127.0.0.1:') >= 0) {
+	if (siteURL.indexOf('localhost:') >= 0 || siteURL.indexOf('127.0.0.1:') >= 0) {
 		// not in a multisite/custom domain project: check if automatic port set by Docker needs to be updated in the DB
 		const webPort = getWebPort(),
 			wpPort = siteURL.replace(/^.*:(\d+)$/g, '$1');
