@@ -107,9 +107,7 @@ module.exports = env => {
 				for (let folder of resourceData.noWatch) {
 					// Folder will be copied now but won't be watched for changes
 					resourceIgnores.push({ dot: true, glob: `${folder}/**` });
-					copy(path.resolve(sourcePath, folder), path.resolve(destPath, folder))
-						.then(() => echo(`Copied folder ${folder}`))
-						.catch(err => warn(`Failed to copy folder ${folder}`));
+					copy.sync(path.resolve(sourcePath, folder), path.resolve(destPath, folder));
 				}
 			}
 
