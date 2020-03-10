@@ -1,7 +1,4 @@
 const path = require('path'),
-	copyPlugin = require('copy-webpack-plugin'),
-	copy = require('copy-concurrently'),
-	rimraf = require('rimraf'),
 	fs = require('fs'),
 	yaml = require('js-yaml');
 
@@ -23,18 +20,7 @@ module.exports = env => {
 	}
 	const configList = [],
 		copyList = [],
-		wpContentPath = 'www/wp-content/',
-		ignores = [
-			{ dot: true, glob: 'node_modules/**' },
-			{ dot: true, glob: '.git/**' },
-			{ dot: true, glob: 'src/**' },
-			'.gitignore',
-			'.gitmodules',
-			'webpack.config.js',
-			'package.json',
-			'package-lock.json',
-			'.DS_Store',
-		];
+		wpContentPath = 'www/wp-content/';
 
 	// Compile resource configs
 	const defaultEntryIndex = path.resolve(__dirname, 'src/index.js'),
@@ -48,23 +34,10 @@ module.exports = env => {
 		}
 
 		// Process each resource config
-		resource.forEach(resourceData => {
-
-			if (typeof resourceData !== 'object') {
-				resourceData = { path: resourceData };
-			}
-			if (resourceData.ignore && !Array.isArray(resourceData.ignore)) {
-				resourceData.ignore = [resourceData.ignore];
-			}
-			if (resourceData.noWatch && !Array.isArray(resourceData.noWatch)) {
-				resourceData.noWatch = [resourceData.noWatch];
-			}
-
-			const resourceName = resourceData.path.replace(/\/$/, '').split('/').pop(),
-				resourceGlob = resourceData.glob || '**',
-				sourcePath = path.resolve(__dirname, resourceData.path),
-				sourceConfigPath = path.resolve(sourcePath, 'webpack.config.js'),
-				destPath = path.resolve(wpContentPath, resourceType, resourceName);
+		resource.forEach(resourcePath => {
+			const resourceName = resourcePath.replace(/\/$/, '').split('/').pop(),
+				sourcePath = path.resolve(__dirname, resourcePath),
+				sourceConfigPath = path.resolve(sourcePath, 'webpack.config.js');
 			echo(`Processing ${resourceType}: ${resourceName}`);
 			if (!fs.existsSync(sourcePath)) {
 				warn('Cannot find source folder');
@@ -92,33 +65,6 @@ module.exports = env => {
 					warn(`No webpack config found for ${resourceName}. Copying content anyway`);
 				}
 			}
-
-			// Empty resource folder ready for fresh version
-			echo('Emptying ' + destPath);
-			rimraf.sync(destPath);
-
-			// Aggregate 'ignore' definitions from different sources and copy folders which won't be watched
-			let resourceIgnores = ignores;
-			if (resourceData.ignore) {
-				resourceIgnores.push(...resourceData.ignore);
-			}
-			if (resourceData.noWatch) {
-				fs.mkdirSync(destPath, { recursive: true });
-				for (let folder of resourceData.noWatch) {
-					// Folder will be copied now but won't be watched for changes
-					resourceIgnores.push({ dot: true, glob: `${folder}/**` });
-					copy.sync(path.resolve(sourcePath, folder), path.resolve(destPath, folder));
-				}
-			}
-
-			// Add resource to be watched
-			copyList.push({
-				context: sourcePath,
-				from: resourceGlob,
-				to: destPath,
-				ignore: resourceIgnores,
-				cache: true
-			});
 		});
 	});
 
@@ -130,7 +76,6 @@ module.exports = env => {
 	configList.push({
 		entry: path.resolve(__dirname, 'resources/index.js'),
 		output: { path: path.resolve(__dirname, wpContentPath) },
-		plugins: [new copyPlugin(copyList)],
 	});
 
 	return configList;

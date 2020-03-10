@@ -421,22 +421,6 @@ const setup = options => {
 	startContainersAndInstall(settings);
 };
 
-const setupTheme = slug => {
-	if (sh.exec(`git clone git@bitbucket.org:yeswework/fdk-starter-theme.git ${slug}`).code < 0) {
-		halt('Error cloning starter theme.')
-	}
-	sh.rm('-fr', `${slug}/.git`);
-	echo(`Theme successfully downloaded and setup at ${slug}.`);
-}
-
-const setupBlock = slug => {
-	if (sh.exec(`git clone git@bitbucket.org:yeswework/fdk-starter-block.git ${slug}`).code < 0) {
-		halt('Error cloning starter block.')
-	}
-	sh.rm('-fr', `${slug}/.git`);
-	echo(`Block successfully downloaded and setup at ${slug}.`);
-}
-
 // ——— Project-specific (post-initialization) commands ————
 
 // Get current site and port for WordPress to check if it matches the current Docker-assigned Web container port (in a singlesite project). Output current project access URLs and ports
@@ -466,6 +450,49 @@ const configURL = () => {
 	echo(` 🗃  Database: \x1b[35mlocalhost:${dbPort}\x1b[0m`);
 	echo(outputSeparator);
 };
+
+// Check if there are any new resources and add paths accordingly to `docker-compose.yml` volumes
+const configResources = project => {
+	let resources, dockerConfig;
+	try {
+		resources = yaml.safeLoad(sh.cat(`./resources/${project || 'index'}.yml`));
+		dockerConfig = yaml.safeLoad(sh.cat(`./docker-compose.yml`));
+	} catch (ex) {
+		warn(`Error loading 'docker-compose.yml' or project settings file at '${resourcesConfigPath}'`);
+		return;
+	}
+
+	// look for resources that haven't got a matching volume configured
+	let allConfigured = true;
+	Object.entries(resources).forEach(([resourceType, resource]) => {
+		if (!resource) {
+			echo(`No ${resourceType} found in the resource file.`);
+			return;
+		}
+		resource.forEach(resourcePath => {
+			const resourceName = resourcePath.replace(/\/$/, '').split('/').pop(),
+				configured = dockerConfig.services.wp.volumes.some(volume => {
+					const volumeData = volume.split(':');
+					return volumeData.length > 1 && volumeData[0] == resourcePath;
+				});
+			if (!configured) {
+				// resource's volume not found: create new volume
+				const destPath = path.resolve('/var/www/html/wp-content/', resourceType, resourceName);
+				echo(`New volume for '${resourcePath}'`);
+				dockerConfig.services.wp.volumes.push(`${resourcePath}:${destPath}`);
+				allConfigured = false;
+			}
+		});
+	});
+	if (allConfigured) { return; }
+
+	// there are new volumes: write new Docker Composer configuration and restart containers
+	sh.ShellString(yaml.safeDump(dockerConfig)).to('docker-compose.yml');
+	echo('Bringing Docker containers up...');
+	if (sh.exec('docker-compose up -d').code == 0) {
+		halt('Docker containers failed to start.');
+	}
+}
 
 // Update Wordmove `Movefile` with web container port and project settings
 const configWordmove = () => {
@@ -542,13 +569,17 @@ const addProjectCommands = () => {
 	program.command('config:url')
 		.description('Update URLs in DB to match changes to WP container port set automatically by Docker (except for multisite projects, where a custom local host/domain is used). Output current access URLs and ports')
 		.action(configURL);
+	program.command('config:resources [project]')
+		.description('Configure Docker volumes to match paths in resources settings if there new resources. Resources settings to be loaded can be set with <project> (default is \'index\')')
+		.action(configResources);
 	program.command('config:wordmove')
 		.description('Automatically create Wordmove configuration file \'Movefile\' based on project settings and Docker\'s web and DB containers\' ports')
 		.action(configWordmove);
-	program.command('config:all')
-		.description('Run all project configuration tasks (config:url and config:wordmove)')
+	program.command('config:all [project]')
+		.description('Run all project configuration tasks (config:url, config:wordmove and config:resources)')
 		.action(() => {
 			configWordmove();
+			configResources();
 			configURL();
 		});
 	addScriptCommands();
@@ -576,14 +607,6 @@ program.command('setup')
 	.description('Setup project based on setting on \'setup.yml\' file')
 	.option('--reinstall', 'Reuse settings for previously setup project and ignore if Docker containers are already in use for project <slug>. \'config/setup.yml\' will be used for configuration if \'setup.yml\' is not available.')
 	.action(setup);
-// `setup:theme` command
-program.command('setup:theme <slug>')
-	.description('Download the starter theme and prepare it for use. <slug> will be used to set the name of the theme folder.')
-	.action(setupTheme);
-// `setup:plugin` command
-program.command('setup:block <slug>')
-	.description('Download the starter block and prepare it for use. <slug> will be used to set the name of the block folder.')
-	.action(setupBlock);
 // load settings if executed in a project that's already been set up
 loadProjectSettings();
 if (project.isInstalled) {
