@@ -26,9 +26,6 @@ module.exports = (settings) => `
     }
   },
   "devDependencies": {
-    "copy-dir": "^1.2.0",
-    "copy-concurrently": "^1.0.5",
-    "copy-webpack-plugin": "^5.1.1",
     "js-yaml": "^3.13.1",
     "rimraf": "^3.0.2",
     "webpack": "^4.41.5",

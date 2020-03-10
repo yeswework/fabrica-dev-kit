@@ -19,7 +19,6 @@ module.exports = env => {
 		error(`Error loading project settings file at '${resourcesConfigPath}'`);
 	}
 	const configList = [],
-		copyList = [],
 		wpContentPath = 'www/wp-content/';
 
 	// Compile resource configs
