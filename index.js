@@ -463,31 +463,37 @@ const configResources = project => {
 	}
 
 	// look for resources that haven't got a matching volume configured
-	let allConfigured = true;
+	const isResourceVolume = volume => !/^\.\/(www$|provision\/)/.test(volume.split(':')[0]), 
+		volumes = [];
+	let existsNewVolumes = false,
+		oldVolumes = dockerConfig.services.wp.volumes.filter(isResourceVolume);
 	Object.entries(resources).forEach(([resourceType, resource]) => {
 		if (!resource) {
 			echo(`No ${resourceType} found in the resource file.`);
 			return;
 		}
-		resource.forEach(resourcePath => {
-			const resourceName = resourcePath.replace(/\/$/, '').split('/').pop(),
-				configured = dockerConfig.services.wp.volumes.some(volume => {
-					const volumeData = volume.split(':');
-					return volumeData.length > 1 && volumeData[0] == resourcePath;
-				});
-			if (!configured) {
-				// resource's volume not found: create new volume
-				const destPath = path.resolve('/var/www/html/wp-content/', resourceType, resourceName);
-				echo(`New volume for '${resourcePath}'`);
-				dockerConfig.services.wp.volumes.push(`${resourcePath}:${destPath}`);
-				dockerConfig.services.web.volumes.push(`${resourcePath}:${destPath}`);
-				allConfigured = false;
+		volumes.splice(volumes.length, 0, ...resource.map(sourcePath => {
+			const resourceName = sourcePath.replace(/\/$/, '').split('/').pop(),
+				destPath = path.resolve('/var/www/html/wp-content/', resourceType, resourceName),
+				rest = oldVolumes.filter(volume => volume.split(':')[0] != sourcePath);
+			if (rest.length == oldVolumes.length) {
+				echo(`New volume for '${sourcePath}'`);
+				existsNewVolumes = true;
 			}
-		});
+			oldVolumes = rest;
+			return `${sourcePath}:${destPath}`;
+		}));
 	});
-	if (allConfigured) { return; }
-
+	// no changes if all resources were found in volumes and all volumes found in resources
+	if (!existsNewVolumes && oldVolumes.length == 0) { return; }
+	
 	// there are new volumes: write new Docker Composer configuration and restart containers
+	dockerConfig.services.web.volumes = dockerConfig.services.web.volumes.filter(
+		volume => !isResourceVolume(volume)
+	).concat(volumes);
+	dockerConfig.services.wp.volumes = dockerConfig.services.wp.volumes.filter(
+		volume => !isResourceVolume(volume)
+	).concat(volumes);
 	sh.ShellString(yaml.safeDump(dockerConfig)).to('docker-compose.yml');
 	echo('Bringing Docker containers up to update resources volumes...');
 	if (sh.exec('docker-compose up -d').code !== 0) {
