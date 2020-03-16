@@ -480,6 +480,7 @@ const configResources = project => {
 				const destPath = path.resolve('/var/www/html/wp-content/', resourceType, resourceName);
 				echo(`New volume for '${resourcePath}'`);
 				dockerConfig.services.wp.volumes.push(`${resourcePath}:${destPath}`);
+				dockerConfig.services.web.volumes.push(`${resourcePath}:${destPath}`);
 				allConfigured = false;
 			}
 		});
@@ -488,7 +489,7 @@ const configResources = project => {
 
 	// there are new volumes: write new Docker Composer configuration and restart containers
 	sh.ShellString(yaml.safeDump(dockerConfig)).to('docker-compose.yml');
-	echo('Bringing Docker containers up...');
+	echo('Bringing Docker containers up to update resources volumes...');
 	if (sh.exec('docker-compose up -d').code == 0) {
 		halt('Docker containers failed to start.');
 	}
