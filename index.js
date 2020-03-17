@@ -38,8 +38,7 @@ const halt = message => {
 	warn(message);
 	process.exit(1)
 };
-const wait = (message, callback, delay) => {
-	delay = delay || 500;
+const wait = (message, callback, delay=500) => {
 	return new Promise((resolve, reject) => {
 		console.log();
 		const spinner = ['🕐', '🕑', '🕒', '🕓', '🕔', '🕕', '🕖', '🕗', '🕘', '🕙', '🕚', '🕛'];
@@ -147,6 +146,32 @@ const loadSetupSettings = (reinstall) => {
 	sh.mv(setupSettingsFilename, setupSettingsBakFilename);
 
 	return settings;
+};
+
+const waitForWebContainer = (forcePortCheck=false) => {
+	let startTime = Date.now(), getting = false, webPort;
+	return wait(`Waiting for 'web' container...`, stopWaitInterval => {
+		// get port dynamically assigned by Docker to expose web container's port 80
+		webPort = forcePortCheck ? getWebPort(true) : (webPort || getWebPort());
+		if (webPort && !getting) {
+			// check if WordPress is already available at the expected URL
+			getting = true;
+			http.get(`http://localhost:${webPort}/wp-admin/install.php`, response => {
+				getting = false;
+				if (response.statusCode == '200') {
+					// container is up
+					stopWaitInterval(true);
+				}
+			}).on('error', error => {
+				// ignore errors (container still not up)
+				getting = false;
+			});
+		}
+		if (Date.now() - startTime > WAIT_WP_CONTAINER_TIMEOUT) {
+			// timeout
+			stopWaitInterval(false);
+		}
+	});
 };
 
 // create and copy project folders
@@ -301,30 +326,8 @@ const startContainersAndInstall = settings => {
 		halt('Docker containers provision failed.');
 	}
 
-	// wait until `wp` container is up to install WordPress
-	let startTime = Date.now(), getting = false, webPort;
-	wait(`Waiting for '${settings['slug']}_wp' container...`, stopWaitInterval => {
-		// get port dynamically assigned by Docker to expose web container's port 80
-		webPort = webPort || getWebPort();
-		if (webPort && !getting) {
-			// check if WordPress is already available at the expected URL
-			getting = true;
-			http.get(`http://localhost:${webPort}/wp-admin/install.php`, response => {
-				getting = false;
-				if (response.statusCode == '200') {
-					// container is up
-					stopWaitInterval(true);
-				}
-			}).on('error', error => {
-				// ignore errors (container still not up)
-				getting = false;
-			});
-		}
-		if (Date.now() - startTime > WAIT_WP_CONTAINER_TIMEOUT) {
-			// timeout
-			stopWaitInterval(false);
-		}
-	}).then(success => {
+	// wait until `web` container is up to install WordPress
+	waitForWebContainer().then(success => {
 		// wait is over: containers are up or timeout has expired
 		if (!success) {
 			halt(`More than ${WAIT_WP_CONTAINER_TIMEOUT / 1000} seconds elapsed while waiting for WordPress container to start.`);
@@ -344,8 +347,8 @@ const startContainersAndInstall = settings => {
 }
 
 // Get current web Docker container automatically assigned port
-const getWebPort = () => {
-	if (project && project.webPort) { return project.webPort; }
+const getWebPort = (force=false) => {
+	if (!force && project && project.webPort) { return project.webPort; }
 
 	const webPort = execGet('docker-compose port web 80').replace(/^.*:(\d+)$/g, '$1');
 	if (project) {
@@ -452,7 +455,7 @@ const configURL = () => {
 };
 
 // Check if there are any new resources and add paths accordingly to `docker-compose.yml` volumes
-const configResources = project => {
+const configResources = (project, callback) => {
 	let resources, dockerConfig;
 	try {
 		resources = yaml.safeLoad(sh.cat(`./resources/${project || 'index'}.yml`));
@@ -467,6 +470,10 @@ const configResources = project => {
 		volumes = [];
 	let existsNewVolumes = false,
 		oldVolumes = dockerConfig.services.wp.volumes.filter(isResourceVolume);
+	if (!resources || resources.length == 0) {
+		warn('No resources found in the resource file.');
+		return;
+	}
 	Object.entries(resources).forEach(([resourceType, resource]) => {
 		if (!resource) {
 			echo(`No ${resourceType} found in the resource file.`);
@@ -485,9 +492,13 @@ const configResources = project => {
 		}));
 	});
 	// no changes if all resources were found in volumes and all volumes found in resources
-	if (!existsNewVolumes && oldVolumes.length == 0) { return; }
+	if (!existsNewVolumes && oldVolumes.length == 0) {
+		callback();
+		return;
+	}
 	
 	// there are new volumes: write new Docker Composer configuration and restart containers
+	let webPort = getWebPort();
 	dockerConfig.services.web.volumes = dockerConfig.services.web.volumes.filter(
 		volume => !isResourceVolume(volume)
 	).concat(volumes);
@@ -499,6 +510,7 @@ const configResources = project => {
 	if (sh.exec('docker-compose up -d').code !== 0) {
 		halt('Docker containers failed to start.');
 	}
+	waitForWebContainer(true).then(callback);
 }
 
 // Update Wordmove `Movefile` with web container port and project settings
@@ -584,10 +596,9 @@ const addProjectCommands = () => {
 		.action(configWordmove);
 	program.command('config:all [project]')
 		.description('Run all project configuration tasks (config:url, config:wordmove and config:resources)')
-		.action(() => {
+		.action((project) => {
 			configWordmove();
-			configResources();
-			configURL();
+			configResources(project, configURL);
 		});
 	addScriptCommands();
 };

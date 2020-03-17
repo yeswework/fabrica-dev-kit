@@ -2,8 +2,3 @@ plugins:
 # - ./src/fdk-starter-plugin
 themes:
 # - ./src/fdk-starter-theme
-# - path: ./src/custom-theme
-#   glob: 'result/**'
-#   ignore: [{dot: true, glob: ignoreme/**}]
-#   noWatch: [vendor]
-
