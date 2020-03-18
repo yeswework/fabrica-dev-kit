@@ -455,7 +455,7 @@ const configURL = () => {
 };
 
 // Check if there are any new resources and add paths accordingly to `docker-compose.yml` volumes
-const configResources = (project, callback) => {
+const configResources = (project) => {
 	let resources, dockerConfig;
 	try {
 		resources = yaml.safeLoad(sh.cat(`./resources/${project || 'index'}.yml`));
@@ -498,7 +498,6 @@ const configResources = (project, callback) => {
 	}
 	
 	// there are new volumes: write new Docker Composer configuration and restart containers
-	let webPort = getWebPort();
 	dockerConfig.services.web.volumes = dockerConfig.services.web.volumes.filter(
 		volume => !isResourceVolume(volume)
 	).concat(volumes);
@@ -510,7 +509,8 @@ const configResources = (project, callback) => {
 	if (sh.exec('docker-compose up -d').code !== 0) {
 		halt('Docker containers failed to start.');
 	}
-	waitForWebContainer(true).then(callback);
+	
+	return waitForWebContainer(true);
 }
 
 // Update Wordmove `Movefile` with web container port and project settings
@@ -598,7 +598,8 @@ const addProjectCommands = () => {
 		.description('Run all project configuration tasks (config:url, config:wordmove and config:resources)')
 		.action((project) => {
 			configWordmove();
-			configResources(project, configURL);
+			configResources(project)
+			.then(configURL);
 		});
 	addScriptCommands();
 };
