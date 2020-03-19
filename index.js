@@ -493,8 +493,7 @@ const configResources = (project) => {
 	});
 	// no changes if all resources were found in volumes and all volumes found in resources
 	if (!existsNewVolumes && oldVolumes.length == 0) {
-		callback();
-		return;
+		return new Promise(resolve => resolve()); // containers unchanged: no need to wait for new port
 	}
 	
 	// there are new volumes: write new Docker Composer configuration and restart containers
@@ -509,7 +508,7 @@ const configResources = (project) => {
 	if (sh.exec('docker-compose up -d').code !== 0) {
 		halt('Docker containers failed to start.');
 	}
-	
+
 	return waitForWebContainer(true);
 }
 
