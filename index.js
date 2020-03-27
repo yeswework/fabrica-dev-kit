@@ -512,32 +512,42 @@ const configResources = (project) => {
 	return waitForWebContainer(true);
 }
 
-// Update Wordmove `Movefile` with web container port and project settings
-const configWordmove = () => {
-	const siteURL = getSiteURL();
-	if (siteURL.indexOf('localhost:') < 0 && siteURL.indexOf('127.0.0.1:') < 0) {
-		echo('Wordmove configuration file \'Movefile\' not generated because this is a multisite project');
-		return;
+// Upload resources built files to server
+const deploy = () => {
+	const buildExcludesParams = (excludes) => {
+		if (!excludes) { return ''; }
+		return '--exclude-glob ' + (excludes).join(' --exclude-glob ');
 	}
 
-	// Load Wordmove settings file
 	try {
-		var wordmove = yaml.safeLoad(sh.cat('./config/wordmove.yml')) || {};
-		wordmove.local = wordmove.local || {};
-		wordmove.local.vhost = `localhost:${getWebPort()}`;
-		wordmove.local.wordpress_path = path.resolve(`${__dirname}/www/`);
-		wordmove.local.database = wordmove.local.database || {};
-		wordmove.local.database.name = 'wordpress';
-		wordmove.local.database.user = 'wordpress';
-		wordmove.local.database.password = 'wordpress';
-		wordmove.local.database.host = '127.0.0.1';
-		wordmove.local.database.port = getDBPort();
-		sh.ShellString(yaml.safeDump(wordmove)).to('Movefile');
+		const config = yaml.safeLoad(sh.cat('./config/deploy.yml')) || {},
+			excludes = buildExcludesParams(config.exclude);
+		for (let resource of config.resources) {
+			// check resource path
+			if (!resource.path) { continue; }
+			const name = resource.path.replace(/\/$/, '').split('/').pop(),
+				ftp = resource.ftp;
+			if (!sh.test('-d', resource.path)) {
+				warn(`Path for resource '${name}' not found`);
+				continue;
+			}
+			echo(`Deploying resource '${name}' to '${ftp.host}'...`);
+			
+			const distignorePath = path.join(resource.path, '.distignore'),
+				distignore = sh.test('-f', distignorePath) ? buildExcludesParams(sh.cat(distignorePath).split('\n')) : '';
+			let command = ftp.commands ? ftp.commands.join('; ') + '; ' : '';
+			
+			// open command
+			command += `open -u ${ftp.user}${ftp.password ? `,${ftp.password}` : ''}`;
+			command += `${ftp.port ? ` -p ${ftp.port}` : ''} ${ftp.host}; `;
+			
+			// mirror command
+			command += `mirror --reverse --only-newer --parallel=5 --verbose=1 ${excludes} ${distignore} ${resource.path} ${path.join(resource.ftp.path || '', `wp-content/${resource.type}s/${name}`)}`;
+			spawn('lftp', ['-c', command], {stdio: 'inherit'});
+		}
 	} catch (ex) {
-		warn('Error generating Movefile:', ex);
+		warn('Error deploying: ' + ex);
 	}
-
-	echo('Wordmove configuration file \'Movefile\' updated');
 }
 
 // check if FDK is being executed inside a project that's already been setup and load its settings
@@ -590,16 +600,15 @@ const addProjectCommands = () => {
 	program.command('config:resources [project]')
 		.description('Configure Docker volumes to match paths in resources settings if there new resources. Resources settings to be loaded can be set with <project> (default is \'index\')')
 		.action(configResources);
-	program.command('config:wordmove')
-		.description('Automatically create Wordmove configuration file \'Movefile\' based on project settings and Docker\'s web and DB containers\' ports')
-		.action(configWordmove);
 	program.command('config:all [project]')
-		.description('Run all project configuration tasks (config:url, config:wordmove and config:resources)')
+		.description('Run all project configuration tasks (config:url and config:resources)')
 		.action((project) => {
-			configWordmove();
 			configResources(project)
 			.then(configURL);
 		});
+	program.command('deploy')
+		.description(`Deploy resources to server according to configuration in 'config/deploy.yml' file. Files and folders matching patterns in resource '.distignore' file will be ignored`)
+		.action(deploy);
 	addScriptCommands();
 };
 

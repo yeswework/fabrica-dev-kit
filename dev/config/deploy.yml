@@ -1,0 +1,30 @@
+# Deploy configuration
+
+# default exclude patterns. files matching these patterns will be excluded in every resource. if you want to add files to exclude to a specific resource you can use the file `.distignore` at the root of the resource
+exclude:
+  - src/*
+  - tmp/*
+  - bin/*
+  - node_modules/*
+  - .git/*
+  - .gitignore
+  - .gitmodules
+  - .distignore
+  - .DS_Store
+  - webpack.config.js
+  - package.json
+  - package-lock.json
+
+# configuration for each resource to be deployed. resources' content will be uploaded to `wp-content/<type>/<resource_name>`
+resources:
+# - path:
+#   type: # plugin or theme
+#   ftp:
+#     user:
+#     password: # optional (will be prompted if not set)
+#     scheme: "ftps" # optional (default "ftp")
+#     host:
+#     port: "3308" # optional (for exotic configs)
+#     path: # wordpress root folder path in the server
+#     commands: # optional list of lftp commands to run before uploading
+    - # eg. set cmd:fail-exit true

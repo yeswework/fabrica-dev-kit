@@ -16,7 +16,8 @@ module.exports = (settings) => `
   },
   "fabrica_dev_kit": {
     "scripts_info": {
-      "run": "Run 'gulp'. Default task will watch and process source files.",
+      "start": "Run 'webpack' in development mode. All available resources 'webpack' configurations and loaded, and changed files are watched.",
+      "build": "Run 'webpack' in production mode and build source for all available resources 'webpack' configurations.",
       "dc": "Run 'docker-compose', eg. 'fdk dc ps'.",
       "sh": "Start shell on WP container.",
       "shroot": "Start shell as root on WP container.",
