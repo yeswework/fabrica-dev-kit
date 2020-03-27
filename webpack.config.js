@@ -26,15 +26,15 @@ module.exports = projectPath => (env=[]) => {
 		defaultOutputPath = path.resolve(projectPath, 'build');
 	let foundResources = false;
 	Object.entries(resources).forEach(([resourceType, resource]) => {
-
 		if (!resource) {
 			echo(`No ${resourceType} found in the resource file.`);
 			return;
 		}
 
 		// Process each resource config
-		resource.forEach(resourcePath => {
-			const resourceName = resourcePath.replace(/\/$/, '').split('/').pop(),
+		resource.forEach(data => {
+			const resourcePath = typeof data === 'object' ? data.path : data,
+				resourceName = resourcePath.replace(/\/$/, '').split('/').pop(),
 				sourcePath = path.resolve(projectPath, resourcePath),
 				sourceConfigPath = path.resolve(sourcePath, 'webpack.config.js');
 			echo(`Processing ${resourceType}: ${resourceName}`);

@@ -29,10 +29,10 @@ const VERSION = execGet('npm list fabrica-dev-kit --depth=0 -g').replace(/^[^@]*
 
 // output functions
 const echo = (message, icon='🏭') => {
-	console.log(`\x1b[7m[Fabrica]\x1b[27m ${icon}  ${message}`);
+	console.log(`\x1b[7m[FDK]\x1b[27m ${icon}  ${message}`);
 };
 const warn = message => {
-	console.error(`\x1b[1m\x1b[41m[Fabrica]\x1b[0m ⚠️  ${message}`);
+	console.error(`\x1b[1m\x1b[41m[FDK]\x1b[0m ⚠️  ${message}`);
 }
 const halt = message => {
 	warn(message);
@@ -54,7 +54,7 @@ const wait = (message, callback, delay=500) => {
 			process.stdout.clearLine();
 			process.stdout.cursorTo(0);
 			// write with no line change
-			process.stdout.write(`\x1b[7m[Fabrica]\x1b[27m ${spinner[waitcounter % 12]}  ${message}`);
+			process.stdout.write(`\x1b[7m[FDK]\x1b[27m ${spinner[waitcounter % 12]}  ${message}`);
 			callback(stopWaitInterval);
 			waitcounter++;
 			// send callback a closure to stop the interval timer
@@ -455,10 +455,10 @@ const configURL = () => {
 };
 
 // Check if there are any new resources and add paths accordingly to `docker-compose.yml` volumes
-const configResources = (project) => {
+const configResources = (project='index') => {
 	let resources, dockerConfig;
 	try {
-		resources = yaml.safeLoad(sh.cat(`./resources/${project || 'index'}.yml`));
+		resources = yaml.safeLoad(sh.cat(`./resources/${project}.yml`));
 		dockerConfig = yaml.safeLoad(sh.cat(`./docker-compose.yml`));
 	} catch (ex) {
 		warn(`Error loading 'docker-compose.yml' or project settings file at '${resourcesConfigPath}'`);
@@ -479,8 +479,9 @@ const configResources = (project) => {
 			echo(`No ${resourceType} found in the resource file.`);
 			return;
 		}
-		volumes.splice(volumes.length, 0, ...resource.map(sourcePath => {
-			const resourceName = sourcePath.replace(/\/$/, '').split('/').pop(),
+		volumes.splice(volumes.length, 0, ...resource.map(data => {
+			const sourcePath = typeof data === 'object' ? data.path : data,
+				resourceName = sourcePath.replace(/\/$/, '').split('/').pop(),
 				destPath = path.resolve('/var/www/html/wp-content/', resourceType, resourceName),
 				rest = oldVolumes.filter(volume => volume.split(':')[0] != sourcePath);
 			if (rest.length == oldVolumes.length) {
@@ -513,38 +514,40 @@ const configResources = (project) => {
 }
 
 // Upload resources built files to server
-const deploy = () => {
+const deploy = (project='index') => {
 	const buildExcludesParams = (excludes) => {
 		if (!excludes) { return ''; }
 		return '--exclude-glob ' + (excludes).join(' --exclude-glob ');
 	}
 
 	try {
-		const config = yaml.safeLoad(sh.cat('./config/deploy.yml')) || {},
-			excludes = buildExcludesParams(config.exclude);
-		for (let resource of config.resources) {
-			// check resource path
-			if (!resource.path) { continue; }
-			const name = resource.path.replace(/\/$/, '').split('/').pop(),
-				ftp = resource.ftp;
-			if (!sh.test('-d', resource.path)) {
-				warn(`Path for resource '${name}' not found`);
-				continue;
+		const config = yaml.safeLoad(sh.cat(`./resources/${project}.yml`)) || {};
+		Object.entries(config).forEach(([resourceType, resources]) => {
+			if (!resources) { return; }
+			for (let resource of resources) {
+				if (typeof resource !== 'object' || !resource.ftp) { continue; }
+				const name = resource.path.replace(/\/$/, '').split('/').pop(),
+					ftp = resource.ftp;
+				if (!sh.test('-d', resource.path)) {
+					warn(`Path for resource '${name}' not found`);
+					continue;
+				}
+				echo(`Deploying resource '${name}' to '${ftp.host}'...`);
+				
+				// file patterns to exclude
+				const distignorePath = path.join(resource.path, '.distignore'),
+					ignore = sh.test('-f', distignorePath) ? buildExcludesParams(sh.cat(distignorePath).split('\n')) : '';
+				let command = ftp.commands ? ftp.commands.join('; ') + '; ' : '';
+				
+				// open command
+				command += `open -u ${ftp.user}${ftp.password ? `,${ftp.password}` : ''}`;
+				command += `${ftp.port ? ` -p ${ftp.port}` : ''} ${ftp.host}; `;
+				
+				// mirror command
+				command += `mirror --reverse --only-newer --parallel=5 --verbose=1 ${ignore} ${resource.path} ${path.join(resource.ftp.path || '', `wp-content/${resourceType}/${name}`)}`;
+				spawn('lftp', ['-c', command], {stdio: 'inherit'});
 			}
-			echo(`Deploying resource '${name}' to '${ftp.host}'...`);
-			
-			const distignorePath = path.join(resource.path, '.distignore'),
-				distignore = sh.test('-f', distignorePath) ? buildExcludesParams(sh.cat(distignorePath).split('\n')) : '';
-			let command = ftp.commands ? ftp.commands.join('; ') + '; ' : '';
-			
-			// open command
-			command += `open -u ${ftp.user}${ftp.password ? `,${ftp.password}` : ''}`;
-			command += `${ftp.port ? ` -p ${ftp.port}` : ''} ${ftp.host}; `;
-			
-			// mirror command
-			command += `mirror --reverse --only-newer --parallel=5 --verbose=1 ${excludes} ${distignore} ${resource.path} ${path.join(resource.ftp.path || '', `wp-content/${resource.type}s/${name}`)}`;
-			spawn('lftp', ['-c', command], {stdio: 'inherit'});
-		}
+		});
 	} catch (ex) {
 		warn('Error deploying: ' + ex);
 	}
@@ -606,7 +609,7 @@ const addProjectCommands = () => {
 			configResources(project)
 			.then(configURL);
 		});
-	program.command('deploy')
+	program.command('deploy [project]')
 		.description(`Deploy resources to server according to configuration in 'config/deploy.yml' file. Files and folders matching patterns in resource '.distignore' file will be ignored`)
 		.action(deploy);
 	addScriptCommands();
