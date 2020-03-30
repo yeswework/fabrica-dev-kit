@@ -120,14 +120,14 @@ const loadSetupSettings = (reinstall) => {
 	// load default, user and project/site settings, in that order
 	mergeSettings(`${process.env.HOME}/.fabrica/settings.yml`);
 	const setupSettingsFilename = './setup.yml',
-		setupSettingsBakFilename = './config/setup.yml';
+		setupSettingsBakFilename = './.setup.yml';
 	if (!sh.test('-f', setupSettingsFilename)) {
 		if (settings.reinstall && sh.test('-f', setupSettingsBakFilename)) {
 			sh.mv(setupSettingsBakFilename, setupSettingsFilename);
 		} else if (settings.reinstall) {
-			halt('Could not find \'setup.yml\' or \'config/setup.yml\' to reinstall project. Please use the \'fdk init <slug>\' command to create a new project folder and \'setup.yml\'.');
+			halt('Could not find \'setup.yml\' or \'.setup.yml\' to reinstall project. Please use the \'fdk init <slug>\' command to create a new project folder and \'setup.yml\'.');
 		} else {
-			halt('Could not find \'setup.yml\'. Please use the \'fdk init <slug>\' command to create a new project folder and \'setup.yml\'. If the current project has been set up previously, you can run \'fdk setup --reinstall\' and \'config/setup.yml\' will be used to bring the Docker containers back up and reconfigure them.');
+			halt('Could not find \'setup.yml\'. Please use the \'fdk init <slug>\' command to create a new project folder and \'setup.yml\'. If the current project has been set up previously, you can run \'fdk setup --reinstall\' and \'.setup.yml\' will be used to bring the Docker containers back up and reconfigure them.');
 		}
 	}
 	mergeSettings(setupSettingsFilename);
@@ -205,7 +205,7 @@ const createFolders = settings => {
 	} else {
 		// working on an existing project
 		let projectSettings = JSON.parse(sh.cat('package.json'));
-		echo('Existing project \'package.json\' found. Overriding the following settings in \'setup.yml\' with those in this file  (old \'setup.yml\' value → new value):');
+		echo('Existing project \'package.json\' found. Overriding the following settings in \'setup.yml\' with those in this file  (old \'.setup.yml\' value → new value):');
 		let keys = {name: 'slug', description: 'title'};
 		const simpleDiff = (value1, value2) => {
 			if (value1 == value2) {
@@ -555,7 +555,7 @@ const deploy = (project='index') => {
 
 // check if FDK is being executed inside a project that's already been setup and load its settings
 const loadProjectSettings = () => {
-	let rootDir = findup('config/setup.yml', { cwd: process.cwd() });
+	let rootDir = findup('.setup.yml', { cwd: process.cwd() });
 	if (!rootDir) { return; }
 
 	rootDir = path.normalize(path.join(path.dirname(rootDir), '..'));
@@ -601,7 +601,7 @@ const addProjectCommands = () => {
 		.description('Update URLs in DB to match changes to WP container port set automatically by Docker (except for multisite projects, where a custom local host/domain is used). Output current access URLs and ports')
 		.action(configURL);
 	program.command('config:resources [project]')
-		.description('Configure Docker volumes to match paths in resources settings if there new resources. Resources settings to be loaded can be set with <project> (default is \'index\')')
+		.description(`Configure Docker volumes to match resources' paths in the 'resources/<project>.yml' settings file if there are new resources. If no <project> is passed, 'resources/index.yml' is opened by default`)
 		.action(configResources);
 	program.command('config:all [project]')
 		.description('Run all project configuration tasks (config:url and config:resources)')
@@ -610,7 +610,7 @@ const addProjectCommands = () => {
 			.then(configURL);
 		});
 	program.command('deploy [project]')
-		.description(`Deploy resources to server according to configuration in 'config/deploy.yml' file. Files and folders matching patterns in resource '.distignore' file will be ignored`)
+		.description(`Deploy resources to server according to configuration in 'resources/<project>.yml' file. If no <project> is passed, 'resources/index.yml' is opened by default. Files and folders matching patterns in resource '.distignore' file will be ignored`)
 		.action(deploy);
 	addScriptCommands();
 };
@@ -635,7 +635,7 @@ program.command('init [slug]')
 // `setup` command
 program.command('setup')
 	.description('Setup project based on setting on \'setup.yml\' file')
-	.option('--reinstall', 'Reuse settings for previously setup project and ignore if Docker containers are already in use for project <slug>. \'config/setup.yml\' will be used for configuration if \'setup.yml\' is not available.')
+	.option('--reinstall', 'Reuse settings for previously setup project and ignore if Docker containers are already in use for project <slug>. \'.setup.yml\' will be used for configuration if \'setup.yml\' is not available.')
 	.action(setup);
 // load settings if executed in a project that's already been set up
 loadProjectSettings();
