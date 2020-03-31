@@ -142,7 +142,6 @@ const loadSetupSettings = (reinstall) => {
 	}
 
  	// move/backup 'setup.yml'
-	sh.mkdir('-p', 'config');
 	sh.mv(setupSettingsFilename, setupSettingsBakFilename);
 
 	return settings;
@@ -456,12 +455,12 @@ const configURL = () => {
 
 // Check if there are any new resources and add paths accordingly to `docker-compose.yml` volumes
 const configResources = (project='index') => {
-	let resources, dockerConfig;
+	let resourcesConfig, dockerConfig;
 	try {
-		resources = yaml.safeLoad(sh.cat(`./resources/${project}.yml`));
+		resourcesConfig = yaml.safeLoad(sh.cat(`./resources/${project}.yml`));
 		dockerConfig = yaml.safeLoad(sh.cat(`./docker-compose.yml`));
 	} catch (ex) {
-		warn(`Error loading 'docker-compose.yml' or project settings file at '${resourcesConfigPath}'`);
+		warn(`Error loading 'docker-compose.yml' or project settings file at './resources/${project}.yml'`);
 		return;
 	}
 
@@ -470,16 +469,16 @@ const configResources = (project='index') => {
 		volumes = [];
 	let existsNewVolumes = false,
 		oldVolumes = dockerConfig.services.wp.volumes.filter(isResourceVolume);
-	if (!resources || resources.length == 0) {
+	if (!resourcesConfig || resourcesConfig.length == 0) {
 		warn('No resources found in the resource file.');
 		return;
 	}
-	Object.entries(resources).forEach(([resourceType, resource]) => {
-		if (!resource) {
+	Object.entries(resourcesConfig).forEach(([resourceType, resources]) => {
+		if (!resources) {
 			echo(`No ${resourceType} found in the resource file.`);
 			return;
 		}
-		volumes.splice(volumes.length, 0, ...resource.map(data => {
+		volumes.splice(volumes.length, 0, ...resources.map(data => {
 			const sourcePath = typeof data === 'object' ? data.path : data,
 				resourceName = sourcePath.replace(/\/$/, '').split('/').pop(),
 				destPath = path.resolve('/var/www/html/wp-content/', resourceType, resourceName),
@@ -521,8 +520,8 @@ const deploy = (project='index') => {
 	}
 
 	try {
-		const config = yaml.safeLoad(sh.cat(`./resources/${project}.yml`)) || {};
-		Object.entries(config).forEach(([resourceType, resources]) => {
+		const resourcesConfig = yaml.safeLoad(sh.cat(`./resources/${project}.yml`)) || {};
+		Object.entries(resourcesConfig).forEach(([resourceType, resources]) => {
 			if (!resources) { return; }
 			for (let resource of resources) {
 				if (typeof resource !== 'object' || !resource.ftp) { continue; }
@@ -558,7 +557,7 @@ const loadProjectSettings = () => {
 	let rootDir = findup('.setup.yml', { cwd: process.cwd() });
 	if (!rootDir) { return; }
 
-	rootDir = path.normalize(path.join(path.dirname(rootDir), '..'));
+	rootDir = path.normalize(path.dirname(rootDir));
 	if (!sh.test('-f', `${rootDir}/docker-compose.yml`)
 		|| !sh.test('-f', `${rootDir}/package.json`)) { return; }
 
