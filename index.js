@@ -555,7 +555,12 @@ const deploy = (project='index') => {
 // check if FDK is being executed inside a project that's already been setup and load its settings
 const loadProjectSettings = () => {
 	let rootDir = findup('.setup.yml', { cwd: process.cwd() });
-	if (!rootDir) { return; }
+	if (!rootDir) {
+		rootDir = findup('config/setup.yml', { cwd: process.cwd() });
+		if (!rootDir) { return; }
+		rootDir = path.join(rootDir, '..');
+		project.version = 2; // set up with previous FDK version
+	}
 
 	rootDir = path.normalize(path.dirname(rootDir));
 	if (!sh.test('-f', `${rootDir}/docker-compose.yml`)
@@ -568,6 +573,7 @@ const loadProjectSettings = () => {
 	}
 
 	project.isInstalled = true;
+	project.version = project.version || 3;
 	project.rootDir = rootDir;
 	project.package = require(`${rootDir}/package.json`);
 	project.slug = project.package.name;
@@ -596,21 +602,23 @@ const addScriptCommands = () => {
 const addProjectCommands = () => {
 	if (!project.isInstalled) { return; }
 
-	program.command('config:url')
-		.description('Update URLs in DB to match changes to WP container port set automatically by Docker (except for multisite projects, where a custom local host/domain is used). Output current access URLs and ports')
-		.action(configURL);
-	program.command('config:resources [project]')
-		.description(`Configure Docker volumes to match resources' paths in the 'resources/<project>.yml' settings file if there are new resources. If no <project> is passed, 'resources/index.yml' is opened by default`)
-		.action(configResources);
-	program.command('config:all [project]')
-		.description('Run all project configuration tasks (config:url and config:resources)')
-		.action((project) => {
-			configResources(project)
-			.then(configURL);
-		});
-	program.command('deploy [project]')
-		.description(`Deploy resources to server according to configuration in 'resources/<project>.yml' file. If no <project> is passed, 'resources/index.yml' is opened by default. Files and folders matching patterns in resource '.distignore' file will be ignored`)
-		.action(deploy);
+	if (project.version >= 3) {
+		program.command('config:url')
+			.description('Update URLs in DB to match changes to WP container port set automatically by Docker (except for multisite projects, where a custom local host/domain is used). Output current access URLs and ports')
+			.action(configURL);
+		program.command('config:resources [project]')
+			.description(`Configure Docker volumes to match resources' paths in the 'resources/<project>.yml' settings file if there are new resources. If no <project> is passed, 'resources/index.yml' is opened by default`)
+			.action(configResources);
+		program.command('config:all [project]')
+			.description('Run all project configuration tasks (config:url and config:resources)')
+			.action((project) => {
+				configResources(project)
+				.then(configURL);
+			});
+		program.command('deploy [project]')
+			.description(`Deploy resources to server according to configuration in 'resources/<project>.yml' file. If no <project> is passed, 'resources/index.yml' is opened by default. Files and folders matching patterns in resource '.distignore' file will be ignored`)
+			.action(deploy);
+	}
 	addScriptCommands();
 };
 
