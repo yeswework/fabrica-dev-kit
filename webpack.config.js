@@ -11,10 +11,10 @@ const error = (message, halt = true) => {
 
 module.exports = projectPath => (env=[]) => {
 	// Set up
-	let resources;
-	const resourcesConfigPath = path.resolve(projectPath, `resources/${env.fdk_project || 'index'}.yml`);
+	let resourcesConfig;
+	const resourcesConfigPath = path.resolve(projectPath, `config.yml`);
 	try {
-		resources = yaml.safeLoad(fs.readFileSync(resourcesConfigPath));
+		resourcesConfig = yaml.safeLoad(fs.readFileSync(resourcesConfigPath))[env.fdk_project || 'default'];
 	} catch (ex) {
 		error(`Error loading project settings file at '${resourcesConfigPath}'`);
 	}
@@ -25,15 +25,16 @@ module.exports = projectPath => (env=[]) => {
 	const defaultEntryIndex = path.resolve(projectPath, 'src/index.js'),
 		defaultOutputPath = path.resolve(projectPath, 'build');
 	let foundResources = false;
-	Object.entries(resources).forEach(([resourceType, resource]) => {
-		if (!resource) {
-			echo(`No ${resourceType} found in the resource file.`);
+	['plugins', 'themes'].forEach(resourceType => {
+		const resources = resourcesConfig[resourceType];
+		if (!resources) {
+			echo(`No ${resourceType} found in the config file.`);
 			return;
 		}
 
 		// Process each resource config
-		resource.forEach(data => {
-			const resourcePath = typeof data === 'object' ? data.path : data,
+		resources.forEach(resource => {
+			const resourcePath = typeof resource === 'object' ? resource.path : resource,
 				resourceName = resourcePath.replace(/\/$/, '').split('/').pop(),
 				sourcePath = path.resolve(projectPath, resourcePath),
 				sourceConfigPath = path.resolve(sourcePath, 'webpack.config.js');
@@ -68,12 +69,12 @@ module.exports = projectPath => (env=[]) => {
 	});
 
 	if (!foundResources) {
-		warn(`No resources found in the resource file. Setup resources to import in ${resourcesConfigPath}.`);
+		warn(`No resources found in the config file. Setup resources to import in ${resourcesConfigPath}.`);
 	}
 
 	// Add extra config to copy all compiled files into active WP installation
 	configList.push({
-		entry: path.resolve(projectPath, 'resources/index.js'),
+		entry: path.resolve(projectPath, 'index.js'),
 		output: { path: path.resolve(projectPath, wpContentPath) },
 	});
 

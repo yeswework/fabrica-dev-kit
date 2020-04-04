@@ -298,7 +298,7 @@ let installWordPress = (webPort, settings) => {
 		}
 
 		// the site will be ready to run and develop locally
-		echo('Setup complete. To develop locally, setup the resources to import automatically in \'resources/index.yml\' and run \'fdk start\'.');
+		echo('Setup complete. To develop locally, setup the resources to import automatically in \'config.yml\' and run \'fdk start\'.');
 	});
 }
 
@@ -454,13 +454,13 @@ const configURL = () => {
 };
 
 // Check if there are any new resources and add paths accordingly to `docker-compose.yml` volumes
-const configResources = (project='index') => {
+const configResources = (project='default') => {
 	let resourcesConfig, dockerConfig;
 	try {
-		resourcesConfig = yaml.safeLoad(sh.cat(`./resources/${project}.yml`));
+		resourcesConfig = yaml.safeLoad(sh.cat(`./config.yml`))[project];
 		dockerConfig = yaml.safeLoad(sh.cat(`./docker-compose.yml`));
 	} catch (ex) {
-		warn(`Error loading 'docker-compose.yml' or project settings file at './resources/${project}.yml'`);
+		warn(`Error loading 'docker-compose.yml' or 'config.yml'`);
 		return;
 	}
 
@@ -470,12 +470,13 @@ const configResources = (project='index') => {
 	let existsNewVolumes = false,
 		oldVolumes = dockerConfig.services.wp.volumes.filter(isResourceVolume);
 	if (!resourcesConfig || resourcesConfig.length == 0) {
-		warn('No resources found in the resource file.');
+		warn('No resources found in the config file.');
 		return;
 	}
-	Object.entries(resourcesConfig).forEach(([resourceType, resources]) => {
+	['plugins', 'themes'].forEach(resourceType => {
+		const resources = resourcesConfig[resourceType];
 		if (!resources) {
-			echo(`No ${resourceType} found in the resource file.`);
+			echo(`No ${resourceType} found in the config file.`);
 			return;
 		}
 		volumes.splice(volumes.length, 0, ...resources.map(data => {
@@ -513,20 +514,25 @@ const configResources = (project='index') => {
 }
 
 // Upload resources built files to server
-const deploy = (project='index') => {
+const deploy = (project='default') => {
 	const buildExcludesParams = (excludes) => {
 		if (!excludes) { return ''; }
 		return '--exclude-glob ' + (excludes).join(' --exclude-glob ');
 	}
 
 	try {
-		const resourcesConfig = yaml.safeLoad(sh.cat(`./resources/${project}.yml`)) || {};
-		Object.entries(resourcesConfig).forEach(([resourceType, resources]) => {
+		const resourcesConfig = yaml.safeLoad(sh.cat(`./config.yml`))[project],
+			ftp = resourcesConfig.ftp;
+		if (!resourcesConfig || !ftp) {
+			warn('Settings for FTP upload not found');
+			return;
+		}
+		['plugins', 'themes'].forEach(resourceType => {
+			const resources = resourcesConfig[resourceType];
 			if (!resources) { return; }
 			for (let resource of resources) {
 				if (typeof resource !== 'object' || !resource.ftp) { continue; }
-				const name = resource.path.replace(/\/$/, '').split('/').pop(),
-					ftp = resource.ftp;
+				const name = resource.path.replace(/\/$/, '').split('/').pop();
 				if (!sh.test('-d', resource.path)) {
 					warn(`Path for resource '${name}' not found`);
 					continue;
@@ -607,7 +613,7 @@ const addProjectCommands = () => {
 			.description('Update URLs in DB to match changes to WP container port set automatically by Docker (except for multisite projects, where a custom local host/domain is used). Output current access URLs and ports')
 			.action(configURL);
 		program.command('config:resources [project]')
-			.description(`Configure Docker volumes to match resources' paths in the 'resources/<project>.yml' settings file if there are new resources. If no <project> is passed, 'resources/index.yml' is opened by default`)
+			.description(`Configure Docker volumes to match resources' paths in the 'config.yml' settings file if there are new resources under <project>. If no <project> is passed,  resources under 'default' will be checked`)
 			.action(configResources);
 		program.command('config:all [project]')
 			.description('Run all project configuration tasks (config:url and config:resources)')
@@ -616,7 +622,7 @@ const addProjectCommands = () => {
 				.then(configURL);
 			});
 		program.command('deploy [project]')
-			.description(`Deploy resources to server according to configuration in 'resources/<project>.yml' file. If no <project> is passed, 'resources/index.yml' is opened by default. Files and folders matching patterns in resource '.distignore' file will be ignored`)
+			.description(`Deploy resources to server according to configuration in 'config.yml' file. If no <project> is passed, settings under 'default' will be loaded. Files and folders matching patterns in resource '.distignore' file will be ignored`)
 			.action(deploy);
 	}
 	addScriptCommands();

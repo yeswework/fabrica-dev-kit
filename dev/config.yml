@@ -1,0 +1,20 @@
+default:
+  plugins:
+#   - ./src/fdk-starter-plugin
+  themes:
+#   - ./src/fdk-starter-theme
+  ftp:
+#     user:
+#     password: # optional (will be prompted if not set)
+#     scheme: "ftps" # optional (default "ftp")
+#     host:
+#     port: "3308" # optional (for exotic configs)
+#     path: # wordpress root folder path in the server
+#     commands: # optional list of lftp commands to run before uploading
+#     - # eg. set cmd:fail-exit true
+
+# alternative configurations for other environments or resource sets, for example
+# staging:
+#   plugins:
+#   themes:
+#   ftp:
