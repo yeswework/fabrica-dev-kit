@@ -44,7 +44,7 @@ const wait = (message, callback, delay=500) => {
 		const spinner = ['🕐', '🕑', '🕒', '🕓', '🕔', '🕕', '🕖', '🕗', '🕘', '🕙', '🕚', '🕛'];
 		let waitcounter = 0,
 			handler,
-			stopWaitInterval = response => {
+			stopWaitInterval = (...response) => {
 				clearTimeout(handler);
 				console.log();
 				resolve(response);
@@ -159,7 +159,7 @@ const waitForWebContainer = (forcePortCheck=false) => {
 				getting = false;
 				if (response.statusCode == '200') {
 					// container is up
-					stopWaitInterval(true);
+					stopWaitInterval(true, webPort);
 				}
 			}).on('error', error => {
 				// ignore errors (container still not up)
@@ -326,7 +326,7 @@ const startContainersAndInstall = settings => {
 	}
 
 	// wait until `web` container is up to install WordPress
-	waitForWebContainer().then(success => {
+	waitForWebContainer().then(([success, webPort]) => {
 		// wait is over: containers are up or timeout has expired
 		if (!success) {
 			halt(`More than ${WAIT_WP_CONTAINER_TIMEOUT / 1000} seconds elapsed while waiting for WordPress container to start.`);
