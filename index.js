@@ -592,12 +592,20 @@ const addScriptCommands = () => {
 
 	const packageManager = sh.test('-f', `${project.rootDir}/yarn.json`) ? 'yarn' : 'npm';
 
-	const scripts = project.package.scripts;
+	const scripts = project.package.scripts,
+		scriptsInfo = (project.package.fabrica_dev_kit || {}).scripts_info || {};
 	for (let command of Object.keys(scripts)) {
-		let script = scripts[command];
-		let scriptsInfo = (project.package.fabrica_dev_kit || {}).scripts_info || {};
-		program.command(command)
-			.description(`'package.json' script: ${scriptsInfo[command] || '`' + (script.length > 80 ? script.substr(0, 80) + '…' : script) + '`'}`)
+		let script = scripts[command],
+			commandInfo = scriptsInfo[command],
+			argumentsInfo = '';
+		if (!commandInfo) {
+			commandInfo = '`' + (script.length > 80 ? script.substr(0, 80) + '…' : script) + '`';
+		} else if (Array.isArray(commandInfo)) {
+			[commandInfo, argumentsInfo] = commandInfo;
+			argumentsInfo = ' ' + argumentsInfo;
+		}
+		program.command(command + argumentsInfo)
+			.description(`from 'package.json': ${commandInfo}`)
 			.action(() => {
 				spawn(packageManager, ['run', ...process.argv.slice(2)], { stdio: 'inherit' });
 			});
