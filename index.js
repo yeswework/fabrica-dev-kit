@@ -531,7 +531,7 @@ const deploy = (project='default') => {
 			const resources = resourcesConfig[resourceType];
 			if (!resources) { return; }
 			for (let resource of resources) {
-				if (typeof resource !== 'object' || !resource.ftp) { continue; }
+				if (typeof resource !== 'object') { continue; }
 				const name = resource.path.replace(/\/$/, '').split('/').pop();
 				if (!sh.test('-d', resource.path)) {
 					warn(`Path for resource '${name}' not found`);
@@ -549,7 +549,7 @@ const deploy = (project='default') => {
 				command += `${ftp.port ? ` -p ${ftp.port}` : ''} ${ftp.host}; `;
 				
 				// mirror command
-				command += `mirror --reverse --only-newer --parallel=5 --verbose=1 ${ignore} ${resource.path} ${path.join(resource.ftp.path || '', `wp-content/${resourceType}/${name}`)}`;
+				command += `mirror --reverse --only-newer --parallel=5 --verbose=1 ${ignore} ${resource.path} ${path.join(ftp.path || '', `wp-content/${resourceType}/${name}`)}`;
 				spawn('lftp', ['-c', command], {stdio: 'inherit'});
 			}
 		});
