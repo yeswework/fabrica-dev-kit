@@ -523,7 +523,7 @@ const deploy = (project='default') => {
 	try {
 		const resourcesConfig = yaml.safeLoad(sh.cat(`./config.yml`))[project],
 			ftp = resourcesConfig.ftp;
-		if (!resourcesConfig || !ftp) {
+		if (!resourcesConfig || !ftp || !ftp.host) {
 			warn('Settings for FTP upload not found');
 			return;
 		}
@@ -531,16 +531,15 @@ const deploy = (project='default') => {
 			const resources = resourcesConfig[resourceType];
 			if (!resources) { return; }
 			for (let resource of resources) {
-				if (typeof resource !== 'object') { continue; }
-				const name = resource.path.replace(/\/$/, '').split('/').pop();
-				if (!sh.test('-d', resource.path)) {
+				const name = resource.replace(/\/$/, '').split('/').pop();
+				if (!sh.test('-d', resource)) {
 					warn(`Path for resource '${name}' not found`);
 					continue;
 				}
 				echo(`Deploying resource '${name}' to '${ftp.host}'...`);
 				
 				// file patterns to exclude
-				const distignorePath = path.join(resource.path, '.distignore'),
+				const distignorePath = path.join(resource, '.distignore'),
 					ignore = sh.test('-f', distignorePath) ? buildExcludesParams(sh.cat(distignorePath).split('\n')) : '';
 				let command = ftp.commands ? ftp.commands.join('; ') + '; ' : '';
 				
@@ -549,7 +548,7 @@ const deploy = (project='default') => {
 				command += `${ftp.port ? ` -p ${ftp.port}` : ''} ${ftp.host}; `;
 				
 				// mirror command
-				command += `mirror --reverse --only-newer --parallel=5 --verbose=1 ${ignore} ${resource.path} ${path.join(ftp.path || '', `wp-content/${resourceType}/${name}`)}`;
+				command += `mirror --reverse --only-newer --parallel=5 --verbose=1 ${ignore} ${resource} ${path.join(ftp.path || '', `wp-content/${resourceType}/${name}`)}`;
 				spawn('lftp', ['-c', command], {stdio: 'inherit'});
 			}
 		});
