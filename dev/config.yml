@@ -11,7 +11,8 @@ default:
 #     port: "3308" # optional (for exotic configs)
 #     path: # wordpress root folder path in the server
 #     commands: # optional list of lftp commands to run before uploading
-#     - # eg. set cmd:fail-exit true
+#     - set ftp:ssl-allow no
+#     - set mirror:parallel-transfer-count 3
 
 # alternative configurations for other environments or resource sets, for example
 # staging:

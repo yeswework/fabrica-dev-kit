@@ -548,7 +548,7 @@ const deploy = (project='default') => {
 				command += `${ftp.port ? ` -p ${ftp.port}` : ''} ${ftp.host}; `;
 				
 				// mirror command
-				command += `mirror --reverse --only-newer --parallel=5 --verbose=1 ${ignore} ${resource} ${path.join(ftp.path || '', `wp-content/${resourceType}/${name}`)}`;
+				command += `mirror --reverse --only-newer --verbose=1 ${ignore} ${resource} ${path.join(ftp.path || '', `wp-content/${resourceType}/${name}`)}`;
 				spawn('lftp', ['-c', command], {stdio: 'inherit'});
 			}
 		});
