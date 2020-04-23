@@ -24,7 +24,7 @@ const VERSION = execGet('npm list fabrica-dev-kit --depth=0 -g').replace(/^[^@]*
 // maximum time (in milliseconds) to wait for wp container to be up and running
 	WAIT_WP_CONTAINER_TIMEOUT = 360 * 1000,
 	project = {
-		isInstalled: false, // command executed inside an already setup project?	
+		isInstalled: false, // command executed inside an already setup project?
 	};
 
 // output functions
@@ -266,7 +266,7 @@ let installWordPress = (webPort, settings) => {
 			// activate multibyte patch for Japanese language
 			wp('plugin activate wp-multibyte-patch');
 		}
-		
+
 		// install and activate WordPress plugins
 		for (let plugin of (settings.wp.plugins || [])) {
 			wp(`plugin install "${plugin}" --activate`);
@@ -463,7 +463,7 @@ const configResources = (project='default') => {
 	}
 
 	// look for resources that haven't got a matching volume configured
-	const isResourceVolume = volume => !/^\.\/(www$|provision\/)/.test(volume.split(':')[0]), 
+	const isResourceVolume = volume => !/^\.\/(www$|provision\/)/.test(volume.split(':')[0]),
 		volumes = [];
 	let existsNewVolumes = false,
 		oldVolumes = dockerConfig.services.wp.volumes.filter(isResourceVolume);
@@ -494,7 +494,7 @@ const configResources = (project='default') => {
 	if (!existsNewVolumes && oldVolumes.length == 0) {
 		return new Promise(resolve => resolve()); // containers unchanged: no need to wait for new port
 	}
-	
+
 	// there are new volumes: write new Docker Composer configuration and restart containers
 	dockerConfig.services.web.volumes = dockerConfig.services.web.volumes.filter(
 		volume => !isResourceVolume(volume)
@@ -515,7 +515,7 @@ const configResources = (project='default') => {
 const deploy = (project='default') => {
 	const buildExcludesParams = (excludes) => {
 		if (!excludes) { return ''; }
-		return '--exclude-glob ' + (excludes).join(' --exclude-glob ');
+		return excludes.map(item => { let glob = item.replace(/#.*/, '').trim(); return glob !== '' ? `--exclude-glob ${glob}` : '' }).join(' ');
 	}
 
 	try {
@@ -535,16 +535,16 @@ const deploy = (project='default') => {
 					continue;
 				}
 				echo(`Deploying resource '${name}' to '${ftp.host}'...`);
-				
+
 				// file patterns to exclude
 				const distignorePath = path.join(resource, '.distignore'),
 					ignore = sh.test('-f', distignorePath) ? buildExcludesParams(sh.cat(distignorePath).split('\n')) : '';
 				let command = ftp.commands ? ftp.commands.join('; ') + '; ' : '';
-				
+
 				// open command
 				command += `open -u ${ftp.user}${ftp.password ? `,${ftp.password}` : ''}`;
 				command += `${ftp.port ? ` -p ${ftp.port}` : ''} ${ftp.host}; `;
-				
+
 				// mirror command
 				command += `mirror --reverse --only-newer --verbose=1 ${ignore} ${resource} ${path.join(ftp.path || '', `wp-content/${resourceType}/${name}`)}`;
 				spawn('lftp', ['-c', command], {stdio: 'inherit'});
