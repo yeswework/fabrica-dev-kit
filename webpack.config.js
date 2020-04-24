@@ -60,16 +60,16 @@ module.exports = projectPath => (env=[]) => {
 				configList.push(config);
 			} catch (e) { // No webpack config
 				if (fs.existsSync(sourceConfigPath)) {
-					warn(`Error loading webpack config for ${resourceName}.`);
+					warn(`Error loading webpack config for ${resourceName}`);
 				} else {
-					warn(`No webpack config found for ${resourceName}.`);
+					warn(`No webpack config found for ${resourceName}`);
 				}
 			}
 		});
 	});
 
 	if (!foundResources) {
-		warn(`No resources found in the config file. Setup resources to import in ${resourcesConfigPath}.`);
+		warn(`No resources found in the config file. Setup resources to import in ${resourcesConfigPath}`);
 	}
 
 	// Add extra config to copy all compiled files into active WP installation
