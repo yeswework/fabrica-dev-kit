@@ -32,7 +32,7 @@ Fabrica Dev Kit is compatible with recent versions of Mac OS X. It has a few dep
 
 Optional but strongly recommended:
 
-*. If you want to use FTP for deployment (rather than SSH), you'll need **lftp** ([installation instructions](https://brewinstall.org/Install-lftp-on-Mac-with-Brew/)).
+* If you want to use FTP for deployment (rather than SSH), you'll need **lftp** ([installation instructions](https://brewinstall.org/Install-lftp-on-Mac-with-Brew/)).
 
 ## Getting started
 
