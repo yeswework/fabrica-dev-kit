@@ -1,4 +1,4 @@
-# <img src="https://fabri.ca/_static/fdk3.png" width="300" height="71" alt="Fabrica Dev Kit for WordPress" title="Fabrica Dev Kit for WordPress">
+# <img src="https://fabri.ca/_static/fdk3.png" width="424" height="100" alt="Fabrica Dev Kit for WordPress" title="Fabrica Dev Kit for WordPress">
 A toolkit for faster, smoother WordPress 5 development
 
 **NEW APRIL 2020!** Completely new architecture for the Gutenberg / Block era. No longer includes a default theme, nor any build process, but allows you to develop multiple resources – blocks, plugins and themes – simultaneously, each with its own Webpack configuration, building and deploying them altogether.
