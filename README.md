@@ -4,11 +4,8 @@ A toolkit for faster, smoother WordPress 5 development
 **NEW APRIL 2020!** Completely new architecture for the Gutenberg / Block era. Now allows you to develop multiple resources (blocks, plugins or themes) simultaneously, each with its own Webpack configuration, watching and deploying them all together. No longer includes a default theme as in previous versions, but a starter theme and block are available separately.
 
 * Super fast setup of project-specific local development servers using Docker
-* Master Webpack config allows you to develop multiple theme / plugin / block resources simultaneously
+* Master Webpack config allows you to develop multiple theme / plugin / block resources simultaneously (supports `@wordpress/scripts` and custom configs alike)
 * Instantly build and deploy your code to multiple environments
-
-Supports `@wordpress/scripts` and custom Webpack configs.
-Starter theme / block / plugin also available.
 
 ## All features
 
