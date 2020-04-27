@@ -38,8 +38,8 @@ First make sure you have all the required dependencies (see above). Then run `np
 
 ### Starting a new project
 1. Create a folder for your project. In this folder run `fdk init`. This will create a template `setup.yml` file for your basic project settings.
-1. Edit `setup.yml` to configure basic parameters for your project. Plugins you want to be installed automatically can be listed here.
-1. Run `fdk setup` from the same folder. This will set up your virtual machine and install everything required: Nginx, PHP-FPM, WordPress, any third-party plugins you specify and our development and deployment tools.
+2. Edit `setup.yml` to configure basic parameters for your project. Plugins you want to be installed automatically can be listed here.
+3. Run `fdk setup` from the same folder. This will set up your virtual machine and install everything required: Nginx, PHP-FPM, WordPress, any third-party plugins you specify and our development and deployment tools.
 
 ### Configuring your devleopment resources
 1. Tell FDK which local resources (ie. themes and plugins) you want to be available for development in the current project by editing `config.yml` folder (in the project root) to specify the local resource paths. These can be within the current project folder (eg. in a `src/` folder) or anywhere else on your system, if you plan to share resources like blocks between projects. You can also specify server details for deployment, and you can specify multiple environemnts configs in the same file. Example entries for a `config.yml`:
@@ -63,7 +63,7 @@ staging:
     - host: staging.fdkserver.com
     - user:
 ```
-1. FDK will invoke each resource's individual Webpack config to build resources (if it needs a build step; otherwise the folder will just be mirrored as it is). To make sure this works correctly, any paths in your Webpack config should be resolved fully with `path.resolve` and the current folder, for example `path.resolve(__dirname, 'src/js/front.js')`
+2. FDK will invoke each resource's individual Webpack config to build resources (if it needs a build step; otherwise the folder will just be mirrored as it is). To make sure this works correctly, any paths in your Webpack config should be resolved fully with `path.resolve` and the current folder, for example `path.resolve(__dirname, 'src/js/front.js')`
 
 ### Running the master Webpack during active development
 * To start developing, run `fdk start` in the project folder. FDK will tell you which dynamic port the site front-end and admin are accessible at, for example:
