@@ -1,28 +1,14 @@
 # <img src="https://fabri.ca/_static/fdk-logo-large.png" width="254" height="60" alt="Fabrica Dev Kit for WordPress" title="Fabrica Dev Kit for WordPress">
 A toolkit for faster, smoother WordPress 5 development
 
+**NEW APRIL 2020!** Completely new architecture for the Gutenberg / Block era. No longer includes a default theme, nor any build process, but allows you to develop multiple resources – blocks, plugins and themes – simultaneously, each with its own Webpack configuration, building and deploying them altogether.
+
 * Super fast setup of project-specific local development servers using Docker
 * Master Webpack config allows you to develop multiple theme / plugin / block resources simultaneously
 * Instantly build and deploy your code to multiple environments
 
 Supports `@wordpress/scripts` and custom Webpack configs.
 Starter theme / block / plugin also available.
-
-## Changelog
-
-**3.0**
-* **NEW APRIL 2020!** Completely new architecture for the Gutenberg / Block era. No longer includes a default theme, nor any build process, but allows you to develop multiple resources – blocks, plugins and themes – simultaneously, each with its own Webpack configuration, building and deploying them altogether.
-
-**2.1**
-* New Webpack/Babel build pipeline to compile theme-based WP 5/Gutenberg blocks (default filename `assets/js/blocks.js`)
-* New Gutenberg-ready common / front / editor boilerplate structure for CSS
-* Automatic timestamp-based fingerprinting on production assets, for cache-busting where needed
-* Use [sanitize.css](https://csstools.github.io/sanitize.css/) in boilerplate theme theme (switched from normalize.css)
-* New `fdk deploy` task recompiles and runs Wordmove, so you can deploy in a new tab without having to stop the build process
-* General spring-cleaning, upgrading and tweaking (NB. no longer including Lost Grid in favour of CSS Grid; no longer including jQuery by default.)
-
-**2.0**
-* Fabrica Dev Kit is now installed globally via `npm`, rather than cloned for each project, and accessible as `fdk` shell command – see below for instructions. Also includes options for plugin development and easier Wordmove configuration. Ruby is no longer a dependency.
 
 ## All features
 
