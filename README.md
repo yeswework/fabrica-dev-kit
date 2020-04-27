@@ -50,7 +50,7 @@ default:
   themes:
     - ./src/themes/fdk-theme
   ftp:
-    - host: fdkserver.com
+    - host: fdkserver.dev
     - user:
     - password:
 
@@ -60,7 +60,7 @@ staging:
   themes:
     - ./src/themes/fdk-theme
   ftp:
-    - host: staging.fdkserver.com
+    - host: staging.fdkserver.dev
     - user:
 ```
 2. FDK will invoke each resource's individual Webpack config to build resources (if it needs a build step; otherwise the folder will just be mirrored as it is). To make sure this works correctly, any paths in your Webpack config should be resolved fully with `path.resolve` and the current folder, for example `path.resolve(__dirname, 'src/js/front.js')`
@@ -75,9 +75,9 @@ staging:
 [FDK] 🏭   🗃  Database: localhost:32774
 [FDK] 🏭   -------------------------------------------
 ```
-* FDK wills run a Webpack watch monitoring and compiling all of your specified resources at once.
-* You can escape Webpack with Ctrl + c. While Webpack is not running, changes requiring a build step will not be reflected on the server.
-* You can also run `fdk build` to run Webpack in build mode for any resources, prior to deployment.
+* FDK will run a Webpack watch monitoring and compiling all of your specified resources at once.
+* You can escape Webpack with ctrl + c. While Webpack is not running, changes requiring a build step will not be reflected on the server.
+* You can also run `fdk build` to run Webpack in build mode (eg. prior to deployment).
 
 ### Deployment
 To deploy your resources, run `fdk build` (runs Webpack for all resources in build mode) and then `fdk deploy`. (This will deploy using the resources and server specified in the `default` section of `config.yml`; if you want to deploy to a different environment, simply add its name, eg. `fdk deploy staging`.)
