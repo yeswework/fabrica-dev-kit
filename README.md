@@ -7,7 +7,8 @@
 
 * Super fast setup of project-specific local development servers using Docker
 * Master Webpack config allows you to develop multiple theme / plugin / block resources simultaneously
-* Starter theme and block available (using `@wordpress/scripts`) but compatible with custom theme frameworks + build scripts
+* Starter theme and block available, but works with yours
+* Compatible with `@wordpress/scripts` and custom Webpack configs, agnostic on code frameworks
 * Instantly build and deploy your code to multiple environments
 * WP Multisite compatible
 
