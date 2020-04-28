@@ -90,10 +90,13 @@ staging:
 ### Deployment
 To deploy your resources, run `fdk build` (runs Webpack for all resources in build mode) and then `fdk deploy`. This will deploy using the resources and server specified in the `default` section of `config.yml`; if you want to deploy to a different environment, simply add its name, eg. `fdk deploy staging`.
 
-### Housekeeping / troubleshooting
+### Troubleshooting and housekeeping
 If you run into any problems during development, restarting the Docker machine may help. Stop FDK with ctrl + c and then run `fdk dc restart` followed by `fdk start` again.
 
 Multiple projects' Docker servers running simultaneously can hog system resources, so you can safely suspend any projects not currently being developed with `fd dc stop` in the project folder (or from the Docker Dashboard). Equally it is safe to run `fdk remove` which removes the project's containers altogether (the local database is preserved); to set them up again you can run `fdk setup --reinstall`.
+
+### Local database access
+For direct MySQL access to the development database, you can use an app such as [Sequel Pro](https://www.sequelpro.com/) while the development machine is up. The database server is accessible at `127.0.0.1`, and with the dynamic port which you'll be told when you run `fdk start` (see example output above). The username, password and database name are are `wordpress`.
 
 ### All available FDK commands
 (You can type `fdk` in any FDK project folder to see this list.)
@@ -114,6 +117,3 @@ Command                      | Description |
 `wp`                         | Run WP Cli. eg. `fdk wp option list`
 `logs`                       | Tail WP container logs
 `remove`                     | Stop all project containers, remove their volumes and WP project image
-
-### Local database access
-For direct MySQL access to the development database, we recommend using [Sequel Pro](https://www.sequelpro.com/) to access it while the development machine is up. The database server is accessible at `127.0.0.1`, and with the dynamic port which you'll be told when you run `fdk start` (see example output above). The username, password and database name are are `wordpress`.
