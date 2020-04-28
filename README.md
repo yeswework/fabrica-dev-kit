@@ -1,7 +1,7 @@
 # <img src="https://fabri.ca/_static/fdk3.png" width="424" height="100" alt="Fabrica Dev Kit for WordPress" title="Fabrica Dev Kit for WordPress">
 ## A toolkit for faster, smoother WordPress 5 development ##
 
-**Version 3.0 just released! (APRIL 2020)** Completely new architecture for the Gutenberg / Block era. Now allows you to develop multiple resources (blocks / plugins / themes), each with its own Webpack configuration, watching and deploying them all together.
+**April 2020: version 3.0 just released!** Completely new architecture for the Gutenberg / Block era. Now allows you to develop multiple blocks / themes / plugins simultaneously, each with its own Webpack configuration, watching and deploying them all together.
 
 ## Key features
 
