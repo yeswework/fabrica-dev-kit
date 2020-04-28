@@ -100,20 +100,20 @@ Multiple projects' Docker servers running simultaneously can hog system resource
 
 Command                      | Description |
 -----------------------------|-------------|
-`init [options] [slug]`      | Start a new project folder called <slug> containing the 'setup.yml' configuration file. <slug> must be unique and no other Docker Compose project should share this name. All optional arguments will be set in the 'setup.yml' file and can be modified there.
-`setup [options]`            | Setup project based on setting on 'setup.yml' file
+`init [options] [slug]`      | Start a new project folder called `[slug]` containing the `setup.yml` configuration file. `[slug]` must be unique and no other Docker Compose project should share this name. All optional arguments will be set in the `setup.yml` file and can be modified there before running `setup`.
+`setup [options]`            | Setup project based on setting on `setup.yml` file
 `config:url`                 | Update URLs in DB to match changes to WP container port set automatically by Docker (except for multisite projects, where a custom local host/domain is used). Output current access URLs and ports
-`config:resources [project]` | Configure Docker volumes to match resources' paths in the 'config.yml' settings file if there are new resources under <project>. If no <project> is passed,  resources under 'default' will be checked
-`config:all [project]`       | Run all project configuration tasks (config:url and config:resources)
-`deploy [project]`           | Deploy resources to server according to configuration in 'config.yml' file. If no <project> is passed, settings under 'default' will be loaded. Files and folders matching patterns in resource '.distignore' file will be ignored
-`start`                      | Run 'webpack' in development mode. All available resources 'webpack' configurations and loaded, and changed files are watched.
-`build`                      | Run 'webpack' in production mode and build source for all available resources 'webpack' configurations.
-`dc`                         | Run 'docker-compose', eg. 'fdk dc ps'.
-`sh`                         | Start shell on WP container.
-`shroot`                     | Start shell as root on WP container.
-`wp`                         | Run WP Cli. eg. 'fdk wp option list'.
-`logs`                       | Tail WP container logs.
-`remove`                     | Stop all project containers, remove their volumes and WP project image.
+`config:resources [project]` | Configure Docker volumes to match resources' paths in the `config.yml` settings file if there are new resources under `[project]`. If no `[project]` is passed,  resources under `default` will be checked
+`config:all [project]`       | Run all project configuration tasks (`config:url` and `config:resources`)
+`deploy [project]`           | Deploy resources to server according to configuration in `config.yml` file. If no `[project]` is passed, settings under `default` will be loaded. Files and folders matching patterns in resource `.distignore` file will be ignored
+`start`                      | Run Webpack in development mode. All available resources' Webpack configurations are loaded, and changed files are watched
+`build`                      | Run Webpack in production mode and build source for all available resources Webpack configurations
+`dc`                         | Run `docker-compose` commands, eg. `fdk dc ps`
+`sh`                         | Start shell on WP container
+`shroot`                     | Start shell as root on WP container
+`wp`                         | Run WP Cli. eg. `fdk wp option list`
+`logs`                       | Tail WP container logs
+`remove`                     | Stop all project containers, remove their volumes and WP project image
 
 ### Local database access
 For direct MySQL access to the development database, we recommend using [Sequel Pro](https://www.sequelpro.com/) to access it while the development machine is up. The database server is accessible at `127.0.0.1`, and with the dynamic port which you'll be told when you run `fdk start` (see example output above). The username, password and database name are are `wordpress`.
