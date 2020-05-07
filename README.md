@@ -42,8 +42,8 @@ First make sure you have all the required dependencies (see above). Then run `np
 
 ### Starting a new project
 1. Create a folder for your project. In this folder run `fdk init`. This will create a template `setup.yml` file for your basic project settings.
-2. Edit `setup.yml` to configure basic parameters for your project. Plugins you want to be installed automatically can be listed here.
-3. Run `fdk setup` from the same folder. This will set up your virtual machine and install everything required: Nginx, PHP-FPM, WordPress, any third-party plugins you specify and our development and deployment tools.
+2. Edit `setup.yml` to configure basic parameters for your project. Third-party plugins you want to be installed automatically in your local development environment can be listed here.
+3. Run `fdk setup` from the same folder. This will set up your virtual machine and install everything required: Nginx, PHP-FPM, WordPress, any third-party plugins and our development and deployment tools.
 
 ### Configuring your development resources
 1. Tell FDK which local resources (ie. themes and plugins) you want to be available for development in the current project by editing `config.yml` folder (in the project root) to specify the local resource paths. These can be within the current project folder (eg. in a `src/` folder) or anywhere else on your system, if you plan to share resources like blocks between projects. You can also specify server details for deployment, and you can specify multiple environemnts configs in the same file. Example entries for a `config.yml`:
