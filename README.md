@@ -1,16 +1,15 @@
 # <img src="https://fabri.ca/_static/fdk3.png" width="424" height="100" alt="Fabrica Dev Kit for WordPress" title="Fabrica Dev Kit for WordPress">
 ## A toolkit for faster, smoother WordPress 5 development ##
 
-**April 2020: version 3.0 just released!** Completely new architecture for the Gutenberg / Block era.
+**May 2020: version 3.0 just released!** Completely new architecture for the Gutenberg / Block era.
 
 ## Key features
 
 * Super fast setup of project-specific local development servers using Docker
-* Master Webpack script allows you to develop multiple theme / plugin / block resources simultaneously, respecting each one's own config
-* Compatible with `@wordpress/scripts` and custom Webpack configs, agnostic on code frameworks
-* Starter theme and block available, but works with yours
+* Allows simultaneous development of multiple blocks, plugins and themes: FDK's master watch / build script runs all resources' build steps together in one process
+* Compatible with `@wordpress/scripts` and custom Webpack configs
+* Starter theme and block available, but works with yours; agnostic on code frameworks
 * Instantly build and deploy to multiple environments
-* WP Multisite compatible
 
 ## FDK 3 features in detail
 
