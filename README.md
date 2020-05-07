@@ -6,7 +6,7 @@
 ## Key features
 
 * Super fast setup of project-specific local development servers using Docker
-* Allows simultaneous development of multiple blocks, plugins and themes: FDK's master watch / build script runs all resources' build steps together in one process
+* Allows simultaneous development of multiple blocks, plugins and themes: FDK's master watch / build script runs all resources' build steps together in one process
 * Compatible with `@wordpress/scripts` and custom Webpack configs
 * Starter theme and block available, but works with yours; agnostic on code frameworks
 * Instantly build and deploy to multiple environments
