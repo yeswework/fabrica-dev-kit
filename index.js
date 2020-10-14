@@ -511,6 +511,42 @@ const configResources = (project='default') => {
 	return waitForWebContainer(true);
 }
 
+const watchResources = (project='default') => {
+	let resourcesConfig, dockerConfig;
+	try {
+		resourcesConfig = yaml.safeLoad(sh.cat(`./config.yml`))[project];
+		dockerConfig = yaml.safeLoad(sh.cat(`./docker-compose.yml`));
+	} catch (ex) {
+		warn(`Error loading 'docker-compose.yml' or 'config.yml'`);
+		return;
+	}
+
+	try {
+		let cmd = 'npx concurrently ';
+		['plugins', 'themes'].forEach(resourceType => {
+			const resources = resourcesConfig[resourceType];
+			if (!resources) { return; }
+			for (let resource of resources) {
+				const name = resource.replace(/\/$/, '').split('/').pop();
+				if (!sh.test('-d', resource)) {
+					warn(`Path for resource '${name}' not found`);
+					continue;
+				}
+				if (!sh.test('-f', `${resource}/package.json`)) {
+					warn(`package.json for resource '${name}' not found`);
+					continue;
+				}
+
+				cmd += `"npm run watch --prefix ${resource} --if-present" `;
+			}
+		});
+		echo(cmd);
+		sh.exec(cmd);
+	} catch (ex) {
+		warn('Error watching: ' + ex);
+	}
+}
+
 // Upload resources built files to server
 const deploy = (project='default') => {
 	const buildExcludesParams = (excludes) => {
@@ -626,6 +662,9 @@ const addProjectCommands = () => {
 				configResources(project)
 				.then(configURL);
 			});
+		program.command('watch [project]')
+			.description(`Run a simultaneous watch on all project resources`)
+			.action(watchResources);
 		program.command('deploy [project]')
 			.description(`Deploy resources to server according to configuration in 'config.yml' file. If no <project> is passed, settings under 'default' will be loaded. Files and folders matching patterns in resource '.distignore' file will be ignored`)
 			.action(deploy);

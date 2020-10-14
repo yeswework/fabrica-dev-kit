@@ -7,6 +7,7 @@ module.exports = (settings) => `
   "scripts": {
     "start": "func() { fdk config:all && webpack --watch --mode=development --env.fdk_project=\\"\${1:-default}\\"; }; func",
     "build": "func() { fdk config:all && webpack --mode=production --env.fdk_project=\\"\${1:-default}\\"; }; func",
+    "watch": "func() { fdk watch:all; };",
     "dc": "docker-compose",
     "sh": "docker-compose exec -u www-data wp /bin/bash",
     "shroot": "docker-compose exec wp /bin/bash",
@@ -27,6 +28,7 @@ module.exports = (settings) => `
     }
   },
   "devDependencies": {
+    "concurrently": "^5.3.0",
     "js-yaml": "^3.13.1",
     "rimraf": "^3.0.2",
     "webpack": "^4.41.5",
