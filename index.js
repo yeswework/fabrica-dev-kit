@@ -522,7 +522,8 @@ const watchResources = (project='default') => {
 	}
 
 	try {
-		let cmd = 'npx concurrently ';
+		let names = [],
+			cmds = [];
 		['plugins', 'themes'].forEach(resourceType => {
 			const resources = resourcesConfig[resourceType];
 			if (!resources) { return; }
@@ -537,11 +538,12 @@ const watchResources = (project='default') => {
 					continue;
 				}
 
-				cmd += `"npm run watch --prefix ${resource} --if-present" `;
+				names.push(name);
+				cmds.push(`"cd ${resource}; npx wp-scripts build --watch"`);
 			}
 		});
-		echo(cmd);
-		sh.exec(cmd);
+		echo(`npx concurrently -n ${names.join(',')} ${cmds.join(' ')}`);
+		spawn('npx', ['concurrently', '-n', names.join(','), ...cmds], { stdio: 'inherit' });
 	} catch (ex) {
 		warn('Error watching: ' + ex);
 	}
