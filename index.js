@@ -511,7 +511,8 @@ const configResources = (project='default') => {
 	return waitForWebContainer(true);
 }
 
-const watchResources = (project='default') => {
+// Build resources concurrently
+const buildResources = (project='default', task='build') => {
 	let resourcesConfig, dockerConfig;
 	try {
 		resourcesConfig = yaml.safeLoad(sh.cat(`./config.yml`))[project];
@@ -539,7 +540,7 @@ const watchResources = (project='default') => {
 				}
 
 				names.push(name);
-				cmds.push(`"cd ${resource}; npx wp-scripts build --watch"`);
+				cmds.push(`"cd ${resource}; npx wp-scripts ${task}"`);
 			}
 		});
 		echo(`npx concurrently -c white.dim -n ${names.join(',')} ${cmds.join(' ')}`);
@@ -664,9 +665,12 @@ const addProjectCommands = () => {
 				configResources(project)
 				.then(configURL);
 			});
-		program.command('watch [project]')
+		program.command('build [project]')
+			.description(`Run a simultaneous build on all project resources`)
+			.action((project = 'default') => buildResources(project, 'build'));
+		program.command('start [project]')
 			.description(`Run a simultaneous watch on all project resources`)
-			.action(watchResources);
+			.action((project = 'default') => buildResources(project, 'start'));
 		program.command('deploy [project]')
 			.description(`Deploy resources to server according to configuration in 'config.yml' file. If no <project> is passed, settings under 'default' will be loaded. Files and folders matching patterns in resource '.distignore' file will be ignored`)
 			.action(deploy);
