@@ -542,8 +542,8 @@ const watchResources = (project='default') => {
 				cmds.push(`"cd ${resource}; npx wp-scripts build --watch"`);
 			}
 		});
-		echo(`npx concurrently -n ${names.join(',')} ${cmds.join(' ')}`);
-		spawn('npx', ['concurrently', '-n', names.join(','), ...cmds], { stdio: 'inherit' });
+		echo(`npx concurrently -c white.dim -n ${names.join(',')} ${cmds.join(' ')}`);
+		spawn('npx', ['concurrently', '-c', 'white.dim', '-n', names.join(','), ...cmds], { stdio: 'inherit' });
 	} catch (ex) {
 		warn('Error watching: ' + ex);
 	}
