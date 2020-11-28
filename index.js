@@ -471,7 +471,7 @@ const configResources = (project='default') => {
 		warn('No resources found in the config file.');
 		return;
 	}
-	['plugins', 'themes'].forEach(resourceType => {
+	['themes', 'plugins'].forEach(resourceType => {
 		const resources = resourcesConfig[resourceType];
 		if (!resources) {
 			echo(`No ${resourceType} found in the config file.`);
@@ -525,7 +525,7 @@ const buildResources = (project='default', task='build') => {
 	try {
 		let names = [],
 			cmds = [];
-		['plugins', 'themes'].forEach(resourceType => {
+		['themes', 'plugins'].forEach(resourceType => {
 			const resources = resourcesConfig[resourceType];
 			if (!resources) { return; }
 			for (let resource of resources) {
@@ -564,7 +564,7 @@ const deploy = (project='default') => {
 			warn('Settings for FTP upload not found');
 			return;
 		}
-		['plugins', 'themes'].forEach(resourceType => {
+		['themes', 'plugins'].forEach(resourceType => {
 			const resources = resourcesConfig[resourceType];
 			if (!resources) { return; }
 			for (let resource of resources) {
