@@ -552,9 +552,23 @@ const buildResources = (project='default', task='build') => {
 
 // Upload resources built files to server
 const deploy = (project='default') => {
-	const buildExcludesParams = (excludes) => {
-		if (!excludes) { return ''; }
-		return excludes.map(item => { let glob = item.replace(/#.*/, '').trim(); return glob !== '' ? `--exclude-glob ${glob}` : '' }).join(' ');
+	const buildIgnoreParams = (distignore) => {
+		if (!distignore) { return ''; }
+		return distignore.map(item => {
+			let glob = item.replace(/#.*/, '').trim(),
+				option = 'exclude';
+			// invert ignore (includes)
+			if (glob.startsWith('!')) {
+				option = 'include';
+				glob = glob.substr(1);
+			}
+			// lftp doesn't support exclude for folders on root only through globs: add exclude folder glob and a recursive glob to include all subfolders with folder
+			if (glob.search(/^\.?\//) >= 0) {
+				glob = glob.replace(/^\.?\//, '');
+				glob = `${glob} --${option == 'exclude' ? 'include' : 'exclude'}-glob **/${glob}`;
+			}
+			return glob !== '' ? `--${option}-glob ${glob}` : ''
+		}).join(' ');
 	}
 
 	try {
@@ -577,7 +591,7 @@ const deploy = (project='default') => {
 
 				// file patterns to exclude
 				const distignorePath = path.join(resource, '.distignore'),
-					ignore = sh.test('-f', distignorePath) ? buildExcludesParams(sh.cat(distignorePath).split('\n')) : '';
+					ignore = sh.test('-f', distignorePath) ? buildIgnoreParams(sh.cat(distignorePath).split('\n')) : '';
 				let command = ftp.commands ? ftp.commands.join('; ') + '; ' : '';
 
 				// open command

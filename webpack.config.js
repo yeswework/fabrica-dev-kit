@@ -60,7 +60,7 @@ module.exports = projectPath => (env=[]) => {
 				configList.push(config);
 			} catch (e) { // No webpack config
 				if (fs.existsSync(sourceConfigPath)) {
-					warn(`Error loading webpack config for ${resourceName}`);
+					warn(`Error loading webpack config for ${resourceName}: '${e}'`);
 				} else {
 					warn(`No webpack config found for ${resourceName}`);
 				}
