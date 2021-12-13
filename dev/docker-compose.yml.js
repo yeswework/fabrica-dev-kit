@@ -22,7 +22,7 @@ ${settings.wp.multisite
 ${settings.wp.multisite ? '      - proxy' : ''
 }
   db:
-    image: mysql:5.7
+    image: mysql/mysql-server:8.0.23
     container_name: ${settings.slug}_db
     volumes:
       - ./db:/var/lib/mysql
@@ -48,6 +48,8 @@ ${settings.wp.multisite ? '      - proxy' : ''
       - ./provision/wp/zz-php.ini:/usr/local/etc/php/conf.d/zz-php.ini
     environment:
       WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
       WORDPRESS_DB_PASSWORD: wordpress
       WORDPRESS_DB_PREFIX: ${settings.db.prefix}
       WORDPRESS_DEBUG: "true"
