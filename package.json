@@ -1,6 +1,6 @@
 {
   "name": "fabrica-dev-kit",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "Fabrica Dev Kit for Wordpress",
   "main": "index.js",
   "repository": {
@@ -22,11 +22,11 @@
     "fdk": "./index.js"
   },
   "dependencies": {
-    "commander": "^4.1.0",
-    "findup-sync": "^3.0.0",
-    "js-yaml": "^3.13.1",
-    "lodash": "^4.17.14",
-    "promise": "^8.0.3",
+    "commander": "^8.3.0",
+    "findup-sync": "^5.0.0",
+    "js-yaml": "^4.1.0",
+    "lodash": "^4.17.21",
+    "promise": "^8.1.0",
     "shelljs": "^0.8.4"
   }
 }

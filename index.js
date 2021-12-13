@@ -104,7 +104,7 @@ const loadSetupSettings = (reinstall) => {
 		if (!sh.test('-f', filename)) { return; }
 		let newSettings;
 		try {
-			newSettings = yaml.safeLoad(sh.cat(filename));
+			newSettings = yaml.load(sh.cat(filename));
 		} catch (ex) {
 			halt(`Failed to open settings file: ${filename}.\nException: ${ex}`);
 		}
@@ -455,8 +455,8 @@ const configURL = () => {
 const configResources = (project='default') => {
 	let resourcesConfig, dockerConfig;
 	try {
-		resourcesConfig = yaml.safeLoad(sh.cat(`./config.yml`))[project];
-		dockerConfig = yaml.safeLoad(sh.cat(`./docker-compose.yml`));
+		resourcesConfig = yaml.load(sh.cat(`./config.yml`))[project];
+		dockerConfig = yaml.load(sh.cat(`./docker-compose.yml`));
 	} catch (ex) {
 		warn(`Error loading 'docker-compose.yml' or 'config.yml'`);
 		return;
@@ -515,8 +515,8 @@ const configResources = (project='default') => {
 const buildResources = (project='default', task='build') => {
 	let resourcesConfig, dockerConfig;
 	try {
-		resourcesConfig = yaml.safeLoad(sh.cat(`./config.yml`))[project];
-		dockerConfig = yaml.safeLoad(sh.cat(`./docker-compose.yml`));
+		resourcesConfig = yaml.load(sh.cat(`./config.yml`))[project];
+		dockerConfig = yaml.load(sh.cat(`./docker-compose.yml`));
 	} catch (ex) {
 		warn(`Error loading 'docker-compose.yml' or 'config.yml'`);
 		return;
@@ -572,7 +572,7 @@ const deploy = (project='default') => {
 	}
 
 	try {
-		const resourcesConfig = yaml.safeLoad(sh.cat(`./config.yml`))[project],
+		const resourcesConfig = yaml.load(sh.cat(`./config.yml`))[project],
 			ftp = resourcesConfig.ftp;
 		if (!resourcesConfig || !ftp || !ftp.host) {
 			warn('Settings for FTP upload not found');
