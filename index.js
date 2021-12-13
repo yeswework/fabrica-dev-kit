@@ -64,7 +64,7 @@ const wait = (message, callback, delay=500) => {
 
 // check Fabrica dependencies
 const checkDependencies = () => {
-	const dependencies = ['docker-compose', 'composer'];
+	const dependencies = ['docker-compose'];
 	for (let dependency of dependencies) {
 		if (sh.exec(`hash ${dependency} 2>/dev/null`, {silent: true}).code != 0) {
 			halt(`Could not find dependency '${dependency}'.`);
