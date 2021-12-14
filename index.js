@@ -283,7 +283,7 @@ let installWordPress = (webPort, settings) => {
 			wp(`plugin delete "hello" "akismet"`);
 		}
 		if (settings.wp.skip_default_themes) {
-			wp(`theme delete "twentynineteen" "twentytwenty" "twentytwentyone"`);
+			wp(`theme delete "twentynineteen" "twentytwenty"`);
 		}
 		// WordPress options
 		for (let option of Object.keys(settings.wp.options || {})) {
