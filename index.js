@@ -502,7 +502,7 @@ const configResources = (project='default') => {
 	dockerConfig.services.wp.volumes = dockerConfig.services.wp.volumes.filter(
 		volume => !isResourceVolume(volume)
 	).concat(volumes);
-	sh.ShellString(yaml.safeDump(dockerConfig)).to('docker-compose.yml');
+	sh.ShellString(yaml.dump(dockerConfig)).to('docker-compose.yml');
 	echo('Bringing Docker containers up to update resources volumes...');
 	if (sh.exec('docker-compose up -d').code !== 0) {
 		halt('Docker containers failed to start.');
