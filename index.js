@@ -20,7 +20,7 @@ const execWP = (cmd, options) => sh.exec(`docker-compose exec -u www-data -T wp 
 const execWPGet = cmd => execWP(cmd, { silent: true }).stdout.trim();
 
 // Fabrica Dev Kit version
-const VERSION = execGet('npm list fabrica-dev-kit --depth=0 -g').replace(/^[^@]*@([^\s]*)\s.*$/, '$1'),
+const VERSION = require('./package.json')['version'],
 // maximum time (in milliseconds) to wait for wp container to be up and running
 	WAIT_WP_CONTAINER_TIMEOUT = 360 * 1000,
 	project = {
@@ -495,7 +495,7 @@ const configResources = (project='default') => {
 		return new Promise(resolve => resolve()); // containers unchanged: no need to wait for new port
 	}
 
-	// there are new volumes: write new Docker Composer configuration and restart containers
+	// there are new volumes: write new Docker Compose configuration and restart containers
 	dockerConfig.services.web.volumes = dockerConfig.services.web.volumes.filter(
 		volume => !isResourceVolume(volume)
 	).concat(volumes);
