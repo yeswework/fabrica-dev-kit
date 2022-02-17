@@ -12,7 +12,7 @@ const findup = require('findup-sync'),
 	sh = require('shelljs'),
 	// `shelljs.exec` doesn't handle color and animations yet
 	// https://github.com/shelljs/shelljs/issues/86
-	spawn = require('child_process').spawnSync,
+	spawn = require('shelljs-live'),
 	yaml = require('js-yaml');
 
 const execGet = cmd => sh.exec(cmd, { silent: true }).stdout.trim();
@@ -229,7 +229,7 @@ const createFolders = settings => {
 // install build dependencies
 const installDependencies = (packageManager) => {
 	echo('Installing build dependencies...');
-	spawn(packageManager, ['install'], { stdio: 'inherit' });
+	spawn([packageManager, 'install']);
 };
 
 // install and configure WordPress in the Docker container
@@ -319,7 +319,7 @@ const setupMultisiteCustomDomain = settings => {
 // start Docker containers and wait for them to be up to start installing and configuring WP
 const startContainersAndInstall = settings => {
 	echo('Bringing Docker containers up...');
-	if (sh.exec('docker-compose up -d').code != 0) {
+	if (spawn(['docker-compose', 'up', '-d']) != 0) {
 		halt('Docker containers provision failed.');
 	}
 
@@ -423,10 +423,35 @@ const setup = options => {
 
 // ——— Project-specific (post-initialization) commands ————
 
-// Get current site and port for WordPress to check if it matches the current Docker-assigned Web container port (in a singlesite project). Output current project access URLs and ports
-const configURL = () => {
-	let siteURL = getSiteURL();
+const echoInfo = (siteURL) => {
+	// output site URLs and ports
+	if (!siteURL) {
+		siteURL = getSiteURL();
+	}
 	const dbPort = getDBPort();
+	const outputSeparator = ` \x1b[36m${'-'.repeat(siteURL.length + 21)}\x1b[0m`;
+	echo(`\x1b[1m${project.title} (${project.slug}) access URLs:\x1b[22m`);
+	echo(outputSeparator);
+	echo(` 🌍  WordPress: \x1b[35m${siteURL}/\x1b[0m`);
+	echo(` 🔧  Admin: \x1b[35m${siteURL}/wp-admin/\x1b[0m`);
+	echo(` 🗃  Database: \x1b[35mlocalhost:${dbPort}\x1b[0m`);
+	echo(outputSeparator);
+};
+
+// Get current site and port for WordPress to check if it matches the current Docker-assigned Web container port (in a singlesite project). Output current project access URLs and ports
+const configURL = async () => {
+	let siteURL = getSiteURL();
+
+	if (siteURL.trim().length <= 0) {
+		// Docker stopped: restart
+		if (spawn(['docker-compose', 'up', '-d']) !== 0) {
+			halt('Docker containers failed to start.');
+		}
+
+		// try to get site URL again
+		await waitForWebContainer(true);
+		siteURL = getSiteURL();
+	}
 
 	if (siteURL.indexOf('localhost:') >= 0 || siteURL.indexOf('127.0.0.1:') >= 0) {
 		// not in a multisite/custom domain project: check if automatic port set by Docker needs to be updated in the DB
@@ -441,14 +466,7 @@ const configURL = () => {
 		}
 	}
 
-	// output site URLs and ports
-	let outputSeparator = ` \x1b[36m${'-'.repeat(siteURL.length + 21)}\x1b[0m`;
-	echo(`\x1b[1m${project.title} (${project.slug}) access URLs:\x1b[22m`);
-	echo(outputSeparator);
-	echo(` 🌍  WordPress: \x1b[35m${siteURL}/\x1b[0m`);
-	echo(` 🔧  Admin: \x1b[35m${siteURL}/wp-admin/\x1b[0m`);
-	echo(` 🗃  Database: \x1b[35mlocalhost:${dbPort}\x1b[0m`);
-	echo(outputSeparator);
+	echoInfo(siteURL);
 };
 
 // Check if there are any new resources and add paths accordingly to `docker-compose.yml` volumes
@@ -504,7 +522,7 @@ const configResources = (project='default') => {
 	).concat(volumes);
 	sh.ShellString(yaml.dump(dockerConfig)).to('docker-compose.yml');
 	echo('Bringing Docker containers up to update resources volumes...');
-	if (sh.exec('docker-compose up -d').code !== 0) {
+	if (spawn(['docker-compose', 'up', '-d']) !== 0) {
 		halt('Docker containers failed to start.');
 	}
 
@@ -513,10 +531,9 @@ const configResources = (project='default') => {
 
 // Build resources concurrently
 const buildResources = (project='default', task='build') => {
-	let resourcesConfig, dockerConfig;
+	let resourcesConfig;
 	try {
 		resourcesConfig = yaml.load(sh.cat(`./config.yml`))[project];
-		dockerConfig = yaml.load(sh.cat(`./docker-compose.yml`));
 	} catch (ex) {
 		warn(`Error loading 'docker-compose.yml' or 'config.yml'`);
 		return;
@@ -544,7 +561,7 @@ const buildResources = (project='default', task='build') => {
 			}
 		});
 		echo(`npx concurrently -c white.dim -n ${names.join(',')} ${cmds.join(' ')}`);
-		spawn('npx', ['concurrently', '-c', 'white.dim', '-n', names.join(','), ...cmds], { stdio: 'inherit' });
+		spawn(['npx', 'concurrently', '-c', 'white.dim', '-n', names.join(','), ...cmds]);
 	} catch (ex) {
 		warn('Error watching: ' + ex);
 	}
@@ -600,7 +617,7 @@ const deploy = (project='default') => {
 
 				// mirror command
 				command += `mirror --reverse --only-newer --verbose=1 ${ignore} ${resource} ${path.join(ftp.path || '', `wp-content/${resourceType}/${name}`)}`;
-				spawn('lftp', ['-c', command], {stdio: 'inherit'});
+				spawn(['lftp', '-c', command]);
 			}
 		});
 	} catch (ex) {
@@ -657,7 +674,7 @@ const addScriptCommands = () => {
 		program.command(command + argumentsInfo)
 			.description(`from 'package.json': ${commandInfo}`)
 			.action(() => {
-				spawn(packageManager, ['run', ...process.argv.slice(2)], { stdio: 'inherit' });
+				spawn([packageManager, 'run', ...process.argv.slice(2)]);
 			});
 	}
 };
@@ -679,6 +696,9 @@ const addProjectCommands = () => {
 				configResources(project)
 				.then(configURL);
 			});
+		program.command('urls')
+			.description('Output current access URLs and ports')
+			.action(() => echoInfo());
 		program.command('build [project]')
 			.description(`Run a simultaneous build on all project resources`)
 			.action((project = 'default') => buildResources(project, 'build'));

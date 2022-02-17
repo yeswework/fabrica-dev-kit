@@ -27,6 +27,7 @@
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "promise": "^8.1.0",
-    "shelljs": "^0.8.4"
+    "shelljs": "^0.8.4",
+    "shelljs-live": "^0.0.5"
   }
 }
