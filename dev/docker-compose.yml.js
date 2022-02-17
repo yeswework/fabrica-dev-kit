@@ -22,7 +22,7 @@ ${settings.wp.multisite
 ${settings.wp.multisite ? '      - proxy' : ''
 }
   db:
-    image: mysql/mysql-server:8.0.23
+    image: mysql/mysql-server:latest
     container_name: ${settings.slug}_db
     volumes:
       - ./db:/var/lib/mysql
