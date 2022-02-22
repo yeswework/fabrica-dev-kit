@@ -107,6 +107,7 @@ Command                      | Description |
 `config:url`                 | Update URLs in DB to match changes to WP container port set automatically by Docker (except for multisite projects, where a custom local host/domain is used). Output current access URLs and ports
 `config:resources [project]` | Configure Docker volumes to match resources' paths in the `config.yml` settings file if there are new resources under `[project]`. If no `[project]` is passed,  resources under `default` will be checked
 `config:all [project]`       | Run all project configuration tasks (`config:url` and `config:resources`)
+`urls`                       | Output current access URLs and ports
 `deploy [project]`           | Deploy resources to server according to configuration in `config.yml` file. If no `[project]` is passed, settings under `default` will be loaded. Files and folders matching patterns in resource `.distignore` file will be ignored
 `start`                      | Run Webpack in development mode. All available resources' Webpack configurations are loaded, and changed files are watched
 `build`                      | Run Webpack in production mode and build source for all available resources Webpack configurations
