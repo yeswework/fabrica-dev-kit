@@ -471,9 +471,10 @@ const configURL = async () => {
 
 // Check if there are any new resources and add paths accordingly to `docker-compose.yml` volumes
 const configResources = (project='default') => {
-	let resourcesConfig, dockerConfig;
+	let resourcesConfig, projectConfig, dockerConfig;
 	try {
-		resourcesConfig = yaml.load(sh.cat(`./config.yml`))[project];
+		resourcesConfig = yaml.load(sh.cat(`./config.yml`));
+		projectConfig = resourcesConfig[project];
 		dockerConfig = yaml.load(sh.cat(`./docker-compose.yml`));
 	} catch (ex) {
 		warn(`Error loading 'docker-compose.yml' or 'config.yml'`);
@@ -485,12 +486,24 @@ const configResources = (project='default') => {
 		volumes = [];
 	let existsNewVolumes = false,
 		oldVolumes = dockerConfig.services.wp.volumes.filter(isResourceVolume);
-	if (!resourcesConfig || resourcesConfig.length == 0) {
+	if (!projectConfig || projectConfig.length == 0) {
 		warn('No resources found in the config file.');
 		return;
 	}
+
+	// extend project configuration from other projects in the config file
+	if (projectConfig.extend && resourcesConfig[projectConfig.extend]) {
+		warn(`Parent project '${projectConfig.extend}' not found in the config file.`);
+	} else if (projectConfig.extend) {
+		projectConfig = {
+			...resourcesConfig[projectConfig.extend],
+			projectConfig
+		};
+	}
+
+	// setup themes and plugins volumes
 	['themes', 'plugins'].forEach(resourceType => {
-		const resources = resourcesConfig[resourceType];
+		const resources = projectConfig[resourceType];
 		if (!resources) {
 			echo(`No ${resourceType} found in the config file.`);
 			return;
@@ -508,6 +521,7 @@ const configResources = (project='default') => {
 			return `${sourcePath}:${destPath}`;
 		}));
 	});
+
 	// no changes if all resources were found in volumes and all volumes found in resources
 	if (!existsNewVolumes && oldVolumes.length == 0) {
 		return new Promise(resolve => resolve()); // containers unchanged: no need to wait for new port
@@ -531,9 +545,9 @@ const configResources = (project='default') => {
 
 // Build resources concurrently
 const buildResources = (project='default', task='build') => {
-	let resourcesConfig;
+	let projectConfig;
 	try {
-		resourcesConfig = yaml.load(sh.cat(`./config.yml`))[project];
+		projectConfig = yaml.load(sh.cat(`./config.yml`))[project];
 	} catch (ex) {
 		warn(`Error loading 'docker-compose.yml' or 'config.yml'`);
 		return;
@@ -543,7 +557,7 @@ const buildResources = (project='default', task='build') => {
 		let names = [],
 			cmds = [];
 		['themes', 'plugins'].forEach(resourceType => {
-			const resources = resourcesConfig[resourceType];
+			const resources = projectConfig[resourceType];
 			if (!resources) { return; }
 			for (let resource of resources) {
 				const name = resource.replace(/\/$/, '').split('/').pop();
@@ -560,6 +574,9 @@ const buildResources = (project='default', task='build') => {
 				cmds.push(`"cd ${resource}; npx wp-scripts ${task}"`);
 			}
 		});
+		if (names.length <= 0) {
+			halt('No resources found in the config file to build or watch.');
+		}
 		echo(`npx concurrently -c white.dim -n ${names.join(',')} ${cmds.join(' ')}`);
 		spawn(['npx', 'concurrently', '-c', 'white.dim', '-n', names.join(','), ...cmds]);
 	} catch (ex) {
@@ -589,14 +606,14 @@ const deploy = (project='default') => {
 	}
 
 	try {
-		const resourcesConfig = yaml.load(sh.cat(`./config.yml`))[project],
-			ftp = resourcesConfig.ftp;
-		if (!resourcesConfig || !ftp || !ftp.host) {
+		const projectConfig = yaml.load(sh.cat(`./config.yml`))[project],
+			ftp = projectConfig.ftp;
+		if (!projectConfig || !ftp || !ftp.host) {
 			warn('Settings for FTP upload not found');
 			return;
 		}
 		['themes', 'plugins'].forEach(resourceType => {
-			const resources = resourcesConfig[resourceType];
+			const resources = projectConfig[resourceType];
 			if (!resources) { return; }
 			for (let resource of resources) {
 				const name = resource.replace(/\/$/, '').split('/').pop();

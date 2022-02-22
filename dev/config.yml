@@ -16,6 +16,7 @@ default:
 
 # alternative configurations for other environments or resource sets, for example
 # staging:
+#   extend: default # inherit 'default' project's options
 #   plugins:
 #   themes:
 #   ftp:
