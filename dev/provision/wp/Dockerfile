@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y sudo less
 RUN curl https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar > /tmp/wp-cli.phar
 RUN chmod +x /tmp/wp-cli.phar
 RUN mv /tmp/wp-cli.phar /usr/local/bin/wp
+RUN mkdir -p /var/www/.wp-cli/cache
+RUN chown -R www-data:www-data /var/www/
 
 # Install Xdebug
 RUN pecl -q install xdebug \

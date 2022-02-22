@@ -283,7 +283,7 @@ let installWordPress = (webPort, settings) => {
 			wp(`plugin delete "hello" "akismet"`);
 		}
 		if (settings.wp.skip_default_themes) {
-			wp(`theme delete "twentynineteen" "twentytwenty"`);
+			wp(`theme delete --all`);
 		}
 		// WordPress options
 		for (let option of Object.keys(settings.wp.options || {})) {
@@ -301,6 +301,7 @@ let installWordPress = (webPort, settings) => {
 }
 
 // add custom domain to /etc/hosts for multisite setups
+// [FIXME] currently not working properly
 const setupMultisiteCustomDomain = settings => {
 	if (!settings.wp.multisite) { return; }
 
@@ -330,11 +331,6 @@ const startContainersAndInstall = settings => {
 			halt(`More than ${WAIT_WP_CONTAINER_TIMEOUT / 1000} seconds elapsed while waiting for WordPress container to start.`);
 		}
 		echo(`Web server running at port ${webPort}`);
-
-		// set WordPress an WP cli cache folders owner
-		sh.exec('docker-compose exec wp sh -c "mkdir -p /var/www/.wp-cli/cache"');
-		sh.exec('docker-compose exec wp sh -c "chown -R www-data:www-data /var/www/.wp-cli"');
-		sh.exec('docker-compose exec wp sh -c "chown -R www-data:www-data ."');
 
 		setupMultisiteCustomDomain(settings);
 		installWordPress(webPort, settings);
