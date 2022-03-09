@@ -93,6 +93,26 @@ const getSetupPackageManager = (settings) => {
 	return packageManager;
 }
 
+const getProjectConfig = (project, resourcesConfig = false) => {
+	try {
+		resourcesConfig ||= yaml.load(sh.cat(`./config.yml`));
+	} catch (ex) {
+		warn(`Error loading 'config.yml'`);
+		return {};
+	}
+	const projectConfig = resourcesConfig[project];
+	// extend project configuration from other projects in the config file
+	if (projectConfig.extend && !resourcesConfig[projectConfig.extend]) {
+		warn(`Parent project '${projectConfig.extend}' not found in the config file.`);
+	} else if (projectConfig.extend) {
+		return {
+			...resourcesConfig[projectConfig.extend],
+			...projectConfig
+		};
+	}
+	return projectConfig;
+};
+
 // load all settings files
 const loadSetupSettings = (reinstall) => {
 	echo('Reading settings...');
@@ -470,7 +490,7 @@ const configResources = (project='default') => {
 	let resourcesConfig, projectConfig, dockerConfig;
 	try {
 		resourcesConfig = yaml.load(sh.cat(`./config.yml`));
-		projectConfig = resourcesConfig[project];
+		projectConfig = getProjectConfig(project, resourcesConfig);
 		dockerConfig = yaml.load(sh.cat(`./docker-compose.yml`));
 	} catch (ex) {
 		warn(`Error loading 'docker-compose.yml' or 'config.yml'`);
@@ -485,16 +505,6 @@ const configResources = (project='default') => {
 	if (!projectConfig || projectConfig.length == 0) {
 		warn('No resources found in the config file.');
 		return;
-	}
-
-	// extend project configuration from other projects in the config file
-	if (projectConfig.extend && resourcesConfig[projectConfig.extend]) {
-		warn(`Parent project '${projectConfig.extend}' not found in the config file.`);
-	} else if (projectConfig.extend) {
-		projectConfig = {
-			...resourcesConfig[projectConfig.extend],
-			projectConfig
-		};
 	}
 
 	// setup themes and plugins volumes
@@ -541,13 +551,7 @@ const configResources = (project='default') => {
 
 // Build resources concurrently
 const buildResources = (project='default', task='build') => {
-	let projectConfig;
-	try {
-		projectConfig = yaml.load(sh.cat(`./config.yml`))[project];
-	} catch (ex) {
-		warn(`Error loading 'docker-compose.yml' or 'config.yml'`);
-		return;
-	}
+	const projectConfig = getProjectConfig(project);
 
 	try {
 		let names = [],
@@ -602,7 +606,7 @@ const deploy = (project='default') => {
 	}
 
 	try {
-		const projectConfig = yaml.load(sh.cat(`./config.yml`))[project],
+		const projectConfig = getProjectConfig(project),
 			ftp = projectConfig.ftp;
 		if (!projectConfig || !ftp || !ftp.host) {
 			warn('Settings for FTP upload not found');
