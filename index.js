@@ -626,6 +626,10 @@ const deploy = (project='default') => {
 				// file patterns to exclude
 				const distignorePath = path.join(resource, '.distignore'),
 					ignore = sh.test('-f', distignorePath) ? buildIgnoreParams(sh.cat(distignorePath).split('\n')) : '';
+
+				// extra `mirror` parameters
+				const params = ftp?.params ? ftp.params.join(' ') : '';
+
 				let command = ftp.commands ? ftp.commands.join('; ') + '; ' : '';
 
 				// open command
@@ -633,7 +637,7 @@ const deploy = (project='default') => {
 				command += `${ftp.port ? ` -p ${ftp.port}` : ''} ${ftp.host}; `;
 
 				// mirror command
-				command += `mirror --reverse --only-newer --verbose=1 ${ignore} ${resource} ${path.join(ftp.path || '', `wp-content/${resourceType}/${name}`)}`;
+				command += `mirror --reverse --only-newer --verbose=1 ${params} ${ignore} ${resource} ${path.join(ftp.path || '', `wp-content/${resourceType}/${name}`)}`;
 				spawn(['lftp', '-c', command]);
 			}
 		});

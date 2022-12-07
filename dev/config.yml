@@ -10,6 +10,7 @@ default:
 #     host:
 #     port: "3308" # optional (for exotic configs)
 #     path: # wordpress root folder path in the server
+#     params: [--delete] # extra parameters to add to lftp's `mirror` command. `--delete` deletes all files at remote site that are not present locally
 #     commands: # optional list of lftp commands to run before uploading
 #     - set ftp:ssl-allow no
 #     - set mirror:parallel-transfer-count 3

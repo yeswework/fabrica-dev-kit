@@ -1,4 +1,4 @@
-FROM wordpress:php7.4-fpm
+FROM wordpress:php8.1-fpm
 
 # Add sudo in order to run wp-cli as the www-data user
 RUN apt-get update && apt-get install -y sudo less
