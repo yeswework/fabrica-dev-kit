@@ -16,7 +16,7 @@ const findup = require('findup-sync'),
 	yaml = require('js-yaml');
 
 const execGet = cmd => sh.exec(cmd, { silent: true }).stdout.trim();
-const execWP = (cmd, options) => sh.exec(`docker-compose exec -u www-data -T wp ${cmd}`, options);
+const execWP = (cmd, options) => sh.exec(`docker compose exec -u www-data -T wp ${cmd}`, options);
 const execWPGet = cmd => execWP(cmd, { silent: true }).stdout.trim();
 
 // Fabrica Dev Kit version
@@ -64,7 +64,7 @@ const wait = (message, callback, delay=500) => {
 
 // check Fabrica dependencies
 const checkDependencies = () => {
-	const dependencies = ['docker-compose'];
+	const dependencies = ['docker'];
 	for (let dependency of dependencies) {
 		if (sh.exec(`hash ${dependency} 2>/dev/null`, {silent: true}).code != 0) {
 			halt(`Could not find dependency '${dependency}'.`);
@@ -340,7 +340,7 @@ const setupMultisiteCustomDomain = settings => {
 // start Docker containers and wait for them to be up to start installing and configuring WP
 const startContainersAndInstall = settings => {
 	echo('Bringing Docker containers up...');
-	if (spawn(['docker-compose', 'up', '-d']) != 0) {
+	if (spawn(['docker', 'compose', 'up', '-d']) != 0) {
 		halt('Docker containers provision failed.');
 	}
 
@@ -359,11 +359,16 @@ const startContainersAndInstall = settings => {
 	});
 }
 
+// Get external Docker port
+const getDockerPort = (service, port) => {
+	return execGet(`docker compose port ${service} ${port}`).replace(/^.*:(\d+)$/g, '$1');
+}
+
 // Get current web Docker container automatically assigned port
 const getWebPort = (force=false) => {
 	if (!force && project && project.webPort) { return project.webPort; }
 
-	const webPort = execGet('docker-compose port web 80').replace(/^.*:(\d+)$/g, '$1');
+	const webPort = getDockerPort('web', 80);
 	if (project) {
 		project.webPort = webPort;
 	}
@@ -375,12 +380,27 @@ const getWebPort = (force=false) => {
 const getDBPort = () => {
 	if (project && project.dbPort) { return project.dbPort; }
 
-	const dbPort = execGet('docker-compose port db 3306').replace(/^.*:(\d+)$/g, '$1');
+	const dbPort = getDockerPort('db', 3306);
 	if (project) {
 		project.dbPort = dbPort;
 	}
 
 	return dbPort;
+}
+
+// Get current Docker automatically assigned ports for extra services
+const getServicesPorts = () => {
+	const dockerConfig = yaml.load(sh.cat(`./docker-compose.yml`)),
+		ports = [];
+	if (dockerConfig.services?.mailhog) {
+		const mailhogPort = getDockerPort('mailhog', 8025);
+		ports.push({
+			icon: '📨',
+			name: 'Mailhog',
+			port: mailhogPort,
+		});
+	}
+	return ports;
 }
 
 // Get current db Docker container automatically assigned port
@@ -445,12 +465,16 @@ const echoInfo = (siteURL) => {
 		siteURL = getSiteURL();
 	}
 	const dbPort = getDBPort();
+	const servicesPorts = getServicesPorts();
 	const outputSeparator = ` \x1b[36m${'-'.repeat(siteURL.length + 21)}\x1b[0m`;
 	echo(`\x1b[1m${project.title} (${project.slug}) access URLs:\x1b[22m`);
 	echo(outputSeparator);
 	echo(` 🌍  WordPress: \x1b[35m${siteURL}/\x1b[0m`);
 	echo(` 🔧  Admin: \x1b[35m${siteURL}/wp-admin/\x1b[0m`);
-	echo(` 🗃  Database: \x1b[35mlocalhost:${dbPort}\x1b[0m`);
+	echo(` 💿  Database: \x1b[35mlocalhost:${dbPort}/\x1b[0m`);
+	for (const service of servicesPorts) {
+		echo(` ${service.icon}  ${service.name}: \x1b[35mlocalhost:${service.port}/\x1b[0m`);
+	}
 	echo(outputSeparator);
 };
 
@@ -460,7 +484,7 @@ const configURL = async () => {
 
 	if (siteURL.trim().length <= 0) {
 		// Docker stopped: restart
-		if (spawn(['docker-compose', 'up', '-d']) !== 0) {
+		if (spawn(['docker', 'compose', 'up', '-d']) !== 0) {
 			halt('Docker containers failed to start.');
 		}
 
@@ -485,17 +509,38 @@ const configURL = async () => {
 	echoInfo(siteURL);
 };
 
+// Check if there are any new services to add to `docker-compose.yml`
+const configServices = (projectConfig, dockerConfig) => {
+	let needsRestart = false;
+
+	// Mailhog
+	const useMailhog = projectConfig?.use?.indexOf('mailhog') >= 0;
+	if (useMailhog && !dockerConfig.services?.mailhog) {
+		needsRestart = true;
+		dockerConfig.services.mailhog = {
+			image: 'mailhog/mailhog:v1.0.0',
+			ports: ['1025:1025', '8025'],
+		};
+	} else if (!useMailhog && dockerConfig.services?.mailhog) {
+		needsRestart = true;
+		delete dockerConfig.services.mailhog;
+	}
+
+	return [needsRestart, dockerConfig];
+}
+
 // Check if there are any new resources and add paths accordingly to `docker-compose.yml` volumes
 const configResources = (project='default') => {
-	let resourcesConfig, projectConfig, dockerConfig;
+	const projectConfig = getProjectConfig(project);
+	let dockerConfig, needsRestart;
 	try {
-		resourcesConfig = yaml.load(sh.cat(`./config.yml`));
-		projectConfig = getProjectConfig(project, resourcesConfig);
 		dockerConfig = yaml.load(sh.cat(`./docker-compose.yml`));
 	} catch (ex) {
 		warn(`Error loading 'docker-compose.yml' or 'config.yml'`);
 		return;
 	}
+
+	[needsRestart, dockerConfig] = configServices(projectConfig, dockerConfig);
 
 	// look for resources that haven't got a matching volume configured
 	const isResourceVolume = volume => !/^\.\/(www$|provision\/)/.test(volume.split(':')[0]),
@@ -527,22 +572,29 @@ const configResources = (project='default') => {
 			return `${sourcePath}:${destPath}`;
 		}));
 	});
-
 	// no changes if all resources were found in volumes and all volumes found in resources
-	if (!existsNewVolumes && oldVolumes.length == 0) {
-		return new Promise(resolve => resolve()); // containers unchanged: no need to wait for new port
+	const volumesChanged = existsNewVolumes || oldVolumes.length != 0;
+	needsRestart ||= volumesChanged;
+
+	if (!needsRestart) {
+		// no containers changed: no need to wait for new port
+		return new Promise(resolve => resolve());
 	}
 
-	// there are new volumes: write new Docker Compose configuration and restart containers
-	dockerConfig.services.web.volumes = dockerConfig.services.web.volumes.filter(
-		volume => !isResourceVolume(volume)
-	).concat(volumes);
-	dockerConfig.services.wp.volumes = dockerConfig.services.wp.volumes.filter(
-		volume => !isResourceVolume(volume)
-	).concat(volumes);
+	if (volumesChanged) {
+		// there are new volumes: write new Docker Compose configuration and restart containers
+		dockerConfig.services.web.volumes = dockerConfig.services.web.volumes.filter(
+			volume => !isResourceVolume(volume)
+		).concat(volumes);
+		dockerConfig.services.wp.volumes = dockerConfig.services.wp.volumes.filter(
+			volume => !isResourceVolume(volume)
+		).concat(volumes);
+	}
+
+	// Save configuration changes and restart
 	sh.ShellString(yaml.dump(dockerConfig)).to('docker-compose.yml');
 	echo('Bringing Docker containers up to update resources volumes...');
-	if (spawn(['docker-compose', 'up', '-d']) !== 0) {
+	if (spawn(['docker', 'compose', 'up', '-d']) !== 0) {
 		halt('Docker containers failed to start.');
 	}
 

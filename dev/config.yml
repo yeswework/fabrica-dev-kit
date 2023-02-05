@@ -3,6 +3,7 @@ default:
 #   - ./src/fdk-starter-plugin
   themes:
 #   - ./src/fdk-starter-theme
+#  use: [mailhog] # optional services to add
   ftp:
 #     user:
 #     password: # optional (will be prompted if not set)
