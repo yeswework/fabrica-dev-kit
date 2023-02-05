@@ -1,23 +1,25 @@
-FROM wordpress:php8.1-fpm
+FROM wordpress:php8.0-fpm
 
-# Add sudo in order to run wp-cli as the www-data user
-RUN apt-get update && apt-get install -y sudo less
+# Add dependencies in order to run wp-cli and mhsendmail as the www-data user
+RUN apt-get update && apt-get install -yq --no-install-recommends sudo less golang-go git
 
 # Add WP-CLI
 RUN curl https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar > /tmp/wp-cli.phar
 RUN chmod +x /tmp/wp-cli.phar
 RUN mv /tmp/wp-cli.phar /usr/local/bin/wp
 RUN mkdir -p /var/www/.wp-cli/cache
-RUN chown -R www-data:www-data /var/www/
+RUN chown -R www-data:www-data /var/www/ /usr/local/var/log
 
 # Install Xdebug
 RUN pecl -q install xdebug \
     && docker-php-ext-enable xdebug
 
-# Install sendmail
-RUN apt-get -qq -o=Dpkg::Use-Pty=0 install -y sendmail > /dev/null 2>&1
+# Install mhsendmail
+RUN go get github.com/mailhog/mhsendmail
+RUN cp /root/go/bin/mhsendmail /usr/bin/mhsendmail
 
-# Cleanup
+# Permissions and cleanup
+RUN chown -R www-data:www-data /var/www/ /usr/bin/mhsendmail
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -32,6 +34,5 @@ RUN CONTAINER_GROUP_OLD=`getent group ${GID} | cut -d: -f1` && \
 RUN groupmod -o -g ${GID} www-data
 
 # Set entrypoint script to update hosts for sendmail before calling Wordpress image original entrypoint script
-COPY provision/wp/wp-entrypoint.sh /usr/local/bin/
-ENTRYPOINT ["wp-entrypoint.sh"]
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["php-fpm"]

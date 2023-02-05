@@ -561,12 +561,8 @@ const buildResources = (project='default', task='build') => {
 			if (!resources) { return; }
 			for (let resource of resources) {
 				const name = resource.replace(/\/$/, '').split('/').pop();
-				if (!sh.test('-d', resource)) {
-					warn(`Path for resource '${name}' not found`);
-					continue;
-				}
 				if (!sh.test('-f', `${resource}/package.json`)) {
-					warn(`package.json for resource '${name}' not found`);
+					warn(`'package.json' for resource '${name}' not found in '${resource}/package.json'`);
 					continue;
 				}
 

@@ -1,5 +1,5 @@
 module.exports = (settings) => `
-version: '2'
+version: '3.9'
 
 services:
   web:
