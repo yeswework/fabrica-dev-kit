@@ -38,9 +38,6 @@ ${settings.wp.multisite ? '      - proxy' : ''
     build:
       context: .
       dockerfile: provision/wp/Dockerfile
-      args:
-        UID: ${settings.user.uid}
-        GID: ${settings.user.gid}
     container_name: ${settings.slug}_wp
     restart: unless-stopped
     volumes:

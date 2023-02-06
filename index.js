@@ -131,12 +131,6 @@ const loadSetupSettings = (reinstall) => {
 		merge(settings, newSettings);
 	}
 
-	// get user's UID/GID to match on container's user
-	settings.user = {
-		uid: execGet('id -u $(whoami)'),
-		gid: execGet('id -g $(whoami)'),
-	}
-
 	// load default, user and project/site settings, in that order
 	mergeSettings(`${process.env.HOME}/.fabrica/settings.yml`);
 	const setupSettingsFilename = './setup.yml',
@@ -321,7 +315,7 @@ let installWordPress = (webPort, settings) => {
 }
 
 // add custom domain to /etc/hosts for multisite setups
-// [FIXME] currently not working properly
+// [FIXME] currently not working properly -- would possibly require a proxy like Traefik to redirect a URLs to container ports
 const setupMultisiteCustomDomain = settings => {
 	if (!settings.wp.multisite) { return; }
 
@@ -521,6 +515,9 @@ const configServices = (projectConfig, dockerConfig) => {
 			image: 'mailhog/mailhog:v1.0.0',
 			ports: ['1025:1025', '8025'],
 		};
+		echo('\x1b[1mNB:\x1b[22m In order to use Mailhog `wp_mail_from` filter must be set, e.g.:');
+		echo("    add_filter('wp_mail_from', fn($email) => 'wordpress@fabrica.dev');");
+		echo("    add_filter('wp_mail_from_name', fn($name) => 'Fabrica');\n");
 	} else if (!useMailhog && dockerConfig.services?.mailhog) {
 		needsRestart = true;
 		delete dockerConfig.services.mailhog;
@@ -594,7 +591,7 @@ const configResources = (project='default') => {
 	// Save configuration changes and restart
 	sh.ShellString(yaml.dump(dockerConfig)).to('docker-compose.yml');
 	echo('Bringing Docker containers up to update resources volumes...');
-	if (spawn(['docker', 'compose', 'up', '-d']) !== 0) {
+	if (spawn(['docker', 'compose', 'up', '-d', '--remove-orphans']) !== 0) {
 		halt('Docker containers failed to start.');
 	}
 
