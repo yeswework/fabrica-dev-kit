@@ -12,7 +12,6 @@ wp:
     user: ${data.wp_admin_user || 'fabrica'}
     pass: ${data.wp_admin_pass || 'fabrica'}
     email: ${data.wp_admin_email || 'admin@fdk.dev'}
-  version: latest
   lang: en_US # dev site WP locale/language
   rewrite_structure: /%postname%/ # dev site permalink structure (can be changed later)
   multisite: ${data.multisite || false}
@@ -26,8 +25,8 @@ wp:
   # - force-regenerate-thumbnails
 
 # Database settings
-db:
-  prefix: wp_
+# db:
+#   prefix: wp_
 
 package_manager: npm # Node package manager to use: either 'npm' or 'yarn'
 `;
