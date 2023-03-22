@@ -249,11 +249,7 @@ const installDependencies = (packageManager) => {
 // install and configure WordPress in the Docker container
 let installWordPress = (webPort, settings) => {
 	echo('Installing WordPress...');
-	let wp = command => {
-		if (execWP(`wp ${command}`).code != 0) {
-			halt(`Failed to execute: 'wp ${command}' on wp container`);
-		}
-	};
+	let wp = command => execWP(`wp ${command}`).code == 0 || halt(`Failed to execute: 'wp ${command}' on wp container`);
 
 	// use stdout stream to filter out known WP CLI warning
 	let install = execWP([`wp core ${settings.wp.multisite ? 'multisite-' : ''}install`,
@@ -270,7 +266,7 @@ let installWordPress = (webPort, settings) => {
 	}).on('error', error => {
 		halt(`Failed to install WordPress:\n${error}`);
 	}).on('end', () => {
-		if (install.exitCode && install.exitCode) {
+		if (install.exitCode) {
 			halt(`Failed to install WordPress`);
 		}
 
@@ -281,6 +277,13 @@ let installWordPress = (webPort, settings) => {
 			wp('plugin activate wp-multibyte-patch');
 		}
 
+		// remove default WordPress plugins and themes
+		if (settings.wp.skip_default_plugins) {
+			wp(`plugin delete "hello" "akismet"`);
+		}
+		if (settings.wp.skip_default_themes) {
+			wp(`theme delete --all`);
+		}
 		// install and activate WordPress plugins
 		for (let plugin of (settings.wp.plugins || [])) {
 			wp(`plugin install "${plugin}" --activate`);
@@ -291,13 +294,6 @@ let installWordPress = (webPort, settings) => {
 				`&& rm /tmp/acf-pro.zip'`].join(' ')).code != 0) {
 				warn('Error installing or configuring ACF Pro.');
 			}
-		}
-		// remove default WordPress plugins and themes
-		if (settings.wp.skip_default_plugins) {
-			wp(`plugin delete "hello" "akismet"`);
-		}
-		if (settings.wp.skip_default_themes) {
-			wp(`theme delete --all`);
 		}
 		// WordPress options
 		for (let option of Object.keys(settings.wp.options || {})) {
@@ -310,12 +306,12 @@ let installWordPress = (webPort, settings) => {
 		}
 
 		// the site will be ready to run and develop locally
-		echo('Setup complete. To develop locally, setup the resources to import automatically in \'config.yml\' and run \'fdk start\'.');
+		echo('Setup complete. To develop locally, setup the resources to import automatically in \'config.yml\', run \'fdk config:all\' to update the Docker configuration and then \'fdk start\'.');
 	});
 }
 
 // add custom domain to /etc/hosts for multisite setups
-// [FIXME] currently not working properly -- would possibly require a proxy like Traefik to redirect a URLs to container ports
+// [FIXME] currently not working properly -- proxy like jwilder/nginx-proxy or Traefik to redirect a URLs to container ports
 const setupMultisiteCustomDomain = settings => {
 	if (!settings.wp.multisite) { return; }
 
@@ -523,6 +519,21 @@ const configServices = (projectConfig, dockerConfig) => {
 		delete dockerConfig.services.mailhog;
 	}
 
+	// PHPUnit
+	const usePhpUnit = projectConfig?.use?.indexOf('phpunit') >= 0;
+	if (usePhpUnit && !dockerConfig.services?.wp_tests) {
+		needsRestart = true;
+		dockerConfig.services.db_tests = {...dockerConfig.services.db};
+		dockerConfig.services.db_tests.volumes = ['db-tests:/var/lib/mysql'];
+		dockerConfig.services.wp_tests = {...dockerConfig.services.wp};
+		const volumeIndex = dockerConfig.services.wp_tests.volumes.indexOf('./www:/var/www/html');
+		if (volumeIndex >= 0) {
+			dockerConfig.services.wp_tests.volumes[volumeIndex] = 'www_tests:/var/www/html';
+		}
+		dockerConfig.services.wp_tests.volumes.push('./provision/phpunit:/var/www/phpunit');
+		dockerConfig.services.wp_tests.environment.WORDPRESS_DB_HOST = 'db_tests';
+	}
+
 	return [needsRestart, dockerConfig];
 }
 
@@ -536,8 +547,6 @@ const configResources = (project='default') => {
 		warn(`Error loading 'docker-compose.yml' or 'config.yml'`);
 		return;
 	}
-
-	[needsRestart, dockerConfig] = configServices(projectConfig, dockerConfig);
 
 	// look for resources that haven't got a matching volume configured
 	const isResourceVolume = volume => !/^\.\/(www$|provision\/)/.test(volume.split(':')[0]),
@@ -571,6 +580,8 @@ const configResources = (project='default') => {
 	});
 	// no changes if all resources were found in volumes and all volumes found in resources
 	const volumesChanged = existsNewVolumes || oldVolumes.length != 0;
+
+	[needsRestart, dockerConfig] = configServices(projectConfig, dockerConfig);
 	needsRestart ||= volumesChanged;
 
 	if (!needsRestart) {
@@ -679,7 +690,7 @@ const deploy = (project='default') => {
 
 				// open command
 				command += `open -u ${ftp.user}${ftp.password ? `,${ftp.password}` : ''}`;
-				command += `${ftp.port ? ` -p ${ftp.port}` : ''} ${ftp.host}; `;
+				command += `${ftp.port ? ` -p ${ftp.port}` : ''} ${ftp?.scheme || 'ftp'}://${ftp.host}; `;
 
 				// mirror command
 				command += `mirror --reverse --only-newer --verbose=1 ${params} ${ignore} ${resource} ${path.join(ftp.path || '', `wp-content/${resourceType}/${name}`)}`;
