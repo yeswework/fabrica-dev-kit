@@ -9,7 +9,6 @@ RUN curl https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.ph
 RUN chmod +x /tmp/wp-cli.phar
 RUN mv /tmp/wp-cli.phar /usr/local/bin/wp
 RUN mkdir -p /var/www/.wp-cli/cache
-RUN chown -R www-data:www-data /var/www/ /usr/local/var/log
 
 # Install Xdebug
 RUN pecl -q install xdebug \
@@ -19,7 +18,7 @@ RUN pecl -q install xdebug \
 COPY --from=mhsendmail /usr/bin/mhsendmail /usr/bin/mhsendmail
 
 # Permissions and cleanup
-RUN chown -R www-data:www-data /var/www/ /usr/bin/mhsendmail
+RUN chown -R www-data:www-data /var/www/ /usr/local/var/log /usr/bin/mhsendmail
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
