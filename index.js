@@ -688,24 +688,25 @@ const deploy = (project='default', options) => {
 
 				// extra `mirror` parameters
 				const params = ftp?.params ? ftp.params.join(' ') : '',
-					destPath = `wp-content/${resourceType}`,
-					destName = options.backup ? `_${name}-tmp` : name;
-				let command = ftp.commands ? ftp.commands.join('; ') + '; ' : '';
+					destPath = path.join(ftp.path || '', `wp-content/${resourceType}`),
+					url = `${ftp?.scheme || 'ftp'}://${encodeURIComponent(ftp.user)}${ftp.password ? `:${encodeURIComponent(ftp.password)}` : ''}@${ftp.host}${ftp.port ? `:${ftp.port}` : ''}`,
+					commands = [...ftp.commands];
 
 				// open command
-				command += `open -u ${ftp.user}${ftp.password ? `,${ftp.password}` : ''}`;
-				command += `${ftp.port ? ` -p ${ftp.port}` : ''} ${ftp?.scheme || 'ftp'}://${ftp.host}; `;
+				commands.push(`open ${url}`);
+
+				if (options.backup) {
+					// copy old folder so it's not overwritten
+					const backupName = `${name}_${(new Date()).toISOString()}`;
+					commands.push(`echo "Copying original resource folder '${name}' to '${backupName}' in '${ftp.host}'..."`);
+					commands.push('set ftp:use-fxp yes');
+					commands.push(`mirror ${path.join(destPath, name)} ${path.join(url, destPath, backupName)}`);
+					commands.push(`echo "Uploading updated files to '${name}'..."`);
+				}
 
 				// mirror command
-				command += `mirror --reverse --only-newer --verbose=1 ${params} ${ignore} ${resource} ${path.join(ftp.path || '', `${destPath}/${destName}`)}`;
-
-				// backup
-				if (options.backup) {
-					// rename (move) old folder so it's not overwritten
-					command += `; mv ${destPath}/${name} ${destPath}/${name}_${(new Date()).toISOString()}`;
-					command += `; mv ${destPath}/${destName} ${destPath}/${name}`;
-				}
-				spawn(['lftp', '-c', command]);
+				commands.push(`mirror --reverse --only-newer --verbose=1 ${params} ${ignore} ${resource} ${path.join(destPath, name)}`);
+				spawn(['lftp', '-c', commands.join('; ') + '; ']);
 			}
 		});
 	} catch (ex) {
