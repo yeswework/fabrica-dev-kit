@@ -11,8 +11,7 @@ RUN mv /tmp/wp-cli.phar /usr/local/bin/wp
 RUN mkdir -p /var/www/.wp-cli/cache
 
 # Install Xdebug
-RUN pecl -q install xdebug \
-    && docker-php-ext-enable xdebug
+RUN pecl -q install xdebug && docker-php-ext-enable xdebug
 
 # Install mhsendmail
 COPY --from=mhsendmail /usr/bin/mhsendmail /usr/bin/mhsendmail

@@ -3,6 +3,7 @@
 
 'use strict';
 
+const { log } = require('console');
 const findup = require('findup-sync'),
 	http = require('http'),
 	merge = require('lodash/merge'),
@@ -36,7 +37,7 @@ const warn = message => {
 }
 const halt = message => {
 	warn(message);
-	process.exit(1)
+	process.exit(1);
 };
 const wait = (message, callback, delay=500) => {
 	return new Promise((resolve, reject) => {
@@ -101,10 +102,12 @@ const getProjectConfig = (project, resourcesConfig = false) => {
 		return {};
 	}
 	const projectConfig = resourcesConfig[project];
-	// extend project configuration from other projects in the config file
-	if (projectConfig.extend && !resourcesConfig[projectConfig.extend]) {
-		warn(`Parent project '${projectConfig.extend}' not found in the config file.`);
+	if (!projectConfig) {
+		halt(`Project '${project}' not found in the config file.`)
+	} else if (projectConfig.extend && !resourcesConfig[projectConfig.extend]) {
+		halt(`Project '${project}' extends '${projectConfig.extend}' which was not found in the config file.`);
 	} else if (projectConfig.extend) {
+		// extend project configuration from other projects in the config file
 		return {
 			...resourcesConfig[projectConfig.extend],
 			...projectConfig
@@ -641,7 +644,7 @@ const buildResources = (project='default', task='build') => {
 }
 
 // Upload resources built files to server
-const deploy = (project='default') => {
+const deploy = (project='default', options) => {
 	const buildIgnoreParams = (distignore) => {
 		if (!distignore) { return ''; }
 		return distignore.map(item => {
@@ -684,8 +687,9 @@ const deploy = (project='default') => {
 					ignore = sh.test('-f', distignorePath) ? buildIgnoreParams(sh.cat(distignorePath).split('\n')) : '';
 
 				// extra `mirror` parameters
-				const params = ftp?.params ? ftp.params.join(' ') : '';
-
+				const params = ftp?.params ? ftp.params.join(' ') : '',
+					destPath = `wp-content/${resourceType}`,
+					destName = options.backup ? `_${name}-tmp` : name;
 				let command = ftp.commands ? ftp.commands.join('; ') + '; ' : '';
 
 				// open command
@@ -693,7 +697,14 @@ const deploy = (project='default') => {
 				command += `${ftp.port ? ` -p ${ftp.port}` : ''} ${ftp?.scheme || 'ftp'}://${ftp.host}; `;
 
 				// mirror command
-				command += `mirror --reverse --only-newer --verbose=1 ${params} ${ignore} ${resource} ${path.join(ftp.path || '', `wp-content/${resourceType}/${name}`)}`;
+				command += `mirror --reverse --only-newer --verbose=1 ${params} ${ignore} ${resource} ${path.join(ftp.path || '', `${destPath}/${destName}`)}`;
+
+				// backup
+				if (options.backup) {
+					// rename (move) old folder so it's not overwritten
+					command += `; mv ${destPath}/${name} ${destPath}/${name}_${(new Date()).toISOString()}`;
+					command += `; mv ${destPath}/${destName} ${destPath}/${name}`;
+				}
 				spawn(['lftp', '-c', command]);
 			}
 		});
@@ -784,6 +795,7 @@ const addProjectCommands = () => {
 			.action((project = 'default') => buildResources(project, 'start'));
 		program.command('deploy [project]')
 			.description(`Deploy resources to server according to configuration in 'config.yml' file. If no <project> is passed, settings under 'default' will be loaded. Files and folders matching patterns in resource '.distignore' file will be ignored`)
+			.option('-k, --backup', 'backup existing resources folders before updating')
 			.action(deploy);
 	}
 	addScriptCommands();
