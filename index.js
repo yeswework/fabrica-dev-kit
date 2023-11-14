@@ -660,7 +660,7 @@ const deploy = (project='default', options) => {
 				glob = glob.replace(/^\.?\//, '');
 				glob = `${glob} --${option == 'exclude' ? 'include' : 'exclude'}-glob **/${glob}`;
 			}
-			return glob !== '' ? `--${option}-glob ${glob}` : ''
+			return glob !== '' ? `--${option}-glob ${glob}` : '';
 		}).join(' ');
 	}
 
@@ -705,7 +705,7 @@ const deploy = (project='default', options) => {
 				}
 
 				// mirror command
-				commands.push(`mirror --reverse --only-newer --verbose=1 ${params} ${ignore} ${resource} ${path.join(destPath, name)}`);
+				commands.push(`mirror --reverse --verbose=1 ${params} ${ignore} ${resource} ${path.join(destPath, name)}`);
 				spawn(['lftp', '-c', commands.join('; ') + '; ']);
 			}
 		});
