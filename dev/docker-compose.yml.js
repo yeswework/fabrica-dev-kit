@@ -1,6 +1,4 @@
 module.exports = (settings) => `
-version: '3.9'
-
 services:
   web:
     image: nginx:latest
