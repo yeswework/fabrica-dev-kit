@@ -3,7 +3,6 @@
 
 'use strict';
 
-const { log } = require('console');
 const findup = require('findup-sync'),
 	http = require('http'),
 	merge = require('lodash/merge'),
@@ -696,12 +695,14 @@ const deploy = (project='default', options) => {
 				commands.push(`open ${url}`);
 
 				if (options.backup) {
-					// copy old folder so it's not overwritten
+					// copy old folder
 					const backupName = `${name}_${(new Date()).toISOString()}`;
-					commands.push(`echo "Copying original resource folder '${name}' to '${backupName}' in '${ftp.host}'..."`);
-					commands.push('set ftp:use-fxp yes');
-					commands.push(`mirror ${path.join(destPath, name)} ${path.join(url, destPath, backupName)}`);
-					commands.push(`echo "Uploading updated files to '${name}'..."`);
+					commands.push(...[
+						`echo "Copying original resource folder '${name}' to '${backupName}' in '${ftp.host}'..."`,
+						'set ftp:use-fxp yes',
+						`mirror ${path.join(destPath, name)} ${new URL(path.join(destPath, backupName), url).href}`,
+						`echo "Original theme backed up. Uploading updated files to '${name}'..."`
+					]);
 				}
 
 				// mirror command
