@@ -629,7 +629,7 @@ const buildResources = (project='default', task='build') => {
 				}
 
 				names.push(name);
-				cmds.push(`"cd ${resource}; npx wp-scripts ${task}"`);
+				cmds.push(`"cd ${resource}; npm run ${task}"`);
 			}
 		});
 		if (names.length <= 0) {

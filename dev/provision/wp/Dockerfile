@@ -4,11 +4,12 @@ FROM wordpress:php8.0-fpm
 # Add dependencies in order to run wp-cli and mhsendmail as the www-data user
 RUN apt-get update && apt-get install -yq --no-install-recommends sudo less
 
-# Add WP-CLI
-RUN curl https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar > /tmp/wp-cli.phar
-RUN chmod +x /tmp/wp-cli.phar
-RUN mv /tmp/wp-cli.phar /usr/local/bin/wp
+# Add and configure WP-CLI with Psysh
+RUN curl https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar > /usr/local/bin/wp
+RUN curl https://psysh.org/psysh > /usr/local/bin/psysh
+RUN chmod +x /usr/local/bin/wp /usr/local/bin/psysh
 RUN mkdir -p /var/www/.wp-cli/cache
+RUN echo -e "require:\n  - /usr/local/bin/psysh" > /var/www/.wp-cli/config.yml
 
 # Install Xdebug
 RUN pecl -q install xdebug && docker-php-ext-enable xdebug
