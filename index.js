@@ -280,10 +280,10 @@ let installWordPress = (webPort, settings) => {
 		}
 
 		// remove default WordPress plugins and themes
-		if (settings.wp.skip_default_plugins) {
+		if (!settings.reinstall && settings.wp.skip_default_plugins) {
 			wp(`plugin delete "hello" "akismet"`);
 		}
-		if (settings.wp.skip_default_themes) {
+		if (!settings.reinstall && settings.wp.skip_default_themes) {
 			wp(`theme delete --all`);
 		}
 		// install and activate WordPress plugins

@@ -1,5 +1,5 @@
-FROM aheadworks/mhsendmail as mhsendmail
-FROM wordpress:php8.0-fpm
+FROM aheadworks/mhsendmail AS mhsendmail
+FROM wordpress:php8.4-fpm
 
 # Add dependencies in order to run wp-cli and mhsendmail as the www-data user
 RUN apt-get update && apt-get install -yq --no-install-recommends sudo less

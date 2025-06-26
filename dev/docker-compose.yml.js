@@ -32,7 +32,7 @@ ${settings.wp.multisite ? '      - proxy' : ''
     ports:
       - '3306'
   wp:
-    image: fabricawp/wordpress:0.0.2
+    image: fabricawp/wordpress:0.0.3
     restart: unless-stopped
     volumes:
       - ./www:/var/www/html
