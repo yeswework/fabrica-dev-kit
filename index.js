@@ -10,14 +10,14 @@ const findup = require('findup-sync'),
 	program = require('commander'),
 	Promise = require('promise'),
 	sh = require('shelljs'),
-	// `shelljs.exec` doesn't handle color and animations yet
-	// https://github.com/shelljs/shelljs/issues/86
-	spawn = require('shelljs-live'),
+	// `shelljs.exec` doesn't handle color and animations (https://github.com/shelljs/shelljs/issues/86 & https://github.com/shelljs/shelljs/issues/426)
+	{ spawnSync } = require('child_process'),
 	yaml = require('js-yaml');
 
 const execGet = cmd => sh.exec(cmd, { silent: true }).stdout.trim();
 const execWP = (cmd, options) => sh.exec(`docker compose exec -u www-data -T wp ${cmd}`, options);
 const execWPGet = cmd => execWP(cmd, { silent: true }).stdout.trim();
+const spawn = ([cmd, ...args]) => spawnSync(cmd, args, { stdio: 'inherit' })
 
 // Fabrica Dev Kit version
 const VERSION = require('./package.json')['version'],
@@ -332,7 +332,7 @@ const setupMultisiteCustomDomain = settings => {
 // start Docker containers and wait for them to be up to start installing and configuring WP
 const startContainersAndInstall = settings => {
 	echo('Bringing Docker containers up...');
-	if (spawn(['docker', 'compose', 'up', '-d']) != 0) {
+	if (spawn(['docker', 'compose', 'up', '-d']).status != 0) {
 		halt('Docker containers provision failed.');
 	}
 
@@ -476,7 +476,7 @@ const configURL = async () => {
 
 	if (siteURL.trim().length <= 0) {
 		// Docker stopped: restart
-		if (spawn(['docker', 'compose', 'up', '-d']) !== 0) {
+		if (spawn(['docker', 'compose', 'up', '-d']).status !== 0) {
 			halt('Docker containers failed to start.');
 		}
 
@@ -604,7 +604,7 @@ const configResources = (project='default') => {
 	// Save configuration changes and restart
 	sh.ShellString(yaml.dump(dockerConfig)).to('docker-compose.yml');
 	echo('Bringing Docker containers up to update resources volumes...');
-	if (spawn(['docker', 'compose', 'up', '-d', '--remove-orphans']) !== 0) {
+	if (spawn(['docker', 'compose', 'up', '-d', '--remove-orphans']).status !== 0) {
 		halt('Docker containers failed to start.');
 	}
 
