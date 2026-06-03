@@ -451,10 +451,18 @@ const setup = options => {
 
 // ——— Project-specific (post-initialization) commands ————
 
-const echoInfo = (siteURL) => {
+const echoInfo = (siteURL, isConfig=false) => {
 	// output site URLs and ports
 	if (!siteURL) {
 		siteURL = getSiteURL();
+	}
+	if (!siteURL && !isConfig) {
+		if (!isConfig) {
+			echo(`Services are not started, please run \x1b[1mfdk config:all\x1b[22m to start them\n(Note: if services fail to start, please check \x1b[1mfdk logs\x1b[22m for PHP errors)`);
+		} else {
+			echo(`Services have not started, please wait or check \x1b[1mfdk logs\x1b[22m for PHP errors`);
+		}
+		return;
 	}
 	const dbPort = getDBPort();
 	const servicesPorts = getServicesPorts();
@@ -498,7 +506,7 @@ const configURL = async () => {
 		}
 	}
 
-	echoInfo(siteURL);
+	echoInfo(siteURL, true);
 };
 
 // Check if there are any new services to add to `docker-compose.yml`
