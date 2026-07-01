@@ -384,12 +384,12 @@ const getDBPort = () => {
 const getServicesPorts = () => {
 	const dockerConfig = yaml.load(sh.cat(`./docker-compose.yml`)),
 		ports = [];
-	if (dockerConfig.services?.mailhog) {
-		const mailhogPort = getDockerPort('mailhog', 8025);
+	if (dockerConfig.services?.mailpit) {
+		const mailpitPort = getDockerPort('mailpit', 8025);
 		ports.push({
 			icon: '📨',
-			name: 'Mailhog',
-			port: mailhogPort,
+			name: 'Mailpit',
+			port: mailpitPort,
 		});
 	}
 	return ports;
@@ -513,20 +513,29 @@ const configURL = async () => {
 const configServices = (projectConfig, dockerConfig) => {
 	let needsRestart = false;
 
-	// Mailhog
-	const useMailhog = projectConfig?.use?.indexOf('mailhog') >= 0;
-	if (useMailhog && !dockerConfig.services?.mailhog) {
+	// Mailpit
+	const useMailpit = projectConfig?.use?.indexOf('mailpit') >= 0,
+		mailpitShareVolume = 'mailpit_bin:/opt/mailpit:ro';
+	if (useMailpit && !dockerConfig.services?.mailpit) {
 		needsRestart = true;
-		dockerConfig.services.mailhog = {
-			image: 'mailhog/mailhog:v1.0.0',
-			ports: ['1025:1025', '8025'],
+		dockerConfig.services.mailpit = {
+			image: 'axllent/mailpit:latest',
+			entrypoint: ['/bin/sh', '-c', 'cp -f /mailpit /shared/mailpit && exec /mailpit'],
+			volumes: ['mailpit_bin:/shared'],
+			ports: ['8025'],
 		};
-		echo('\x1b[1mNB:\x1b[22m In order to use Mailhog `wp_mail_from` filter must be set, e.g.:');
+		dockerConfig.volumes.mailpit_bin = {};
+		if (!dockerConfig.services.wp.volumes.includes(mailpitShareVolume)) {
+			dockerConfig.services.wp.volumes = [mailpitShareVolume, ...dockerConfig.services.wp.volumes];
+		}
+		echo('\x1b[1mNB:\x1b[22m In order to use Mailpit `wp_mail_from` filter must be set, e.g.:');
 		echo("    add_filter('wp_mail_from', fn($email) => 'wordpress@fabrica.dev');");
 		echo("    add_filter('wp_mail_from_name', fn($name) => 'Fabrica');\n");
-	} else if (!useMailhog && dockerConfig.services?.mailhog) {
+	} else if (!useMailpit && dockerConfig.services?.mailpit) {
 		needsRestart = true;
-		delete dockerConfig.services.mailhog;
+		dockerConfig.services.wp.volumes = dockerConfig.services.wp.volumes.filter(v => v !== mailpitShareVolume);
+		delete dockerConfig.volumes.mailpit_bin;
+		delete dockerConfig.services.mailpit;
 	}
 
 	// PHPUnit
