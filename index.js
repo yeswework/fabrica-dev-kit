@@ -65,13 +65,15 @@ const wait = (message, callback, delay=500) => {
 // check Fabrica dependencies
 const checkDependencies = () => {
 	const dependencies = ['docker'];
-	for (let dependency of dependencies) {
-		if (sh.exec(`hash ${dependency} 2>/dev/null`, {silent: true}).code != 0) {
-			halt(`Could not find dependency '${dependency}'.`);
-		}
+	for (const dependency of dependencies) {
+		if (sh.exec(`hash ${dependency} 2>/dev/null`, {silent: true}).code === 0) { continue; }
+		halt(`Could not find dependency '${dependency}'.`);
 	}
 }
 checkDependencies();
+
+// Check if portless CLI is available
+const checkPortless = () => sh.exec('hash portless 2>/dev/null', { silent: true }).code === 0;
 
 const getSetupPackageManager = (settings) => {
 	let packageManager = '';
@@ -249,13 +251,20 @@ const installDependencies = (packageManager) => {
 };
 
 // install and configure WordPress in the Docker container
-let installWordPress = (webPort, settings) => {
+const installWordPress = (webPort, settings) => {
 	echo('Installing WordPress...');
-	let wp = command => execWP(`wp ${command}`).code == 0 || halt(`Failed to execute: 'wp ${command}' on wp container`);
+	const wp = command => execWP(`wp ${command}`).code == 0 || halt(`Failed to execute: 'wp ${command}' on wp container`);
 
+	// set up portless alias if enabled in config.yml 'use' array and capture the actual proxy URL
+	const usePortless = getProjectConfig('default')?.use?.indexOf('portless') >= 0,
+		portlessURL = usePortless && setupPortlessAlias(settings.slug, webPort);
+	if (portlessURL) {
+		echo(`Portless URL: ${portlessURL}`);
+	}
+	
 	// use stdout stream to filter out known WP CLI warning
-	let install = execWP([`wp core ${settings.wp.multisite ? 'multisite-' : ''}install`,
-		`--url=${settings.wp.multisite ? `${settings.slug}.local --subdomains` : `localhost:${webPort}`}`,
+	const install = execWP(['wp core install',
+		`--url=${portlessURL || `localhost:${webPort}`}`,
 		`--title="${settings.title}"`,
 		`--admin_user=${settings.wp.admin.user}`,
 		`--admin_password=${settings.wp.admin.pass}`,
@@ -312,23 +321,6 @@ let installWordPress = (webPort, settings) => {
 	});
 }
 
-// add custom domain to /etc/hosts for multisite setups
-// [FIXME] currently not working properly -- proxy like jwilder/nginx-proxy or Traefik to redirect a URLs to container ports
-const setupMultisiteCustomDomain = settings => {
-	if (!settings.wp.multisite) { return; }
-
-	try {
-		if (execGet(`cat /etc/hosts | grep "${settings.slug}.local"`)) {
-			echo(`'${settings.slug}.local' already in in /etc/hosts.`);
-		} else {
-			echo(`sudo access required to add '${settings.slug}.local' to /etc/hosts`, '🔐');
-			execGet(`echo "127.0.0.1 ${settings.slug}.local" | sudo tee -a /etc/hosts`);
-		}
-	} catch (ex) {
-		warn(`Error setting up custom local domain '${settings.slug}.local' in /etc/hosts.`);
-	}
-}
-
 // start Docker containers and wait for them to be up to start installing and configuring WP
 const startContainersAndInstall = settings => {
 	echo('Bringing Docker containers up...');
@@ -343,8 +335,6 @@ const startContainersAndInstall = settings => {
 			halt(`More than ${WAIT_WP_CONTAINER_TIMEOUT / 1000} seconds elapsed while waiting for WordPress container to start.`);
 		}
 		echo(`Web server running at port ${webPort}`);
-
-		setupMultisiteCustomDomain(settings);
 		installWordPress(webPort, settings);
 	}).catch(error => {
 		halt(`Error installing or configuring WordPress:\n${error}`);
@@ -407,6 +397,63 @@ const getSiteURL = () => {
 	return siteURL;
 }
 
+// ——— Portless helper functions ————
+
+// Check if the portless proxy is already running by inspecting its state files.
+// Returns { port } if running, null otherwise.
+const isPortlessProxyStarted = () => {
+	if (!checkPortless()) { return null; }
+	const stateDir = process.env.PORTLESS_STATE_DIR || path.join(require('os').homedir(), '.portless'),
+		pidPath = path.join(stateDir, 'proxy.pid'),
+		portPath = path.join(stateDir, 'proxy.port');
+	if (!sh.test('-e', pidPath) || !sh.test('-e', portPath)) { return null; }
+	const pid = parseInt(sh.cat(pidPath)?.trim(), 10),
+		port = sh.cat(portPath)?.trim() || 0;
+	if (pid <= 0 || !port || sh.exec(`kill -0 ${pid}`, { silent: true }).code !== 0) { return null; }
+	return { port };
+};
+
+// Setup portless alias for a service and return the alias URL (protocol+hostname+proxy port)
+const setupPortlessAlias = (name, port) => {
+	// 1. Ensure the portless proxy is running
+	if (!checkPortless()) {
+		echo('Portless CLI not found. Install it with: npm install -g portless', '📛');
+		return null;
+	}
+	// `portless proxy start` is idempotent — starts the proxy if not running, else no-op
+	if (!isPortlessProxyStarted()) {
+		echo('Portless might require \x1b[1m`sudo`\x1b[22m priviledges to setup 443 or 80 port. You can skip this and use port 1355 by pressing \x1b[1m`ctrl-d`\x1b[22m when asked for the password.');
+		echo('To use other ports or configuration settings, set the enviroment variables for Portless or start the Portless proxy using \x1b[1m`portless proxy start`\x1b[22m with the parameters for the your preferred settings before running this command.')
+	}
+	const proxyStartResult = sh.exec(`portless proxy start`, { silent: false });
+	if (proxyStartResult.code !== 0) {
+		warn('Failed to start portless proxy.');
+		return null;
+	}
+
+	// 2. Register the alias
+	const aliasResult = sh.exec(`portless alias "${name}" ${port} --force`, { silent: false });
+	if (aliasResult.code !== 0) {
+		warn(`Failed to set up portless alias for '${name}'.`);
+		return null;
+	}
+
+	// 3. Verify by reading back from portless list — extract the full URL (works with any TLD)
+	const listOutput = sh.exec(`portless list`, { silent: true }).stdout,
+		// Match the full URL: protocol://hostname:port (any TLD, any port)
+		urlMatch = listOutput.match(new RegExp(`(https?)://${name}\\.([^\\s:]+)(?::(\\d+))?`));
+	if (!urlMatch) { return null; }
+	
+	const protocol = urlMatch[1],
+		tldHost = urlMatch[2],     // e.g. "localhost" or "test" or "loc"
+		listPort = urlMatch[3],
+		aliasPort = listPort && listPort !== '443' && listPort !== '80' ? `:${listPort}` : '';
+	return `${protocol}://${name}.${tldHost}${aliasPort}`;
+}
+
+// Remove portless alias for a service
+const removePortlessAlias = name => checkPortless() && sh.exec(`portless alias --remove "${name}"`, { silent: true });
+
 // ——— Project initialization Commands ————
 
 const init = (slug, options) => {
@@ -456,7 +503,7 @@ const echoInfo = (siteURL, isConfig=false) => {
 	if (!siteURL) {
 		siteURL = getSiteURL();
 	}
-	if (!siteURL && !isConfig) {
+	if (!siteURL) {
 		if (!isConfig) {
 			echo(`Services are not started, please run \x1b[1mfdk config:all\x1b[22m to start them\n(Note: if services fail to start, please check \x1b[1mfdk logs\x1b[22m for PHP errors)`);
 		} else {
@@ -466,6 +513,8 @@ const echoInfo = (siteURL, isConfig=false) => {
 	}
 	const dbPort = getDBPort();
 	const servicesPorts = getServicesPorts();
+
+	// detect portless to show fallback hint
 	const outputSeparator = ` \x1b[36m${'-'.repeat(siteURL.length + 21)}\x1b[0m`;
 	echo(`\x1b[1m${project.title} (${project.slug}) access URLs:\x1b[22m`);
 	echo(outputSeparator);
@@ -493,20 +542,38 @@ const configURL = async () => {
 		siteURL = getSiteURL();
 	}
 
-	if (siteURL.indexOf('localhost:') >= 0 || siteURL.indexOf('127.0.0.1:') >= 0) {
-		// not in a multisite/custom domain project: check if automatic port set by Docker needs to be updated in the DB
-		const webPort = getWebPort(),
-			wpPort = siteURL.replace(/^.*:(\d+)$/g, '$1');
-		if (wpPort != webPort) {
-			// port needs to be updated
-			echo('Updating WordPress port from ' + wpPort + ' to ' + webPort + '...');
-			execWP(`wp search-replace --quiet "localhost:${wpPort}" "localhost:${webPort}"`);
-			execWP(`bash -c \'wp option update home "http://localhost:${webPort}" && wp option update siteurl "http://localhost:${webPort}"\'`);
-			siteURL = `http://localhost:${webPort}`;
+	// detect if portless is active in config.yml
+	const usePortless = getProjectConfig('default')?.use?.indexOf('portless') >= 0,
+		portlessAvailable = checkPortless(),
+		webPort = getWebPort();
+	// Extract port from siteURL only if the URL actually has one (localhost:port or hostname:port)
+	const sitePort = siteURL.includes(':') && siteURL.lastIndexOf(':') > siteURL.lastIndexOf('/') ? siteURL.replace(/^.*:(\d+)$/g, '$1') : null;
+
+	let portlessURL,
+		webURL = `localhost:${webPort}`;
+	if (usePortless && portlessAvailable) {
+		// create/refresh the portless alias and get the actual proxy URL (protocol + port)
+		portlessURL = setupPortlessAlias(project.slug, webPort);
+		if (portlessURL) {
+			webURL = portlessURL;
+		} else {
+			// alias creation failed; fall back to localhost handling below
+			warn('Portless alias creation failed, falling back to localhost URL.');
 		}
+	} 
+	
+	// Need to update if:
+	//  (a) we have a portless URL and it differs from the current site URL, OR
+	//  (b) we have a localhost URL and the Docker port changed
+	const needsUpdate = portlessURL && siteURL !== webURL || !portlessURL && sitePort && sitePort !== webPort;
+	if (needsUpdate) {
+		// URL changed — search-replace content and update siteurl/home
+		echo(`Updating WordPress URL from ${siteURL} to ${webURL}...`);
+		execWP(`wp search-replace --quiet "${siteURL}" "${webURL}"`);
+		execWP(`bash -c \'wp option update home "${webURL}" && wp option update siteurl "${webURL}"\'`);
 	}
 
-	echoInfo(siteURL, true);
+	echoInfo(webURL, true);
 };
 
 // Check if there are any new services to add to `docker-compose.yml`
@@ -602,6 +669,11 @@ const configResources = (project='default') => {
 
 	[needsRestart, dockerConfig] = configServices(projectConfig, dockerConfig);
 	needsRestart ||= volumesChanged;
+
+	// Portless cleanup: if 'portless' is not in the 'use' array but an alias exists, remove it
+	if (!projectConfig?.use?.includes('portless')) {
+		removePortlessAlias(project.slug);
+	}
 
 	if (!needsRestart) {
 		// no containers changed: no need to wait for new port
@@ -792,7 +864,7 @@ const addProjectCommands = () => {
 
 	if (project.version >= 3) {
 		program.command('config:url')
-			.description('Update URLs in DB to match changes to WP container port set automatically by Docker (except for multisite projects, where a custom local host/domain is used). Output current access URLs and ports')
+			.description('Update URLs in DB to match changes to WP container port set automatically by Docker. Output current access URLs and ports')
 			.action(configURL);
 		program.command('config:resources [project]')
 			.description(`Configure Docker volumes to match resources' paths in the 'config.yml' settings file if there are new resources under <project>. If no <project> is passed,  resources under 'default' will be checked`)
@@ -835,7 +907,6 @@ program.command('init [slug]')
 	.option('--wp_admin_user <username>', 'WordPress admin username')
 	.option('--wp_admin_pass <password>', 'WordPress admin password')
 	.option('--wp_admin_email <email>', 'WordPress admin email')
-	.option('-m, --multisite', 'support multisite network')
 	.action(init);
 // `setup` command
 program.command('setup')

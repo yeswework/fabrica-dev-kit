@@ -3,7 +3,7 @@ default:
 #   - ./src/fdk-starter-plugin
   themes:
 #   - ./src/fdk-starter-theme
-#  use: [mailpit, phpunit] # optional services to add
+#  use: [mailpit, phpunit, portless] # optional services to add (portless gives you https://<slug>.localhost)
   ftp:
 #     user:
 #     password: # optional (will be prompted if not set)
