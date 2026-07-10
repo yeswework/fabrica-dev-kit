@@ -571,7 +571,9 @@ const configURL = async () => {
 		echo(`Updating WordPress URL from ${siteURL} to ${webURL}...`);
 		execWP(`wp search-replace --quiet "${siteURL}" "${webURL}"`);
 		if (!siteURL.startsWith('http')) {
+			// `wp search-replace` supports regex but it's up to 15 times slower, so it's more efficient to just repeate the command
 			execWP(`wp search-replace --quiet "http://${siteURL}" "${webURL}"`);
+			execWP(`wp search-replace --quiet "https://${siteURL}" "${webURL}"`);
 		}
 		execWP(`bash -c \'wp option update home "${webURL}" && wp option update siteurl "${webURL}"\'`);
 	}
