@@ -104,7 +104,7 @@ Command                      | Description |
 -----------------------------|-------------|
 `init [options] [slug]`      | Start a new project folder called `[slug]` containing the `setup.yml` configuration file. `[slug]` must be unique and no other Docker Compose project should share this name. All optional arguments will be set in the `setup.yml` file and can be modified there before running `setup`.
 `setup [options]`            | Setup project based on setting on `setup.yml` file
-`config:url`                 | Update URLs in DB to match changes to WP container port set automatically by Docker (except for multisite projects, where a custom local host/domain is used). Output current access URLs and ports
+`config:url`                 | Update URLs in DB to match changes to WP container port set automatically by Docker. Output current access URLs and ports
 `config:resources [project]` | Configure Docker volumes to match resources' paths in the `config.yml` settings file if there are new resources under `[project]`. If no `[project]` is passed,  resources under `default` will be checked
 `config:all [project]`       | Run all project configuration tasks (`config:url` and `config:resources`)
 `urls`                       | Output current access URLs and ports

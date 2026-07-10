@@ -1,6 +1,6 @@
 module.exports = (data) => `
 server {
-  server_name localhost${data.wp.multisite ? ` ${data.slug}.local *.${data.slug}.local` : ''};
+  server_name localhost;
 
   client_max_body_size  32M;
   proxy_connect_timeout 300;

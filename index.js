@@ -422,8 +422,8 @@ const setupPortlessAlias = (name, port) => {
 	}
 	// `portless proxy start` is idempotent — starts the proxy if not running, else no-op
 	if (!isPortlessProxyStarted()) {
-		echo('Portless might require \x1b[1m`sudo`\x1b[22m priviledges to setup 443 or 80 port. You can skip this and use port 1355 by pressing \x1b[1m`ctrl-d`\x1b[22m when asked for the password.');
-		echo('To use other ports or configuration settings, set the enviroment variables for Portless or start the Portless proxy using \x1b[1m`portless proxy start`\x1b[22m with the parameters for the your preferred settings before running this command.')
+		echo('Portless might require \x1b[1m`sudo`\x1b[22m priviledges to setup the 443 or 80 port. You can skip this and use port 1355 by pressing \x1b[1m`ctrl-d`\x1b[22m when asked for the password.');
+		echo('To use other ports or configuration settings, set the corresponding Portless enviroment variables or start the Portless proxy using \x1b[1m`portless proxy start`\x1b[22m with the parameters for the your preferred settings before running this command.')
 	}
 	const proxyStartResult = sh.exec(`portless proxy start`, { silent: false });
 	if (proxyStartResult.code !== 0) {
@@ -570,6 +570,9 @@ const configURL = async () => {
 		// URL changed — search-replace content and update siteurl/home
 		echo(`Updating WordPress URL from ${siteURL} to ${webURL}...`);
 		execWP(`wp search-replace --quiet "${siteURL}" "${webURL}"`);
+		if (!siteURL.startsWith('http')) {
+			execWP(`wp search-replace --quiet "http://${siteURL}" "${webURL}"`);
+		}
 		execWP(`bash -c \'wp option update home "${webURL}" && wp option update siteurl "${webURL}"\'`);
 	}
 

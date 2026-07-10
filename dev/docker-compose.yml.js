@@ -7,18 +7,10 @@ services:
       - ./www:/var/www/html
       - ./provision/web/wordpress-fpm.conf:/etc/nginx/conf.d/default.conf
       - ./provision/web/global:/etc/nginx/global
-${settings.wp.multisite
-  ? `    environment:\n` +
-    `      VIRTUAL_HOST: ${settings.slug}.local`
-    `      VIRTUAL_PORT: 80`
-    : ''
-}
     ports:
       - '80'
     links:
       - wp
-${settings.wp.multisite ? '      - proxy' : ''
-}
   db:
     image: mysql/mysql-server:latest
     volumes:
@@ -45,17 +37,14 @@ ${settings.wp.multisite ? '      - proxy' : ''
         settings?.db?.prefix ? `      WORDPRESS_DB_PREFIX: ${settings?.db?.prefix}` : ''
       }
       WORDPRESS_DEBUG: 'true'
+      # When behind the Portless proxy, trust its forwarded headers so WordPress uses the real public host/scheme instead of the internal 127.0.0.1 backend address
+      WORDPRESS_CONFIG_EXTRA: |
+        if (!empty($$_SERVER['HTTP_X_PORTLESS_HOPS'])) {
+        	if (!empty($$_SERVER['HTTP_X_FORWARDED_HOST'])) $$_SERVER['HTTP_HOST'] = $$_SERVER['HTTP_X_FORWARDED_HOST'];
+        	if (($$_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') $$_SERVER['HTTPS'] = 'on';
+        }
     links:
       - db:mysql
-${settings.wp.multisite
-  ? `  proxy:\n` +
-    `    image: jwilder/nginx-proxy:alpine\n` +
-    `    ports:\n` +
-    `      - '80:80'\n` +
-    `    volumes:\n` +
-    `      - /var/run/docker.sock:/tmp/docker.sock:ro\n` +
-    `    restart: unless-stopped`
-  : ''}
 volumes:
   db: {}
 `;

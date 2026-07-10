@@ -14,7 +14,6 @@ wp:
     email: ${data.wp_admin_email || 'admin@fdk.dev'}
   lang: en_US # dev site WP locale/language
   rewrite_structure: /%postname%/ # dev site permalink structure (can be changed later)
-  multisite: ${data.multisite || false}
   # uninstall WP CLI default plugins & themes
   skip_default_plugins: true
   skip_default_themes: true # uninstall WP CLI default themes
