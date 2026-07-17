@@ -75,6 +75,16 @@ checkDependencies();
 // Check if portless CLI is available
 const checkPortless = () => sh.exec('hash portless 2>/dev/null', { silent: true }).code === 0;
 
+// When behind the Portless proxy, WordPress must trust its forwarded headers so it uses
+// the real public host/scheme instead of the internal 127.0.0.1 backend address. This
+// ships in the setup template for new projects; `configServices` injects it into existing
+// projects. `$$` escapes Docker Compose interpolation so the container receives `$_SERVER`.
+const PORTLESS_CONFIG_EXTRA = `if (!empty($$_SERVER['HTTP_X_PORTLESS_HOPS'])) {
+	if (!empty($$_SERVER['HTTP_X_FORWARDED_HOST'])) $$_SERVER['HTTP_HOST'] = $$_SERVER['HTTP_X_FORWARDED_HOST'];
+	if (($$_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') $$_SERVER['HTTPS'] = 'on';
+}
+`;
+
 const getSetupPackageManager = (settings) => {
 	let packageManager = '';
 
@@ -584,6 +594,18 @@ const configURL = async () => {
 // Check if there are any new services to add to `docker-compose.yml`
 const configServices = (projectConfig, dockerConfig) => {
 	let needsRestart = false;
+
+	// Portless: migrate existing projects by injecting the forwarded-header trust snippet
+	// into the wp container. Without it WordPress canonicalises to the internal backend
+	// address (301 -> https://127.0.0.1/). Flagging needsRestart recreates wp so the env lands.
+	const usePortless = projectConfig?.use?.indexOf('portless') >= 0;
+	if (usePortless && dockerConfig.services?.wp) {
+		dockerConfig.services.wp.environment ||= {};
+		if (dockerConfig.services.wp.environment.WORDPRESS_CONFIG_EXTRA !== PORTLESS_CONFIG_EXTRA) {
+			needsRestart = true;
+			dockerConfig.services.wp.environment.WORDPRESS_CONFIG_EXTRA = PORTLESS_CONFIG_EXTRA;
+		}
+	}
 
 	// Mailpit
 	const useMailpit = projectConfig?.use?.indexOf('mailpit') >= 0,
