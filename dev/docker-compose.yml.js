@@ -34,7 +34,7 @@ services:
       WORDPRESS_DB_NAME: wordpress
       WORDPRESS_DB_USER: wordpress
       WORDPRESS_DB_PASSWORD: wordpress${
-        settings?.db?.prefix ? `      WORDPRESS_DB_PREFIX: ${settings?.db?.prefix}` : ''
+        settings?.db?.prefix ? `\n      WORDPRESS_DB_PREFIX: ${settings?.db?.prefix}` : ''
       }
       WORDPRESS_DEBUG: 'true'
       # When behind the Portless proxy, trust its forwarded headers so WordPress uses the real public host/scheme instead of the internal 127.0.0.1 backend address
