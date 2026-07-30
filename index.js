@@ -50,11 +50,15 @@ const wait = (message, callback, delay=500) => {
 				resolve(response);
 			};
 		handler = setInterval(() => {
-			// move cursor to beginning of line
-			process.stdout.clearLine();
-			process.stdout.cursorTo(0);
-			// write with no line change
-			process.stdout.write(`\x1b[7m[FDK]\x1b[27m ${spinner[waitcounter % 12]}  ${message}`);
+			// clearLine/cursorTo only exist on a TTY; in a non-TTY shell (pipe, CI,
+			// agent) calling them throws and aborts the command mid-run
+			if (process.stdout.isTTY) {
+				// move cursor to beginning of line
+				process.stdout.clearLine();
+				process.stdout.cursorTo(0);
+				// write with no line change
+				process.stdout.write(`\x1b[7m[FDK]\x1b[27m ${spinner[waitcounter % 12]}  ${message}`);
+			}
 			callback(stopWaitInterval);
 			waitcounter++;
 			// send callback a closure to stop the interval timer
