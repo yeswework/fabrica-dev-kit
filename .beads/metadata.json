@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "fabrica_dev_kit",
+  "project_id": "1677503c-9e78-4f24-b656-340135798407"
+}

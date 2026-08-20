@@ -3,3 +3,6 @@
 _resources/
 .DS_Store
 .vscode/
+
+# Claude Code: settings.json is committed (bd prime SessionStart hook); this one is personal
+.claude/settings.local.json
