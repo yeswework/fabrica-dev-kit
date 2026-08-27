@@ -762,6 +762,35 @@ const buildResources = (project='default', task='build') => {
 	}
 }
 
+// Field groups the server holds a newer revision of, judged by ACF's own `modified` stamp.
+// Local being newer, or present only locally, is just an ordinary edit on its way up
+const acfGroupsAheadOnRemote = (remoteDir, localDir) => {
+	const modifiedStamp = file => {
+		if (!sh.test('-f', file)) { return null; }
+		try {
+			return JSON.parse(sh.cat(file).toString()).modified || 0;
+		} catch (ex) {
+			return 0;
+		}
+	};
+	return sh.ls(remoteDir).filter(file => {
+		if (!file.endsWith('.json')) { return false; }
+		const local = modifiedStamp(path.join(localDir, file));
+		return local === null || modifiedStamp(path.join(remoteDir, file)) > local;
+	});
+};
+
+// Files git would lose track of if they were overwritten in place. `files` are paths
+// relative to the repository root; null means there's no repository to ask
+const uncommittedFiles = (repoPath, files) => {
+	if (sh.exec(`git -C ${repoPath} rev-parse --is-inside-work-tree`, { silent: true }).code !== 0) { return null; }
+	return files.filter(file => {
+		const status = sh.exec(`git -C ${repoPath} status --porcelain -- ${file}`, { silent: true });
+		// if git can't answer, assume there's something to lose
+		return status.code !== 0 || status.stdout.trim() !== '';
+	});
+};
+
 // Upload resources built files to server
 const deploy = (project='default', options) => {
 	const buildIgnoreParams = (distignore) => {
@@ -813,6 +842,34 @@ const deploy = (project='default', options) => {
 
 				// open command
 				commands.push(`open ${url}`);
+
+				// ACF saves field groups edited in wp-admin into the deployed resource's own
+				// `acf-json`, so mirroring over it silently reverts them: check before uploading
+				const acfPath = path.join(resource, 'acf-json');
+				if (!options.force && sh.test('-d', acfPath)) {
+					const remoteCopy = path.join(sh.tempdir(), `fdk-acf-${name}`);
+					sh.rm('-rf', remoteCopy);
+					spawn(['lftp', '-c', [...commands, `mirror --verbose=0 ${path.join(destPath, name, 'acf-json')} ${remoteCopy}`].join('; ') + '; ']);
+					// no remote copy yet (first deploy): nothing to lose, carry on
+					const ahead = sh.test('-d', remoteCopy) ? acfGroupsAheadOnRemote(remoteCopy, acfPath) : [];
+					if (ahead.length > 0) {
+						const listed = ahead.map(file => `  acf-json/${file}`).join('\n');
+						// bring them into the working tree so they can be reviewed and committed, but
+						// only where git can undo it and there's no local work to overwrite
+						const uncommitted = uncommittedFiles(resource, ahead.map(file => path.join('acf-json', file)));
+						if (uncommitted === null) {
+							warn(`Server holds newer '${name}' field groups than this repo, most likely edited in wp-admin. Deploying would revert them:\n${listed}\n\n'${name}' isn't a git repository, so they can't be pulled safely. Copy them across by hand, or re-run with '--force' to overwrite the server.`);
+						} else if (uncommitted.length > 0) {
+							warn(`Server holds newer '${name}' field groups than this repo, most likely edited in wp-admin:\n${listed}\n\nPulling them would overwrite uncommitted local changes. Commit or stash these first, then deploy again:\n${uncommitted.map(file => `  ${file}`).join('\n')}`);
+						} else {
+							ahead.forEach(file => sh.cp('-f', path.join(remoteCopy, file), path.join(acfPath, file)));
+							warn(`Server holds newer '${name}' field groups than this repo, most likely edited in wp-admin. Deploy stopped, and they have been pulled into the working tree:\n${listed}\n\nReview and commit them, then deploy again — or 'git restore' them and re-run with '--force' to overwrite the server.`);
+						}
+						sh.rm('-rf', remoteCopy);
+						continue;
+					}
+					sh.rm('-rf', remoteCopy);
+				}
 
 				if (options.backup) {
 					// copy old folder
@@ -918,6 +975,7 @@ const addProjectCommands = () => {
 		program.command('deploy [project]')
 			.description(`Deploy resources to server according to configuration in 'config.yml' file. If no <project> is passed, settings under 'default' will be loaded. Files and folders matching patterns in resource '.distignore' file will be ignored`)
 			.option('-k, --backup', 'backup existing resources folders before updating')
+			.option('-f, --force', `deploy even if the remote 'acf-json' has diverged from the local one`)
 			.action(deploy);
 	}
 	addScriptCommands();
