@@ -762,6 +762,24 @@ const buildResources = (project='default', task='build') => {
 	}
 }
 
+// Field groups the server holds a newer revision of, judged by ACF's own `modified` stamp.
+// Local being newer, or present only locally, is just an ordinary edit on its way up
+const acfGroupsAheadOnRemote = (remoteDir, localDir) => {
+	const modifiedStamp = file => {
+		if (!sh.test('-f', file)) { return null; }
+		try {
+			return JSON.parse(sh.cat(file).toString()).modified || 0;
+		} catch (ex) {
+			return 0;
+		}
+	};
+	return sh.ls(remoteDir).filter(file => {
+		if (!file.endsWith('.json')) { return false; }
+		const local = modifiedStamp(path.join(localDir, file));
+		return local === null || modifiedStamp(path.join(remoteDir, file)) > local;
+	});
+};
+
 // Upload resources built files to server
 const deploy = (project='default', options) => {
 	const buildIgnoreParams = (distignore) => {
@@ -822,18 +840,11 @@ const deploy = (project='default', options) => {
 					sh.rm('-rf', remoteCopy);
 					spawn(['lftp', '-c', [...commands, `mirror --verbose=0 ${path.join(destPath, name, 'acf-json')} ${remoteCopy}`].join('; ') + '; ']);
 					// no remote copy yet (first deploy): nothing to lose, carry on
-					if (sh.test('-d', remoteCopy)) {
-						// files only present locally are new field groups on their way up, not drift
-						const drift = execGet(`diff -rq ${remoteCopy} ${acfPath}`)
-							.split('\n')
-							.filter(line => line && !line.startsWith(`Only in ${acfPath}:`))
-							.map(line => line.replaceAll(remoteCopy, 'remote').replaceAll(acfPath, 'local'))
-							.join('\n');
-						sh.rm('-rf', remoteCopy);
-						if (drift) {
-							warn(`Remote 'acf-json' for '${name}' has diverged, most likely from a field group edited in wp-admin. Deploying would revert it:\n${drift}\n\nReconcile the two, or re-run with '--force' to overwrite.`);
-							continue;
-						}
+					const ahead = sh.test('-d', remoteCopy) ? acfGroupsAheadOnRemote(remoteCopy, acfPath) : [];
+					sh.rm('-rf', remoteCopy);
+					if (ahead.length > 0) {
+						warn(`Server holds newer '${name}' field groups than this repo, most likely edited in wp-admin. Deploying would revert them:\n${ahead.map(file => `  acf-json/${file}`).join('\n')}\n\nReconcile them first, or re-run with '--force' to overwrite.`);
+						continue;
 					}
 				}
 
