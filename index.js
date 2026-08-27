@@ -780,12 +780,30 @@ const acfGroupsAheadOnRemote = (remoteDir, localDir) => {
 	});
 };
 
+// Pull the server's `acf-json` into `dest` before mirroring over it. Returns `true` if a copy
+// arrived, `false` if the server holds none yet, `null` if the pull itself failed: `lftp` exits
+// non-zero both for a folder that isn't there and for a transfer that broke, and only the first
+// is safe to read as 'nothing on the server to lose'
+const pullRemoteAcfJson = (commands, remotePath, dest) => {
+	const mirror = `mirror --verbose=0 ${remotePath} ${dest}`,
+		// force English so the 'folder isn't there' message can be told apart from a real failure
+		result = spawnSync('lftp', ['-c', [...commands, mirror].join('; ') + '; '], { stdio: ['inherit', 'inherit', 'pipe'], env: { ...process.env, LC_ALL: 'C' } }),
+		stderr = (result.stderr || '').toString();
+	// an empty or missing `dest` after a clean run means the folder is there but has nothing in it
+	if (result.status === 0) { return sh.test('-d', dest); }
+	if (!sh.test('-d', dest) && /No such file or directory/.test(stderr)) { return false; }
+	process.stderr.write(stderr);
+	return null;
+};
+
 // Files git would lose track of if they were overwritten in place. `files` are paths
 // relative to the repository root; null means there's no repository to ask
 const uncommittedFiles = (repoPath, files) => {
-	if (sh.exec(`git -C ${repoPath} rev-parse --is-inside-work-tree`, { silent: true }).code !== 0) { return null; }
+	const git = args => sh.exec(`git -C '${repoPath}' ${args}`, { silent: true });
+	if (git('rev-parse --is-inside-work-tree').code !== 0) { return null; }
 	return files.filter(file => {
-		const status = sh.exec(`git -C ${repoPath} status --porcelain -- ${file}`, { silent: true });
+		// asked one file at a time, so an empty answer means clean with no paths to parse back
+		const status = git(`status --porcelain -- '${file}'`);
 		// if git can't answer, assume there's something to lose
 		return status.code !== 0 || status.stdout.trim() !== '';
 	});
@@ -819,6 +837,9 @@ const deploy = (project='default', options) => {
 			warn('Settings for FTP upload not found');
 			return;
 		}
+
+		// resources whose upload was called off: the run mustn't report success without them
+		const skipped = [];
 		['themes', 'plugins'].forEach(resourceType => {
 			const resources = projectConfig[resourceType];
 			if (!resources) { return; }
@@ -826,6 +847,7 @@ const deploy = (project='default', options) => {
 				const name = resource.replace(/\/$/, '').split('/').pop();
 				if (!sh.test('-d', resource)) {
 					warn(`Path for resource '${name}' not found`);
+					skipped.push(name);
 					continue;
 				}
 				echo(`Deploying resource '${name}' to '${ftp.host}'...`);
@@ -849,9 +871,15 @@ const deploy = (project='default', options) => {
 				if (!options.force && sh.test('-d', acfPath)) {
 					const remoteCopy = path.join(sh.tempdir(), `fdk-acf-${name}`);
 					sh.rm('-rf', remoteCopy);
-					spawn(['lftp', '-c', [...commands, `mirror --verbose=0 ${path.join(destPath, name, 'acf-json')} ${remoteCopy}`].join('; ') + '; ']);
-					// no remote copy yet (first deploy): nothing to lose, carry on
-					const ahead = sh.test('-d', remoteCopy) ? acfGroupsAheadOnRemote(remoteCopy, acfPath) : [];
+					const pulled = pullRemoteAcfJson(commands, path.join(destPath, name, 'acf-json'), remoteCopy);
+					if (pulled === null) {
+						sh.rm('-rf', remoteCopy);
+						skipped.push(name);
+						warn(`Couldn't read the 'acf-json' folder of '${name}' from the server, so there's no telling whether it holds field groups this deploy would revert. Deploy of '${name}' stopped: fix the error above and deploy again, or re-run with '--force' to deploy regardless.`);
+						continue;
+					}
+					// nothing on the server yet (first deploy): nothing to lose, carry on
+					const ahead = pulled ? acfGroupsAheadOnRemote(remoteCopy, acfPath) : [];
 					if (ahead.length > 0) {
 						const listed = ahead.map(file => `  acf-json/${file}`).join('\n');
 						// bring them into the working tree so they can be reviewed and committed, but
@@ -863,8 +891,9 @@ const deploy = (project='default', options) => {
 							warn(`Server holds newer '${name}' field groups than this repo, most likely edited in wp-admin:\n${listed}\n\nPulling them would overwrite uncommitted local changes. Commit or stash these first, then deploy again:\n${uncommitted.map(file => `  ${file}`).join('\n')}`);
 						} else {
 							ahead.forEach(file => sh.cp('-f', path.join(remoteCopy, file), path.join(acfPath, file)));
-							warn(`Server holds newer '${name}' field groups than this repo, most likely edited in wp-admin. Deploy stopped, and they have been pulled into the working tree:\n${listed}\n\nReview and commit them, then deploy again — or 'git restore' them and re-run with '--force' to overwrite the server.`);
+							warn(`Server holds newer '${name}' field groups than this repo, most likely edited in wp-admin. Deploy of '${name}' stopped, and they have been pulled into the working tree:\n${listed}\n\nReview and commit them, then deploy again — or 'git restore' them and re-run with '--force' to overwrite the server.`);
 						}
+						skipped.push(name);
 						sh.rm('-rf', remoteCopy);
 						continue;
 					}
@@ -887,7 +916,14 @@ const deploy = (project='default', options) => {
 				spawn(['lftp', '-c', commands.join('; ') + '; ']);
 			}
 		});
+
+		if (skipped.length > 0) {
+			// non-zero exit, so a scripted deploy can't read a called-off resource as a clean run
+			process.exitCode = 1;
+			warn(`Deploy incomplete — not uploaded: ${skipped.join(', ')}`);
+		}
 	} catch (ex) {
+		process.exitCode = 1;
 		warn('Error deploying: ' + ex);
 	}
 }
