@@ -780,6 +780,17 @@ const acfGroupsAheadOnRemote = (remoteDir, localDir) => {
 	});
 };
 
+// Files git would lose track of if they were overwritten in place. `files` are paths
+// relative to the repository root; null means there's no repository to ask
+const uncommittedFiles = (repoPath, files) => {
+	if (sh.exec(`git -C ${repoPath} rev-parse --is-inside-work-tree`, { silent: true }).code !== 0) { return null; }
+	return files.filter(file => {
+		const status = sh.exec(`git -C ${repoPath} status --porcelain -- ${file}`, { silent: true });
+		// if git can't answer, assume there's something to lose
+		return status.code !== 0 || status.stdout.trim() !== '';
+	});
+};
+
 // Upload resources built files to server
 const deploy = (project='default', options) => {
 	const buildIgnoreParams = (distignore) => {
@@ -841,11 +852,23 @@ const deploy = (project='default', options) => {
 					spawn(['lftp', '-c', [...commands, `mirror --verbose=0 ${path.join(destPath, name, 'acf-json')} ${remoteCopy}`].join('; ') + '; ']);
 					// no remote copy yet (first deploy): nothing to lose, carry on
 					const ahead = sh.test('-d', remoteCopy) ? acfGroupsAheadOnRemote(remoteCopy, acfPath) : [];
-					sh.rm('-rf', remoteCopy);
 					if (ahead.length > 0) {
-						warn(`Server holds newer '${name}' field groups than this repo, most likely edited in wp-admin. Deploying would revert them:\n${ahead.map(file => `  acf-json/${file}`).join('\n')}\n\nReconcile them first, or re-run with '--force' to overwrite.`);
+						const listed = ahead.map(file => `  acf-json/${file}`).join('\n');
+						// bring them into the working tree so they can be reviewed and committed, but
+						// only where git can undo it and there's no local work to overwrite
+						const uncommitted = uncommittedFiles(resource, ahead.map(file => path.join('acf-json', file)));
+						if (uncommitted === null) {
+							warn(`Server holds newer '${name}' field groups than this repo, most likely edited in wp-admin. Deploying would revert them:\n${listed}\n\n'${name}' isn't a git repository, so they can't be pulled safely. Copy them across by hand, or re-run with '--force' to overwrite the server.`);
+						} else if (uncommitted.length > 0) {
+							warn(`Server holds newer '${name}' field groups than this repo, most likely edited in wp-admin:\n${listed}\n\nPulling them would overwrite uncommitted local changes. Commit or stash these first, then deploy again:\n${uncommitted.map(file => `  ${file}`).join('\n')}`);
+						} else {
+							ahead.forEach(file => sh.cp('-f', path.join(remoteCopy, file), path.join(acfPath, file)));
+							warn(`Server holds newer '${name}' field groups than this repo, most likely edited in wp-admin. Deploy stopped, and they have been pulled into the working tree:\n${listed}\n\nReview and commit them, then deploy again — or 'git restore' them and re-run with '--force' to overwrite the server.`);
+						}
+						sh.rm('-rf', remoteCopy);
 						continue;
 					}
+					sh.rm('-rf', remoteCopy);
 				}
 
 				if (options.backup) {
