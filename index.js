@@ -814,6 +814,29 @@ const deploy = (project='default', options) => {
 				// open command
 				commands.push(`open ${url}`);
 
+				// ACF saves field groups edited in wp-admin into the deployed resource's own
+				// `acf-json`, so mirroring over it silently reverts them: check before uploading
+				const acfPath = path.join(resource, 'acf-json');
+				if (!options.force && sh.test('-d', acfPath)) {
+					const remoteCopy = path.join(sh.tempdir(), `fdk-acf-${name}`);
+					sh.rm('-rf', remoteCopy);
+					spawn(['lftp', '-c', [...commands, `mirror --verbose=0 ${path.join(destPath, name, 'acf-json')} ${remoteCopy}`].join('; ') + '; ']);
+					// no remote copy yet (first deploy): nothing to lose, carry on
+					if (sh.test('-d', remoteCopy)) {
+						// files only present locally are new field groups on their way up, not drift
+						const drift = execGet(`diff -rq ${remoteCopy} ${acfPath}`)
+							.split('\n')
+							.filter(line => line && !line.startsWith(`Only in ${acfPath}:`))
+							.map(line => line.replaceAll(remoteCopy, 'remote').replaceAll(acfPath, 'local'))
+							.join('\n');
+						sh.rm('-rf', remoteCopy);
+						if (drift) {
+							warn(`Remote 'acf-json' for '${name}' has diverged, most likely from a field group edited in wp-admin. Deploying would revert it:\n${drift}\n\nReconcile the two, or re-run with '--force' to overwrite.`);
+							continue;
+						}
+					}
+				}
+
 				if (options.backup) {
 					// copy old folder
 					const backupName = `${name}_${(new Date()).toISOString()}`;
@@ -918,6 +941,7 @@ const addProjectCommands = () => {
 		program.command('deploy [project]')
 			.description(`Deploy resources to server according to configuration in 'config.yml' file. If no <project> is passed, settings under 'default' will be loaded. Files and folders matching patterns in resource '.distignore' file will be ignored`)
 			.option('-k, --backup', 'backup existing resources folders before updating')
+			.option('-f, --force', `deploy even if the remote 'acf-json' has diverged from the local one`)
 			.action(deploy);
 	}
 	addScriptCommands();
