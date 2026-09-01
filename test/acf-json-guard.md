@@ -80,8 +80,12 @@ fdk deploy; echo "EXIT=$?"
 ```
 
 **Expect:** both files transfer, `EXIT=0`, and no warning. In particular no
-`Access failed: No such file` — that message is the server saying the folder isn't there, which is
-expected here and is swallowed deliberately.
+`Access failed: ...` — that message is the server saying the folder isn't there, which is expected
+here and is swallowed deliberately. Its wording is the server's own, so it varies with the target:
+sftp says `No such file (<path>)`, pure-ftpd `550 Can't change directory to ...: No such file or
+directory`, vsftpd merely `550 Failed to change directory.`. The check keys off `lftp`'s own
+`Access failed:` prefix for that reason, so this case is worth re-running against a second kind of
+server if you have one.
 
 ### 2. In sync
 

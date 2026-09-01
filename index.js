@@ -789,11 +789,16 @@ const pullRemoteAcfJson = (commands, remotePath, dest) => {
 		// force English so the 'folder isn't there' message can be told apart from a real failure
 		result = spawnSync('lftp', ['-c', [...commands, mirror].join('; ') + '; '], { stdio: ['inherit', 'inherit', 'pipe'], env: { ...process.env, LC_ALL: 'C' } }),
 		stderr = (result.stderr || '').toString();
-	// an empty or missing `dest` after a clean run means the folder is there but has nothing in it
+	// a clean run creates `dest` even when the remote folder held nothing, and an empty copy
+	// yields no groups ahead, so both read the same downstream
 	if (result.status === 0) { return sh.test('-d', dest); }
-	// sftp reports a missing folder as `Access failed: No such file (<path>)`, plain ftp as
-	// `550 ...: No such file or directory` — match the half both share
-	if (!sh.test('-d', dest) && /No such file/.test(stderr)) { return false; }
+	// `lftp` prefixes every couldn't-get-at-the-target error with `Access failed:` and then quotes
+	// the source verbatim, so match its own wrapper rather than the wording underneath: sftp says
+	// `No such file (<path>)`, `file://` says `<path>: No such file or directory`, and an FTP
+	// server says what it likes after its 550 — pure-ftpd `Can't change directory to ...: No such
+	// file or directory`, vsftpd merely `Failed to change directory.`. A pull that broke reads
+	// differently again (`Fatal error:`, `Login failed:`), so it still falls through to `null`
+	if (!sh.test('-d', dest) && /Access failed: (550 |.*No such file)/.test(stderr)) { return false; }
 	process.stderr.write(stderr);
 	return null;
 };
