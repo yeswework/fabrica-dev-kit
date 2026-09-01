@@ -791,7 +791,9 @@ const pullRemoteAcfJson = (commands, remotePath, dest) => {
 		stderr = (result.stderr || '').toString();
 	// an empty or missing `dest` after a clean run means the folder is there but has nothing in it
 	if (result.status === 0) { return sh.test('-d', dest); }
-	if (!sh.test('-d', dest) && /No such file or directory/.test(stderr)) { return false; }
+	// sftp reports a missing folder as `Access failed: No such file (<path>)`, plain ftp as
+	// `550 ...: No such file or directory` — match the half both share
+	if (!sh.test('-d', dest) && /No such file/.test(stderr)) { return false; }
 	process.stderr.write(stderr);
 	return null;
 };

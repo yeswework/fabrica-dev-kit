@@ -1,6 +1,6 @@
 # Verifying the `acf-json` deploy guard
 
-Manual procedure for the check added in #58. It builds a throwaway resource and deploys it into a
+Manual procedure for the check on this branch. It builds a throwaway resource and deploys it into a
 scratch directory on a server, so no real site or theme is involved at any point. Runnable by hand or
 by an agent — each case states the exact command and the exact expected outcome.
 
@@ -18,6 +18,9 @@ Allow about ten minutes.
 Nothing here needs shell access on the server. Every "the server is ahead" state is produced by
 deploying a newer file and then rewinding the local copy, which is also how the original bug
 happened.
+
+Every case checks the exit status as well as the output: a stopped resource must not let the run
+report success.
 
 ## Setup
 
@@ -62,28 +65,31 @@ git init -q && git add -A && git commit -q -m seed
 ```
 
 Run every `fdk deploy` below from `/tmp/guard-test/proj`. Outside a project directory `fdk` doesn't
-register the `deploy` command at all, and `--force` fails with `unknown option`.
+register the `deploy` command at all — `--force` fails with `unknown option`, and a bare
+`fdk deploy` prints the general help and still exits 0, so it is easy to mistake for a pass.
 
 ## The cases
 
 ### 1. No remote `acf-json` yet
 
-First deploy, nothing on the server to lose.
+First deploy of a new resource: the server has no `acf-json` folder, so there is nothing to lose.
+This is the case that must not be confused with a failed read.
 
 ```bash
-fdk deploy
+fdk deploy; echo "EXIT=$?"
 ```
 
-**Expect:** both files transfer. No warning. In particular no `Access failed: No such file` — the
-pre-flight is silenced precisely so a first deploy doesn't look like a failure.
+**Expect:** both files transfer, `EXIT=0`, and no warning. In particular no
+`Access failed: No such file` — that message is the server saying the folder isn't there, which is
+expected here and is swallowed deliberately.
 
 ### 2. In sync
 
 ```bash
-fdk deploy
+fdk deploy; echo "EXIT=$?"
 ```
 
-**Expect:** the `Deploying resource` line and nothing else.
+**Expect:** the `Deploying resource` line, `EXIT=0`, nothing else.
 
 ### 3. Local newer — the everyday case
 
@@ -93,10 +99,10 @@ The one that must not be blocked: a field group edited locally, on its way up.
 cd /tmp/guard-test/guard-theme
 printf '{"key":"group_alpha","title":"Alpha","fields":[],"modified":2000}\n' > acf-json/group_alpha.json
 git commit -qam "local edit"
-cd /tmp/guard-test/proj && fdk deploy
+cd /tmp/guard-test/proj && fdk deploy; echo "EXIT=$?"
 ```
 
-**Expect:** `group_alpha.json` transfers. No warning.
+**Expect:** `group_alpha.json` transfers, `EXIT=0`, no warning.
 
 ### 4. Server newer, working tree clean
 
@@ -108,15 +114,15 @@ cd /tmp/guard-test/guard-theme
 printf '{"key":"group_alpha","title":"Alpha","fields":[],"modified":1000}\n' > acf-json/group_alpha.json
 git commit -qam rewind
 git status --short          # must be empty
-cd /tmp/guard-test/proj && fdk deploy
+cd /tmp/guard-test/proj && fdk deploy; echo "EXIT=$?"
 ```
 
-**Expect:** deploy stops, naming `acf-json/group_alpha.json`, saying it has been pulled into the
-working tree. Then:
+**Expect:** the deploy of `guard-theme` stops, naming `acf-json/group_alpha.json` as pulled into the
+working tree, followed by `Deploy incomplete — not uploaded: guard-theme` and `EXIT=1`. Then:
 
 ```bash
 cd /tmp/guard-test/guard-theme
-git status --short                              # ` M acf-json/group_alpha.json`
+git status --short                                      # ` M acf-json/group_alpha.json`
 grep -o '"modified":[0-9]*' acf-json/group_alpha.json   # `"modified":2000`
 ```
 
@@ -130,11 +136,11 @@ The refusal case: pulling would destroy uncommitted local work.
 ```bash
 cd /tmp/guard-test/guard-theme
 printf '{"key":"group_alpha","title":"Alpha","fields":[],"modified":1500}\n' > acf-json/group_alpha.json
-cd /tmp/guard-test/proj && fdk deploy
+cd /tmp/guard-test/proj && fdk deploy; echo "EXIT=$?"
 ```
 
-**Expect:** deploy stops with `Pulling them would overwrite uncommitted local changes`, naming the
-file, and:
+**Expect:** stops with `Pulling them would overwrite uncommitted local changes`, naming the file,
+then `Deploy incomplete` and `EXIT=1`. And:
 
 ```bash
 grep -o '"modified":[0-9]*' /tmp/guard-test/guard-theme/acf-json/group_alpha.json   # still 1500
@@ -147,10 +153,10 @@ destroyed local work — that is the serious failure mode for this feature.
 
 ```bash
 cd /tmp/guard-test/guard-theme && git restore acf-json/group_alpha.json
-cd /tmp/guard-test/proj && fdk deploy --force
+cd /tmp/guard-test/proj && fdk deploy --force; echo "EXIT=$?"
 ```
 
-**Expect:** `group_alpha.json` transfers, overwriting the newer server copy. No warning.
+**Expect:** `group_alpha.json` transfers, overwriting the newer server copy. `EXIT=0`, no warning.
 
 ### 7. A group that exists only on the server
 
@@ -159,10 +165,10 @@ Stands in for a field group created in production wp-admin that the repo has nev
 ```bash
 cd /tmp/guard-test/guard-theme
 git rm -q acf-json/group_beta.json && git commit -qm "drop beta locally"
-cd /tmp/guard-test/proj && fdk deploy
+cd /tmp/guard-test/proj && fdk deploy; echo "EXIT=$?"
 ```
 
-**Expect:** deploy stops, naming `acf-json/group_beta.json` as pulled. Then:
+**Expect:** stops, naming `acf-json/group_beta.json` as pulled, `EXIT=1`. Then:
 
 ```bash
 cd /tmp/guard-test/guard-theme && git status --short   # `?? acf-json/group_beta.json`
@@ -170,6 +176,22 @@ cd /tmp/guard-test/guard-theme && git status --short   # `?? acf-json/group_beta
 
 It comes back as an untracked file rather than a modification, which is correct — the repo never had
 it.
+
+### 8. The server can't be read at all
+
+A broken connection must not be read as "no field groups on the server", because that would deploy
+straight over the thing the check exists to protect.
+
+```bash
+cd /tmp/guard-test/proj
+sed 's/<your host>/nonexistent.invalid/' config.yml > config.bad.yml
+cp config.yml config.good.yml && cp config.bad.yml config.yml
+fdk deploy; echo "EXIT=$?"
+cp config.good.yml config.yml
+```
+
+**Expect:** the underlying `lftp` error is printed, then `Couldn't read the 'acf-json' folder`,
+`Deploy incomplete — not uploaded: guard-theme`, and `EXIT=1`. Nothing is uploaded.
 
 ## Teardown
 
