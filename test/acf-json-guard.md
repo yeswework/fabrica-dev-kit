@@ -188,14 +188,19 @@ straight over the thing the check exists to protect.
 
 ```bash
 cd /tmp/guard-test/proj
-sed 's/<your host>/nonexistent.invalid/' config.yml > config.bad.yml
-cp config.yml config.good.yml && cp config.bad.yml config.yml
+cp -f config.yml config.good.yml
+sed 's/^\( *host:\).*/\1 nonexistent.invalid/' config.good.yml > config.yml
+grep host: config.yml       # must read `nonexistent.invalid` before you go on
 fdk deploy; echo "EXIT=$?"
-cp config.good.yml config.yml
+cp -f config.good.yml config.yml
+grep host: config.yml       # and the real host must be back
 ```
 
 **Expect:** the underlying `lftp` error is printed, then `Couldn't read the 'acf-json' folder`,
 `Deploy incomplete — not uploaded: guard-theme`, and `EXIT=1`. Nothing is uploaded.
+
+Check the `grep` output rather than trusting the `sed`: if the host is unchanged this case deploys
+for real against the good config and passes with `EXIT=0`, which looks like a pass and is not one.
 
 ## Teardown
 
@@ -211,9 +216,10 @@ configured; over FTP, remove it in your client.
 The "resource isn't a git repository" branch, which warns and declines to pull. Every resource in
 the fleet is a git repo, so there is nothing realistic to run it against.
 
-## Two traps in the harness itself
+## Traps in the harness itself
 
-Neither is caused by this change; both will stop you before you reach case 1.
+None is caused by this change. The first two stop you before you reach case 1; the third lets
+case 8 pass without testing anything.
 
 - **`package.json` needs a `scripts` key**, even empty. `addScriptCommands` calls `Object.keys` on
   it unguarded, so a stub without one crashes `fdk` on startup with `Cannot convert undefined or
@@ -221,3 +227,7 @@ Neither is caused by this change; both will stop you before you reach case 1.
 - **The `ftp:` block needs a `password`, even a placeholder, when authenticating by SSH key.**
   Without one, lftp falls back to anonymous login, drops the configured user, and fails with
   `GetPass() failed -- assume anonymous login` followed by `Permission denied (publickey)`.
+- **`cp` is often aliased to `cp -i`**, which turns case 8's config swap into an interactive prompt
+  that defaults to *no*. It prints `overwrite config.yml? (y/n [n]) not overwritten` amid the
+  deploy output and is easy to miss, so the case runs against the good config. Hence the `-f` and
+  the `grep` above.
