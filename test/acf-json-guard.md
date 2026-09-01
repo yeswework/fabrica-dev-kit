@@ -1,0 +1,233 @@
+# Verifying the `acf-json` deploy guard
+
+Manual procedure for the check on this branch. It builds a throwaway resource and deploys it into a
+scratch directory on a server, so no real site or theme is involved at any point. Runnable by hand or
+by an agent — each case states the exact command and the exact expected outcome.
+
+Allow about ten minutes.
+
+## What you need
+
+- `lftp`, and this branch of FDK linked as your `fdk` binary (`npm link` in the repo, or run
+  `node /path/to/index.js` in place of `fdk` throughout).
+- A deploy target you can write a scratch directory to: any FTP/SFTP account you already use. It
+  never touches WordPress — the files land in a directory nothing reads. Copy the `ftp:` block from
+  one of your own `config.yml` files and change only `path`.
+- `git`.
+
+Nothing here needs shell access on the server. Every "the server is ahead" state is produced by
+deploying a newer file and then rewinding the local copy, which is also how the original bug
+happened.
+
+Every case checks the exit status as well as the output: a stopped resource must not let the run
+report success.
+
+## Setup
+
+Two directories: a stub FDK project, and a git repo standing in for a theme.
+
+```bash
+mkdir -p /tmp/guard-test/proj /tmp/guard-test/guard-theme/acf-json
+cd /tmp/guard-test/proj
+touch .setup.yml docker-compose.yml
+printf '{"name":"guardtest","description":"acf-json guard harness","scripts":{}}\n' > package.json
+```
+
+`config.yml`, with the `ftp:` block replaced by your own and `path` pointing somewhere disposable:
+
+```yaml
+default:
+  themes:
+    - ../guard-theme
+  ftp:
+    user: <your user>
+    password: "<your password>"
+    host: <your host>
+    scheme: "sftp"
+    port: "18765"
+    path: "/home/customer/www/<a site you control>/tmp-fdk-guard-test"
+    params: [--delete]
+    commands:
+      - set sftp:auto-confirm yes
+      - set sftp:connect-program "ssh -a -x -p 18765 -i ~/.ssh/<your key>"
+      - set net:max-retries 2
+      - set net:timeout 20
+```
+
+Then the resource — two field groups, both stamped `1000`:
+
+```bash
+cd /tmp/guard-test/guard-theme
+printf '.git/\n.distignore\n' > .distignore
+printf '{"key":"group_alpha","title":"Alpha","fields":[],"modified":1000}\n' > acf-json/group_alpha.json
+printf '{"key":"group_beta","title":"Beta","fields":[],"modified":1000}\n' > acf-json/group_beta.json
+git init -q && git add -A && git commit -q -m seed
+```
+
+Run every `fdk deploy` below from `/tmp/guard-test/proj`. Outside a project directory `fdk` doesn't
+register the `deploy` command at all — `--force` fails with `unknown option`, and a bare
+`fdk deploy` prints the general help and still exits 0, so it is easy to mistake for a pass.
+
+## The cases
+
+### 1. No remote `acf-json` yet
+
+First deploy of a new resource: the server has no `acf-json` folder, so there is nothing to lose.
+This is the case that must not be confused with a failed read.
+
+```bash
+fdk deploy; echo "EXIT=$?"
+```
+
+**Expect:** both files transfer, `EXIT=0`, and no warning. In particular no
+`Access failed: ...` — that message is the server saying the folder isn't there, which is expected
+here and is swallowed deliberately. Its wording is the server's own, so it varies with the target:
+sftp says `No such file (<path>)`, pure-ftpd `550 Can't change directory to ...: No such file or
+directory`, vsftpd merely `550 Failed to change directory.`. The check keys off `lftp`'s own
+`Access failed:` prefix for that reason, so this case is worth re-running against a second kind of
+server if you have one.
+
+### 2. In sync
+
+```bash
+fdk deploy; echo "EXIT=$?"
+```
+
+**Expect:** the `Deploying resource` line, `EXIT=0`, nothing else.
+
+### 3. Local newer — the everyday case
+
+The one that must not be blocked: a field group edited locally, on its way up.
+
+```bash
+cd /tmp/guard-test/guard-theme
+printf '{"key":"group_alpha","title":"Alpha","fields":[],"modified":2000}\n' > acf-json/group_alpha.json
+git commit -qam "local edit"
+cd /tmp/guard-test/proj && fdk deploy; echo "EXIT=$?"
+```
+
+**Expect:** `group_alpha.json` transfers, `EXIT=0`, no warning.
+
+### 4. Server newer, working tree clean
+
+Rewind the local copy and commit, so the tree is clean and the server holds `2000` against the
+local `1000`.
+
+```bash
+cd /tmp/guard-test/guard-theme
+printf '{"key":"group_alpha","title":"Alpha","fields":[],"modified":1000}\n' > acf-json/group_alpha.json
+git commit -qam rewind
+git status --short          # must be empty
+cd /tmp/guard-test/proj && fdk deploy; echo "EXIT=$?"
+```
+
+**Expect:** the deploy of `guard-theme` stops, naming `acf-json/group_alpha.json` as pulled into the
+working tree, followed by `Deploy incomplete — not uploaded: guard-theme` and `EXIT=1`. Then:
+
+```bash
+cd /tmp/guard-test/guard-theme
+git status --short                                      # ` M acf-json/group_alpha.json`
+grep -o '"modified":[0-9]*' acf-json/group_alpha.json   # `"modified":2000`
+```
+
+The server's version is now an ordinary unstaged change, ready to review and commit. Nothing was
+uploaded.
+
+### 5. Server newer, and the file is dirty
+
+The refusal case: pulling would destroy uncommitted local work.
+
+```bash
+cd /tmp/guard-test/guard-theme
+printf '{"key":"group_alpha","title":"Alpha","fields":[],"modified":1500}\n' > acf-json/group_alpha.json
+cd /tmp/guard-test/proj && fdk deploy; echo "EXIT=$?"
+```
+
+**Expect:** stops with `Pulling them would overwrite uncommitted local changes`, naming the file,
+then `Deploy incomplete` and `EXIT=1`. And:
+
+```bash
+grep -o '"modified":[0-9]*' /tmp/guard-test/guard-theme/acf-json/group_alpha.json   # still 1500
+```
+
+The local file must be untouched. If it reads `2000`, the dirty check has failed and the guard has
+destroyed local work — that is the serious failure mode for this feature.
+
+### 6. `--force` overrides
+
+```bash
+cd /tmp/guard-test/guard-theme && git restore acf-json/group_alpha.json
+cd /tmp/guard-test/proj && fdk deploy --force; echo "EXIT=$?"
+```
+
+**Expect:** `group_alpha.json` transfers, overwriting the newer server copy. `EXIT=0`, no warning.
+
+### 7. A group that exists only on the server
+
+Stands in for a field group created in production wp-admin that the repo has never seen.
+
+```bash
+cd /tmp/guard-test/guard-theme
+git rm -q acf-json/group_beta.json && git commit -qm "drop beta locally"
+cd /tmp/guard-test/proj && fdk deploy; echo "EXIT=$?"
+```
+
+**Expect:** stops, naming `acf-json/group_beta.json` as pulled, `EXIT=1`. Then:
+
+```bash
+cd /tmp/guard-test/guard-theme && git status --short   # `?? acf-json/group_beta.json`
+```
+
+It comes back as an untracked file rather than a modification, which is correct — the repo never had
+it.
+
+### 8. The server can't be read at all
+
+A broken connection must not be read as "no field groups on the server", because that would deploy
+straight over the thing the check exists to protect.
+
+```bash
+cd /tmp/guard-test/proj
+cp -f config.yml config.good.yml
+sed 's/^\( *host:\).*/\1 nonexistent.invalid/' config.good.yml > config.yml
+grep host: config.yml       # must read `nonexistent.invalid` before you go on
+fdk deploy; echo "EXIT=$?"
+cp -f config.good.yml config.yml
+grep host: config.yml       # and the real host must be back
+```
+
+**Expect:** the underlying `lftp` error is printed, then `Couldn't read the 'acf-json' folder`,
+`Deploy incomplete — not uploaded: guard-theme`, and `EXIT=1`. Nothing is uploaded.
+
+Check the `grep` output rather than trusting the `sed`: if the host is unchanged this case deploys
+for real against the good config and passes with `EXIT=0`, which looks like a pass and is not one.
+
+## Teardown
+
+```bash
+rm -rf /tmp/guard-test
+```
+
+Then delete the scratch directory on the server. Over SSH that is one `rm -rf` of the `path` you
+configured; over FTP, remove it in your client.
+
+## Not covered
+
+The "resource isn't a git repository" branch, which warns and declines to pull. Every resource in
+the fleet is a git repo, so there is nothing realistic to run it against.
+
+## Traps in the harness itself
+
+None is caused by this change. The first two stop you before you reach case 1; the third lets
+case 8 pass without testing anything.
+
+- **`package.json` needs a `scripts` key**, even empty. `addScriptCommands` calls `Object.keys` on
+  it unguarded, so a stub without one crashes `fdk` on startup with `Cannot convert undefined or
+  null to object`.
+- **The `ftp:` block needs a `password`, even a placeholder, when authenticating by SSH key.**
+  Without one, lftp falls back to anonymous login, drops the configured user, and fails with
+  `GetPass() failed -- assume anonymous login` followed by `Permission denied (publickey)`.
+- **`cp` is often aliased to `cp -i`**, which turns case 8's config swap into an interactive prompt
+  that defaults to *no*. It prints `overwrite config.yml? (y/n [n]) not overwritten` amid the
+  deploy output and is easy to miss, so the case runs against the good config. Hence the `-f` and
+  the `grep` above.
