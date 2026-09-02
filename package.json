@@ -3,6 +3,10 @@
   "version": "3.2",
   "description": "Fabrica Dev Kit for Wordpress",
   "main": "index.js",
+  "scripts": {
+    "test": "node --test test/unit/ test/integration/",
+    "test:live": "node --test test/live/"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/yeswework/fabrica-dev-kit.git"

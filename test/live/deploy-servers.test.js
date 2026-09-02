@@ -1,0 +1,87 @@
+'use strict';
+
+const assert = require('node:assert/strict'),
+	{ after, before, describe, test } = require('node:test'),
+	fs = require('fs'),
+	path = require('path');
+
+const { pullRemoteAcfJson } = require('../../lib/deploy'),
+	{ FIXTURE_GROUP, SERVERS, commandsFor, missingRequirements, seedFixtures, startServers, stopServers }
+		= require('../helpers/ftp-servers'),
+	{ cleanTmpDirs, makeTmpDir } = require('../helpers/tmpdir');
+
+// This tier is opt-in (`npm run test:live`) because it needs Docker and lftp. It exists for the one
+// thing a stub can't reproduce: what a real server says when a folder isn't there. Three servers,
+// three different sentences after the same 550 — which is why the guard matches lftp's own
+// `Access failed:` wrapper rather than the wording underneath.
+const missing = missingRequirements();
+
+describe('the ACF preflight against real servers',
+	{ skip: missing.length ? `needs ${missing.join(', ')}` : false }, () => {
+		let fileRoot;
+
+		before(() => {
+			startServers();
+			fileRoot = seedFixtures();
+		}, { timeout: 180000 });
+
+		after(() => { stopServers(); cleanTmpDirs(); });
+
+		const pull = (name, remotePath) => {
+			const dest = path.join(makeTmpDir('fdk-live-pull-'), 'copy'),
+				commands = name === 'file' ? [`open file://${fileRoot}`] : commandsFor(name);
+			return { dest, result: pullRemoteAcfJson(commands, remotePath, dest) };
+		};
+
+		const schemes = [...Object.keys(SERVERS), 'file'];
+
+		for (const name of schemes) {
+			test(`${name}: a folder that isn't there reads as false`, () => {
+				assert.equal(pull(name, 'never-created').result, false);
+			});
+
+			test(`${name}: a folder holding a group reads as true`, () => {
+				const { dest, result } = pull(name, 'acf-json');
+				assert.equal(result, true);
+				assert.deepEqual(fs.readdirSync(dest), ['g.json']);
+			});
+
+			// a copy that arrives but can't be read is worse than one that never arrives: the guard
+			// scores it 0 and waves the deploy through — see fabrica-dev-kit-e2c
+			test(`${name}: what arrives is readable`, () => {
+				const { dest } = pull(name, 'acf-json');
+				assert.equal(fs.readFileSync(path.join(dest, 'g.json'), 'utf8'), FIXTURE_GROUP);
+			});
+
+			test(`${name}: an empty folder reads as true, with nothing in it`, () => {
+				const { dest, result } = pull(name, 'empty-json');
+				assert.equal(result, true);
+				assert.deepEqual(fs.readdirSync(dest), []);
+			});
+		}
+
+		// failures must stay distinguishable from an empty server, whatever the transport
+		test('a refused connection reads as null', () => {
+			const dest = path.join(makeTmpDir('fdk-live-pull-'), 'copy');
+			assert.equal(pullRemoteAcfJson(
+				['set net:max-retries 1', 'set net:timeout 5', 'open ftp://fdk:secret@127.0.0.1:2199'],
+				'acf-json', dest), null);
+		});
+
+		test('a rejected FTP password reads as null', () => {
+			const dest = path.join(makeTmpDir('fdk-live-pull-'), 'copy');
+			assert.equal(pullRemoteAcfJson(
+				['set net:max-retries 1', 'set net:timeout 5', 'set ftp:ssl-allow no',
+					`open ftp://fdk:wrong@127.0.0.1:${SERVERS.vsftpd.port}`],
+				'acf-json', dest), null);
+		});
+
+		test('a rejected sftp password reads as null', () => {
+			const dest = path.join(makeTmpDir('fdk-live-pull-'), 'copy'),
+				// BatchMode stops ssh sitting at a password prompt
+				commands = commandsFor('sftp').map(command => command
+					.replace('fdk:secret@', 'fdk:wrong@')
+					.replace('-o StrictHostKeyChecking=yes', '-o StrictHostKeyChecking=yes -o BatchMode=yes'));
+			assert.equal(pullRemoteAcfJson(commands, 'acf-json', dest), null);
+		});
+	});
