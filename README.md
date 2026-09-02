@@ -99,6 +99,24 @@ legitimately exits non-zero, it will now stop the deploy for that resource.
 `fdk deploy -k` checks whether the resource is on the server before taking its backup, so a
 first deploy says there is nothing to back up and carries on rather than stopping.
 
+Every deploy script also opens with bounded network settings, because lftp's own defaults are 1000
+retries and a five-minute response timeout — against a server that is down or firewalled it never
+fails, it retries for days with nothing on screen:
+
+```
+set net:max-retries 3
+set net:reconnect-interval-base 2
+set net:timeout 30
+```
+
+Against a refused connection the ACF preflight now gives up after about 5 seconds and the upload
+after about 15 — it opens several connections, each with its own retries — and an unroutable
+address takes about a minute and a half per step. Either way `fdk deploy` exits non-zero with lftp's own
+error, where before it sat there indefinitely.
+
+These come *before* anything in `ftp.commands`, and lftp's `set` is last-wins, so your own value
+for any of them takes precedence — raise `net:timeout` if you deploy to a slow server.
+
 ### Troubleshooting and housekeeping
 If you run into any problems during development, restarting the Docker machine may help. Stop FDK with ctrl + c and then run `fdk dc restart` followed by `fdk start` again.
 

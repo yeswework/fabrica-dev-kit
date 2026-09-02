@@ -5,7 +5,8 @@ const assert = require('node:assert/strict'),
 	fs = require('fs'),
 	path = require('path');
 
-const { BROKEN_PULL, LFTP_STUB_BODY, MISSING_FOLDER, acfPullDest } = require('../helpers/lftp-stub'),
+const { LFTP_DEFAULTS } = require('../../lib/deploy'),
+	{ BROKEN_PULL, LFTP_STUB_BODY, MISSING_FOLDER, acfPullDest } = require('../helpers/lftp-stub'),
 	{ makeProject } = require('../helpers/project'),
 	{ runFdk } = require('../helpers/run'),
 	{ stubBin } = require('../helpers/stub-bin'),
@@ -14,8 +15,11 @@ const { BROKEN_PULL, LFTP_STUB_BODY, MISSING_FOLDER, acfPullDest } = require('..
 after(cleanTmpDirs);
 
 const RESOURCE = 'mytheme',
-	CONFIG = ['default:', '  ftp:', '    host: ftp.test', '    user: u', '    password: p',
-		'    path: /', '    commands: []', '  themes:', `    - ./${RESOURCE}`, ''].join('\n');
+	config = (ftpCommands = []) => ['default:', '  ftp:', '    host: ftp.test', '    user: u',
+		'    password: p', '    path: /',
+		...(ftpCommands.length ? ['    commands:', ...ftpCommands.map(command => `      - ${command}`)]
+			: ['    commands: []']),
+		'  themes:', `    - ./${RESOURCE}`, ''].join('\n');
 
 const group = (key, modified) => JSON.stringify({ key, modified });
 
@@ -31,6 +35,7 @@ const deploy = async ({
 	noAcfDir = false,  // resource with no local acf-json at all
 	noResource = false, // config names a resource whose folder isn't there
 	lftp = true,
+	ftpCommands = [],
 	status = 0,
 	stderr = '',
 	signal = false,
@@ -47,7 +52,7 @@ const deploy = async ({
 		for (const [name, body] of Object.entries(local)) { files[`acf-json/${name}`] = body; }
 	}
 	const dir = makeProject({
-		config: CONFIG,
+		config: config(ftpCommands),
 		resources: noResource ? {} : { [RESOURCE]: {
 			files,
 			dirty: Object.fromEntries(Object.entries(dirty).map(([n, b]) => [`acf-json/${n}`, b])),
@@ -239,13 +244,23 @@ test('an upload that broke is reported as a failure, not as a skip', async () =>
 	assert.doesNotMatch(run.output, /not uploaded: mytheme/);
 });
 
-// `lftp -c` reports only the last command's status, so without this a `--backup` that failed would
-// be masked by the mirror that follows it — and the deploy would overwrite what it failed to copy
-test('the upload script tells lftp to stop at the first failing command', async () => {
+// `lftp -c` reports only the last command's status, so without cmd:fail-exit a `--backup` that
+// failed would be masked by the mirror that follows it — and the deploy would overwrite what it
+// failed to copy. The rest bound how long an unreachable host can be waited on
+test('every script opens with the deploy defaults', async () => {
 	const run = await deploy({ noAcfDir: true, force: true });
-	assert.match(run.upload, /set cmd:fail-exit yes/);
-	// and it comes first, before anything the config contributed
-	assert.ok(run.upload.indexOf('set cmd:fail-exit yes') < run.upload.indexOf('open ftp://'));
+	for (const setting of LFTP_DEFAULTS) {
+		assert.ok(run.upload.includes(setting), `missing from the script: ${setting}`);
+	}
+	assert.ok(run.upload.indexOf(LFTP_DEFAULTS[0]) < run.upload.indexOf('open ftp://'));
+});
+
+// `set` is last-wins in lftp, so a project's own value has to come after ours to take effect
+test("a project's own ftp.commands come after the defaults, and so win", async () => {
+	const run = await deploy({ noAcfDir: true, force: true,
+		ftpCommands: ['set net:max-retries 9'] });
+	assert.ok(run.upload.indexOf('set net:max-retries 3') < run.upload.indexOf('set net:max-retries 9'));
+	assert.ok(run.upload.indexOf('set net:max-retries 9') < run.upload.indexOf('open ftp://'));
 });
 
 test('a successful upload still exits 0', async () => {

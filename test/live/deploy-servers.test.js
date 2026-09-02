@@ -6,7 +6,7 @@ const assert = require('node:assert/strict'),
 	fs = require('fs'),
 	path = require('path');
 
-const { pullRemoteAcfJson, remoteFolderExists } = require('../../lib/deploy'),
+const { LFTP_DEFAULTS, pullRemoteAcfJson, remoteFolderExists } = require('../../lib/deploy'),
 	{ FIXTURE_GROUP, SERVERS, commandsFor, missingRequirements, seedFixtures, startServers, stopServers }
 		= require('../helpers/ftp-servers'),
 	{ cleanTmpDirs, makeTmpDir } = require('../helpers/tmpdir');
@@ -102,6 +102,32 @@ describe('the ACF preflight against real servers',
 			assert.equal(
 				pullRemoteAcfJson(['set cmd:fail-exit yes', ...commandsFor('vsftpd')], 'never-created', dest),
 				false);
+		});
+
+		// lftp's own defaults are 1000 retries backing off to a 300s interval, with a 5-minute
+		// response timeout, so a host that is down or firewalled never fails — it retries for days
+		// with nothing on screen. These two need no server, only a real lftp
+		test('an unreachable host fails in seconds rather than retrying for days', () => {
+			const dest = path.join(makeTmpDir('fdk-live-pull-'), 'copy'),
+				started = Date.now();
+			assert.equal(
+				pullRemoteAcfJson([...LFTP_DEFAULTS, 'open ftp://fdk:secret@127.0.0.1:2199'],
+					'acf-json', dest),
+				null);
+			const elapsed = Date.now() - started;
+			assert.ok(elapsed < 30000, `took ${elapsed}ms; a refused connection should fail in about 5s`);
+		});
+
+		test("a project's own retry limit overrides the default", () => {
+			const dest = path.join(makeTmpDir('fdk-live-pull-'), 'copy'),
+				started = Date.now();
+			// as `ftp.commands` would arrive: after the defaults, and `set` is last-wins
+			assert.equal(
+				pullRemoteAcfJson([...LFTP_DEFAULTS, 'set net:max-retries 1',
+					'open ftp://fdk:secret@127.0.0.1:2199'], 'acf-json', dest),
+				null);
+			const elapsed = Date.now() - started;
+			assert.ok(elapsed < 3000, `took ${elapsed}ms; one attempt should fail almost at once`);
 		});
 
 		// `--backup` asks this before queueing a copy, so that a first deploy isn't aborted by a
