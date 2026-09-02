@@ -180,6 +180,30 @@ test('a resource that is not a repository is left for the operator to sort out',
 	assert.equal(run.read('g.json'), group('g', 100));
 });
 
+// a group that can't be compared is the one the guard used to score 0 and wave through
+test("a server group that can't be compared stops the deploy", async () => {
+	const run = await deploy({
+		local: { 'g.json': group('g', 100) },
+		server: { 'g.json': '{ not json' },
+	});
+	assert.equal(run.uploaded, false);
+	assert.equal(run.status, 1);
+	assert.match(run.output, /Couldn't compare these 'mytheme' field groups/);
+	assert.match(run.output, /acf-json\/g\.json/);
+	// and nothing was pulled over the local copy
+	assert.equal(run.read('g.json'), group('g', 100));
+});
+
+test("--force still overrides a group that can't be compared", async () => {
+	const run = await deploy({
+		local: { 'g.json': group('g', 100) },
+		server: { 'g.json': '{ not json' },
+		force: true,
+	});
+	assert.equal(run.uploaded, true);
+	assert.equal(run.status, 0);
+});
+
 // ——— cases that never reach the guard ————
 
 test('a resource with no acf-json folder skips the preflight and uploads', async () => {

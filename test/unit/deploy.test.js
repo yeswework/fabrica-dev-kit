@@ -5,7 +5,7 @@ const assert = require('node:assert/strict'),
 	fs = require('fs'),
 	path = require('path');
 
-const { acfGroupsAheadOnRemote, pullRemoteAcfJson, uncommittedFiles } = require('../../lib/deploy'),
+const { acfGroupsAtRisk, pullRemoteAcfJson, uncommittedFiles } = require('../../lib/deploy'),
 	{ BROKEN_PULL, LFTP_STUB_BODY, MISSING_FOLDER } = require('../helpers/lftp-stub'),
 	{ makeProject } = require('../helpers/project'),
 	{ stubBin } = require('../helpers/stub-bin'),
@@ -21,47 +21,62 @@ const dirWith = files => {
 	return dir;
 };
 
-// ——— acfGroupsAheadOnRemote ————
+// ——— acfGroupsAtRisk ————
 
-test('a remote group with a newer stamp is ahead', () => {
-	const remote = dirWith({ 'g.json': group('g', 900) }),
-		local = dirWith({ 'g.json': group('g', 100) });
-	assert.deepEqual(acfGroupsAheadOnRemote(remote, local), ['g.json']);
+const atRisk = (remote, local) => acfGroupsAtRisk(dirWith(remote), dirWith(local));
+
+test('a remote group with a newer stamp is newer', () => {
+	assert.deepEqual(atRisk({ 'g.json': group('g', 900) }, { 'g.json': group('g', 100) }),
+		{ newer: ['g.json'], unknown: [] });
 });
 
-test('an older or equal remote group is not ahead', () => {
-	const remote = dirWith({ 'older.json': group('a', 100), 'same.json': group('b', 500) }),
-		local = dirWith({ 'older.json': group('a', 900), 'same.json': group('b', 500) });
-	assert.deepEqual(acfGroupsAheadOnRemote(remote, local), []);
+test('an older or equal remote group is at no risk', () => {
+	assert.deepEqual(
+		atRisk({ 'older.json': group('a', 100), 'same.json': group('b', 500) },
+			{ 'older.json': group('a', 900), 'same.json': group('b', 500) }),
+		{ newer: [], unknown: [] });
 });
 
-test('a group only the server has is ahead', () => {
-	assert.deepEqual(acfGroupsAheadOnRemote(dirWith({ 'new.json': group('n', 100) }), dirWith({})),
-		['new.json']);
+test('a group only the server has counts as newer', () => {
+	assert.deepEqual(atRisk({ 'new.json': group('n', 100) }, {}), { newer: ['new.json'], unknown: [] });
 });
 
 test('files that are not .json are ignored', () => {
-	const remote = dirWith({ 'notes.txt': 'x', 'g.json': group('g', 100) }),
-		local = dirWith({ 'g.json': group('g', 100) });
-	assert.deepEqual(acfGroupsAheadOnRemote(remote, local), []);
+	assert.deepEqual(atRisk({ 'notes.txt': 'x', 'g.json': group('g', 100) }, { 'g.json': group('g', 100) }),
+		{ newer: [], unknown: [] });
 });
 
-// `modifiedStamp` returns 0 for any exception, so a group that arrives but can't be read scores
-// below every real local stamp and the guard waves the deploy through
-test('a remote group whose JSON is corrupt is treated as ahead',
-	{ todo: 'fabrica-dev-kit-e2c' }, () => {
-		const remote = dirWith({ 'g.json': '{ not json' }),
-			local = dirWith({ 'g.json': group('g', 100) });
-		assert.deepEqual(acfGroupsAheadOnRemote(remote, local), ['g.json']);
-	});
+// a group with no usable stamp can't be ranked, and scoring it 0 would rank it below every real
+// one — which is how an unreadable copy on the server used to read as older than ours
+test('a remote group whose JSON is corrupt cannot be compared', () => {
+	assert.deepEqual(atRisk({ 'g.json': '{ not json' }, { 'g.json': group('g', 100) }),
+		{ newer: [], unknown: ['g.json'] });
+});
 
-test('a remote group that cannot be read is treated as ahead',
-	{ todo: 'fabrica-dev-kit-e2c', skip: process.getuid && process.getuid() === 0 ? 'running as root' : false },
-	() => {
+test('a remote group with no modified stamp cannot be compared', () => {
+	assert.deepEqual(atRisk({ 'g.json': JSON.stringify({ key: 'g' }) }, { 'g.json': group('g', 100) }),
+		{ newer: [], unknown: ['g.json'] });
+});
+
+test('a stamp that arrives as a string is still a stamp', () => {
+	assert.deepEqual(atRisk({ 'g.json': '{"key":"g","modified":"900"}' }, { 'g.json': group('g', 100) }),
+		{ newer: ['g.json'], unknown: [] });
+});
+
+test('a local group that cannot be compared blocks too', () => {
+	assert.deepEqual(atRisk({ 'g.json': group('g', 100) }, { 'g.json': 'not json either' }),
+		{ newer: [], unknown: ['g.json'] });
+});
+
+test('a remote group that cannot be read cannot be compared',
+	{ skip: process.getuid && process.getuid() === 0 ? 'running as root' : false }, () => {
 		const remote = dirWith({ 'g.json': group('g', 900) }),
 			local = dirWith({ 'g.json': group('g', 100) });
 		fs.chmodSync(path.join(remote, 'g.json'), 0o000);
-		assert.deepEqual(acfGroupsAheadOnRemote(remote, local), ['g.json']);
+		// unreadable and server-only at once must not land in `newer`: that branch copies the file
+		// into the working tree, which would fail
+		assert.deepEqual(acfGroupsAtRisk(remote, dirWith({})), { newer: [], unknown: ['g.json'] });
+		assert.deepEqual(acfGroupsAtRisk(remote, local), { newer: [], unknown: ['g.json'] });
 	});
 
 // ——— uncommittedFiles ————
