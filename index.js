@@ -176,8 +176,8 @@ const configServices = (projectConfig, dockerConfig) => {
 }
 
 // Check if there are any new resources and add paths accordingly to `docker-compose.yml` volumes
-const configResources = (project='default') => {
-	const projectConfig = getProjectConfig(project);
+const configResources = (projectName='default') => {
+	const projectConfig = getProjectConfig(projectName);
 	let dockerConfig, needsRestart;
 	try {
 		dockerConfig = yaml.load(sh.cat(`./docker-compose.yml`));
@@ -248,8 +248,8 @@ const configResources = (project='default') => {
 }
 
 // Build resources concurrently
-const buildResources = (project='default', task='build') => {
-	const projectConfig = getProjectConfig(project);
+const buildResources = (projectName='default', task='build') => {
+	const projectConfig = getProjectConfig(projectName);
 
 	try {
 		let names = [],
@@ -318,8 +318,8 @@ const addProjectCommands = () => {
 			.action(configResources);
 		program.command('config:all [project]')
 			.description('Run all project configuration tasks (config:url and config:resources)')
-			.action((project) => {
-				configResources(project)
+			.action(projectName => {
+				configResources(projectName)
 				.then(configURL);
 			});
 		program.command('urls')
@@ -327,10 +327,10 @@ const addProjectCommands = () => {
 			.action(() => echoInfo());
 		program.command('build [project]')
 			.description(`Run a simultaneous build on all project resources`)
-			.action((project = 'default') => buildResources(project, 'build'));
+			.action((projectName = 'default') => buildResources(projectName, 'build'));
 		program.command('start [project]')
 			.description(`Run a simultaneous watch on all project resources`)
-			.action((project = 'default') => buildResources(project, 'start'));
+			.action((projectName = 'default') => buildResources(projectName, 'start'));
 		program.command('deploy [project]')
 			.description(`Deploy resources to server according to configuration in 'config.yml' file. If no <project> is passed, settings under 'default' will be loaded. Files and folders matching patterns in resource '.distignore' file will be ignored`)
 			.option('-k, --backup', 'backup existing resources folders before updating')

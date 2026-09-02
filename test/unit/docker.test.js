@@ -51,7 +51,7 @@ test('a second read comes from the cache, not from Docker', () => {
 		getWebPort();
 		getDBPort();
 		getDBPort();
-		assert.deepEqual(docker.calls(), ['compose port web 80', 'compose port db 3306']);
+		assert.deepEqual(docker.calls(), ['docker compose port web 80', 'docker compose port db 3306']);
 	} finally { restore(); }
 });
 

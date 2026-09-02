@@ -83,5 +83,5 @@ test('without the portless CLI both helpers decline quietly', () => {
 
 test('removing an alias calls portless with the name', () => {
 	const calls = withPortless({}, stub => { removePortlessAlias('site'); return stub.calls(); });
-	assert.deepEqual(calls, ['alias --remove site']);
+	assert.deepEqual(calls, ['portless alias --remove site']);
 });

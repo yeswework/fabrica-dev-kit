@@ -26,19 +26,23 @@ const THEME_VOLUME = './mytheme:/var/www/html/wp-content/themes/mytheme',
 // `config:resources` diffs the config against `docker-compose.yml` and rewrites the file, so a
 // config it could not read must stop it before the diff — an unreadable config that reads as
 // 'no resources' is indistinguishable from one that says 'unmount everything'
-const configResources = async ({ config, webPort }) => {
+const configResources = async ({ config, webPort, portless = false }) => {
 	const dir = makeProject({
 		config,
 		resources: { mytheme: { files: { 'style.css': '/* theme */' }, git: false } },
 	});
 	fs.writeFileSync(path.join(dir, 'docker-compose.yml'), COMPOSE);
 
-	// `portless` is declared absent rather than stubbed, which narrows the child's PATH to the
-	// stub folder alone. `configResources` calls `removePortlessAlias` on every run, and with the
-	// developer's own PATH inherited that would reach the real Portless and touch real aliases
-	const docker = stubBin({ docker: webPort
+	// `configResources` calls `removePortlessAlias` on every run, so a test that inherited the
+	// developer's PATH would reach the real Portless and touch real aliases. Either stub it and
+	// watch what it was asked to do, or declare it absent — both narrow the child's PATH to the
+	// stub folder alone
+	const dockerBody = webPort
 		? `case "$*" in *"port web 80"*) printf '0.0.0.0:%s\\n' "${webPort}" ;; esac\nexit 0`
-		: 'exit 0' }, { absent: ['portless'] });
+		: 'exit 0';
+	const docker = portless
+		? stubBin({ docker: dockerBody, portless: 'exit 0' }, { isolate: true })
+		: stubBin({ docker: dockerBody }, { absent: ['portless'] });
 	const res = await runFdk(['config:resources'], { cwd: dir, env: { PATH: docker.path } });
 	return {
 		calls: docker.calls(),
@@ -81,5 +85,34 @@ test('a config.yml that genuinely lists no resources still unmounts them', async
 		assert.equal(run.status, 0);
 		assert.deepEqual(volumesOf(run.compose), ['./www:/var/www/html']);
 		assert.ok(run.calls.some(call => call.includes('compose up -d --remove-orphans')));
+	} finally { server.close(); }
+});
+
+// ——— the Portless cleanup, which used to read its slug off the wrong `project` ————
+
+test('dropping portless from `use` removes that project\'s alias, by slug', async () => {
+	const run = await configResources({
+		config: 'default:\n  use: []\n  themes:\n    - ./mytheme\n',
+		portless: true,
+	});
+	assert.equal(run.status, 0);
+	// `testproj` is the name in the project's package.json — the state object's slug, not the
+	// `default` section name the command was invoked with
+	assert.deepEqual(run.calls.filter(call => call.startsWith('portless')),
+		['portless alias --remove testproj']);
+	assert.ok(!run.calls.some(call => call.includes('undefined')));
+});
+
+test('a project still using portless keeps its alias', async () => {
+	const server = http.createServer((req, res) => { res.writeHead(200); res.end('ok'); });
+	await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+	try {
+		const run = await configResources({
+			config: 'default:\n  use:\n    - portless\n  themes:\n    - ./mytheme\n',
+			portless: true,
+			webPort: server.address().port,
+		});
+		assert.equal(run.status, 0);
+		assert.deepEqual(run.calls.filter(call => call.includes('alias --remove')), []);
 	} finally { server.close(); }
 });
