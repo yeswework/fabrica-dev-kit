@@ -8,7 +8,11 @@
 // The destination is passed in rather than parsed back out of the command script: `deploy` builds
 // it as `<tmpdir>/fdk-acf-<resource>`, which a test can compute for itself with `acfPullDest`.
 //
-// Outcomes, matching the ones the guard has to distinguish:
+// The upload is the `--reverse` branch: `LFTP_STUB_UPLOAD_STATUS` is what it exits with. `--backup`
+// probes for the resource on the server first, with `cls -d`: `LFTP_STUB_EXISTS_STATUS` and
+// `LFTP_STUB_EXISTS_STDERR` answer that.
+//
+// Preflight outcomes, matching the ones the guard has to distinguish:
 //   status  0 + fixture   a copy arrived
 //   status  1 + `Access failed: 550 …`, no directory   the server holds none yet
 //   status  1 + `Fatal error: …`   the pull broke, state indeterminate
@@ -16,7 +20,10 @@
 //   (no stub at all)                the binary isn't installed
 const LFTP_STUB_BODY = `
 case "$*" in
-	*--reverse*) exit 0 ;;
+	*--reverse*) exit \${LFTP_STUB_UPLOAD_STATUS:-0} ;;
+	*"cls -d"*)
+		if [ -n "\${LFTP_STUB_EXISTS_STDERR:-}" ]; then printf '%s\\n' "$LFTP_STUB_EXISTS_STDERR" >&2; fi
+		exit \${LFTP_STUB_EXISTS_STATUS:-0} ;;
 esac
 if [ -n "\${LFTP_STUB_STDERR:-}" ]; then printf '%s\\n' "$LFTP_STUB_STDERR" >&2; fi
 if [ -n "\${LFTP_STUB_FIXTURE:-}" ] && [ -n "\${LFTP_STUB_DEST:-}" ]; then

@@ -89,6 +89,16 @@ staging:
 ### Deployment
 To deploy your resources, run `fdk build` (runs Webpack for all resources in build mode) and then `fdk deploy`. This will deploy using the resources and server specified in the `default` section of `config.yml`; if you want to deploy to a different environment, simply add its name, eg. `fdk deploy staging`.
 
+Anything listed under an environment's `ftp.commands` is passed to `lftp` before it connects. The
+whole script now runs with `set cmd:fail-exit yes` prepended, so the first command that fails
+aborts that resource's deploy and `fdk deploy` exits non-zero. Previously `lftp -c` reported only
+the *last* command's status, which meant a `--backup` (`fdk deploy -k`) that failed was invisible
+and the overwriting upload went ahead regardless. If you have an `ftp.commands` entry that
+legitimately exits non-zero, it will now stop the deploy for that resource.
+
+`fdk deploy -k` checks whether the resource is on the server before taking its backup, so a
+first deploy says there is nothing to back up and carries on rather than stopping.
+
 ### Troubleshooting and housekeeping
 If you run into any problems during development, restarting the Docker machine may help. Stop FDK with ctrl + c and then run `fdk dc restart` followed by `fdk start` again.
 

@@ -34,6 +34,11 @@ const deploy = async ({
 	status = 0,
 	stderr = '',
 	signal = false,
+	uploadStatus = 0, // what the `mirror --reverse` run exits with
+	backup = false,
+	// what the `--backup` probe for the resource on the server answers
+	existsStatus = 0,
+	existsStderr = '',
 } = {}) => {
 	const files = { 'style.css': '/* theme */' };
 	if (!noAcfDir) {
@@ -61,7 +66,7 @@ const deploy = async ({
 	const stubs = lftp
 		? stubBin({ docker: 'exit 0', lftp: LFTP_STUB_BODY })
 		: stubBin({ docker: 'exit 0' }, { absent: ['lftp'] });
-	const res = await runFdk(['deploy', ...(force ? ['--force'] : [])], {
+	const res = await runFdk(['deploy', ...(force ? ['--force'] : []), ...(backup ? ['--backup'] : [])], {
 		cwd: dir,
 		env: {
 			PATH: stubs.path,
@@ -70,12 +75,16 @@ const deploy = async ({
 			LFTP_STUB_SIGNAL: signal ? '1' : '',
 			LFTP_STUB_STATUS: String(status),
 			LFTP_STUB_STDERR: stderr,
+			LFTP_STUB_EXISTS_STATUS: String(existsStatus),
+			LFTP_STUB_EXISTS_STDERR: existsStderr,
+			LFTP_STUB_UPLOAD_STATUS: String(uploadStatus),
 		},
 	});
 
 	const calls = stubs.calls();
 	return {
 		calls,
+		upload: calls.find(call => call.includes('--reverse')) || '',
 		lftpRuns: calls.filter(c => c.includes('mirror')).length,
 		output: res.stdout + res.stderr,
 		read: file => fs.readFileSync(path.join(dir, RESOURCE, 'acf-json', file), 'utf8'),
@@ -105,6 +114,8 @@ test('a preflight that broke stops before the upload', async () => {
 	assert.equal(run.status, 1);
 	assert.match(run.output, /Couldn't read the 'acf-json' folder/);
 	assert.match(run.output, /not uploaded: mytheme/);
+	// nothing was sent, so this is not an upload that broke
+	assert.doesNotMatch(run.output, /failed while uploading/);
 });
 
 test('a missing lftp binary stops before the upload', async () => {
@@ -183,4 +194,66 @@ test('a resource folder that is not there is reported and the run fails', async 
 	assert.equal(run.uploaded, false);
 	assert.equal(run.status, 1);
 	assert.match(run.output, /Path for resource 'mytheme' not found/);
+});
+
+// ——— an upload that breaks ————
+
+test('an upload that exits non-zero fails the run', async () => {
+	const run = await deploy({ local: { 'g.json': group('g', 100) }, server: { 'g.json': group('g', 100) },
+		uploadStatus: 1 });
+	assert.equal(run.uploaded, true, 'the upload was attempted');
+	assert.equal(run.status, 1);
+});
+
+// a resource nothing was sent for and one that may be half-written on the server need different
+// handling, so they get different wording
+test('an upload that broke is reported as a failure, not as a skip', async () => {
+	const run = await deploy({ local: { 'g.json': group('g', 100) }, server: { 'g.json': group('g', 100) },
+		uploadStatus: 1 });
+	assert.match(run.output, /failed while uploading: mytheme/);
+	assert.match(run.output, /may hold a partial copy/);
+	assert.doesNotMatch(run.output, /not uploaded: mytheme/);
+});
+
+// `lftp -c` reports only the last command's status, so without this a `--backup` that failed would
+// be masked by the mirror that follows it — and the deploy would overwrite what it failed to copy
+test('the upload script tells lftp to stop at the first failing command', async () => {
+	const run = await deploy({ noAcfDir: true, force: true });
+	assert.match(run.upload, /set cmd:fail-exit yes/);
+	// and it comes first, before anything the config contributed
+	assert.ok(run.upload.indexOf('set cmd:fail-exit yes') < run.upload.indexOf('open ftp://'));
+});
+
+test('a successful upload still exits 0', async () => {
+	const run = await deploy({ local: { 'g.json': group('g', 100) }, server: { 'g.json': group('g', 100) } });
+	assert.equal(run.status, 0);
+	assert.doesNotMatch(run.output, /failed while uploading/);
+});
+
+// ——— --backup, which runs before the upload in the same script ————
+
+test('a backup is queued when the resource is already on the server', async () => {
+	const run = await deploy({ noAcfDir: true, backup: true, existsStatus: 0 });
+	assert.equal(run.status, 0);
+	assert.match(run.upload, /set ftp:use-fxp yes/);
+	assert.match(run.upload, /Copying original resource folder/);
+});
+
+// fail-fast would otherwise abort a legitimate first deploy on the backup of a folder that was
+// never there
+test('nothing is backed up on a first deploy, and the upload still happens', async () => {
+	const run = await deploy({ noAcfDir: true, backup: true,
+		existsStatus: 1, existsStderr: MISSING_FOLDER.vsftpd });
+	assert.equal(run.status, 0);
+	assert.equal(run.uploaded, true);
+	assert.doesNotMatch(run.upload, /use-fxp/, 'no backup should have been queued');
+	assert.match(run.output, /Nothing to back up/);
+});
+
+test('a backup probe that cannot answer stops the deploy', async () => {
+	const run = await deploy({ noAcfDir: true, backup: true,
+		existsStatus: 1, existsStderr: BROKEN_PULL });
+	assert.equal(run.status, 1);
+	assert.equal(run.uploaded, false);
+	assert.match(run.output, /Couldn't tell whether 'mytheme' is already on the server/);
 });

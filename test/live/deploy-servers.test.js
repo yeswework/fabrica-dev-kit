@@ -2,10 +2,11 @@
 
 const assert = require('node:assert/strict'),
 	{ after, before, describe, test } = require('node:test'),
+	{ spawnSync } = require('child_process'),
 	fs = require('fs'),
 	path = require('path');
 
-const { pullRemoteAcfJson } = require('../../lib/deploy'),
+const { pullRemoteAcfJson, remoteFolderExists } = require('../../lib/deploy'),
 	{ FIXTURE_GROUP, SERVERS, commandsFor, missingRequirements, seedFixtures, startServers, stopServers }
 		= require('../helpers/ftp-servers'),
 	{ cleanTmpDirs, makeTmpDir } = require('../helpers/tmpdir');
@@ -74,6 +75,43 @@ describe('the ACF preflight against real servers',
 				['set net:max-retries 1', 'set net:timeout 5', 'set ftp:ssl-allow no',
 					`open ftp://fdk:wrong@127.0.0.1:${SERVERS.vsftpd.port}`],
 				'acf-json', dest), null);
+		});
+
+		// `lftp -c` reports only the last command's status, which is why the deploy script now
+		// opens with `set cmd:fail-exit yes` — a `--backup` that failed would otherwise be masked
+		// by the mirror that follows it. This is the behaviour that claim rests on
+		test('cmd:fail-exit is what stops a script at its first failure', () => {
+			const dest = path.join(makeTmpDir('fdk-live-failexit-'), 'copy'),
+				run = prelude => spawnSync('lftp', ['-c', [...prelude, ...commandsFor('vsftpd'),
+					`mirror never-created ${dest}`, 'echo REACHED'].join('; ') + '; '],
+				{ encoding: 'utf8', env: { ...process.env, LC_ALL: 'C' } });
+
+			const masked = run([]);
+			assert.equal(masked.status, 0, 'the trailing echo should mask the failed mirror');
+			assert.match(masked.stdout, /REACHED/);
+
+			const failFast = run(['set cmd:fail-exit yes']);
+			assert.notEqual(failFast.status, 0);
+			assert.doesNotMatch(failFast.stdout, /REACHED/, 'nothing after the failure should run');
+		});
+
+		// the guard reads a missing folder off lftp's stderr, so fail-exit must not change what
+		// it says or the deploy would start refusing first deploys
+		test('a missing folder still reads as false with cmd:fail-exit set', () => {
+			const dest = path.join(makeTmpDir('fdk-live-pull-'), 'copy');
+			assert.equal(
+				pullRemoteAcfJson(['set cmd:fail-exit yes', ...commandsFor('vsftpd')], 'never-created', dest),
+				false);
+		});
+
+		// `--backup` asks this before queueing a copy, so that a first deploy isn't aborted by a
+		// backup of a folder that was never there
+		test('remoteFolderExists answers three ways against a real server', () => {
+			assert.equal(remoteFolderExists(commandsFor('vsftpd'), 'acf-json'), true);
+			assert.equal(remoteFolderExists(commandsFor('vsftpd'), 'never-created'), false);
+			assert.equal(remoteFolderExists(['set net:max-retries 1', 'set net:timeout 5',
+				'set ftp:ssl-allow no', `open ftp://fdk:wrong@127.0.0.1:${SERVERS.vsftpd.port}`],
+			'acf-json'), null);
 		});
 
 		test('a rejected sftp password reads as null', () => {
