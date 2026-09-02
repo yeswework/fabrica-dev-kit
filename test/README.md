@@ -37,8 +37,12 @@ without Docker reports that rather than failing.
   narrows PATH to the stub folder instead, which is how a missing binary is simulated.
 - **`lftp-stub.js`** — the `lftp` stub body, driven by environment variables, plus the real stderr
   wording four different servers produce for a folder that isn't there.
-- **`run.js`** — `runFdk()` runs the CLI as a user would; `runNode()` evaluates a snippet in a
-  child process, which is how anything reaching `halt` gets tested, since `halt` calls
+- **`run.js`** — `runFdk()` runs the CLI as a user would and returns a promise, so `await` it.
+  It is asynchronous on purpose: a synchronous spawn blocks this process's event loop, so a test
+  that also has to *answer* the CLI — an HTTP server standing in for the web container, say —
+  would deadlock until FDK gave up six minutes later. Both it and `runNode()` carry a one-minute
+  timeout, so a hang fails the test instead of stalling the run. `runNode()` evaluates a snippet
+  in a child process, which is how anything reaching `halt` gets tested, since `halt` calls
   `process.exit` and would take the runner down with it.
 - **`ftp-servers.js`** — starts and seeds the containers for the live tier.
 
@@ -52,6 +56,12 @@ needs a daemon.
 
 Nothing in `unit/` or `integration/` may depend on Docker, `lftp`, the network, or anything in the
 developer's home directory. Stub the binary and assert on the command line it was given.
+
+Watch what a code path reaches for that you didn't think to stub: `stubBin` puts its folder at the
+*front* of PATH, so anything not stubbed is still the developer's own copy. `config:resources`
+calls `removePortlessAlias` on every run, which would reach a real Portless and touch real
+aliases — so `test/integration/config-resources.test.js` passes `{ absent: ['portless'] }`, which
+narrows the child's PATH to the stub folder alone.
 
 ### Known bugs
 

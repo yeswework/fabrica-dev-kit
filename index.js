@@ -191,11 +191,6 @@ const configResources = (project='default') => {
 		volumes = [];
 	let existsNewVolumes = false,
 		oldVolumes = dockerConfig.services.wp.volumes.filter(isResourceVolume);
-	if (!projectConfig || projectConfig.length == 0) {
-		warn('No resources found in the config file.');
-		return;
-	}
-
 	// setup themes and plugins volumes
 	['themes', 'plugins'].forEach(resourceType => {
 		const resources = projectConfig[resourceType];

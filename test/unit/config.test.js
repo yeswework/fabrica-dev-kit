@@ -42,23 +42,34 @@ test('extending a section that is not in the file halts', () => {
 	assert.match(res.stderr, /extends 'missing' which was not found/);
 });
 
-test('a malformed config.yml warns and yields an empty object', () => {
+test('a malformed config.yml halts', () => {
 	const dir = makeProject({ config: 'default:\n  themes: [unclosed\n' }),
-		res = runNode(`console.log(JSON.stringify(${requireLib('config')}.getProjectConfig('default')))`,
-			{ cwd: dir });
-	assert.equal(res.status, 0);
+		res = runNode(`${requireLib('config')}.getProjectConfig('default')`, { cwd: dir });
+	assert.equal(res.status, 1);
 	assert.match(res.stderr, /Error loading 'config.yml'/);
-	assert.equal(res.stdout.trim(), '{}');
 });
 
-// `sh.cat` doesn't throw on a file that isn't there, so the try/catch written for this case never
-// fires and the next line dereferences undefined
-test('a missing config.yml fails as softly as a malformed one',
-	{ todo: 'fabrica-dev-kit-vgd' }, () => {
-		const dir = makeProject({}), // no config.yml written at all
-			res = runNode(`console.log(JSON.stringify(${requireLib('config')}.getProjectConfig('default')))`,
-				{ cwd: dir });
-		// asserted on the exit status alone: a raw stack trace in the diff of every run is worse
-		// than the reminder is worth
-		assert.equal(res.status, 0, 'should warn and return {}, not throw a TypeError');
-	});
+// `sh.cat` doesn't throw on a file that isn't there, and `yaml.load` of an empty one returns
+// undefined, so both used to slip past the catch and dereference undefined a line later
+test('a missing config.yml halts', () => {
+	const dir = makeProject({}), // no config.yml written at all
+		res = runNode(`${requireLib('config')}.getProjectConfig('default')`, { cwd: dir });
+	assert.equal(res.status, 1);
+	assert.match(res.stderr, /Could not find 'config.yml'/);
+	assert.doesNotMatch(res.stderr, /TypeError/);
+});
+
+test('an empty config.yml halts', () => {
+	const dir = makeProject({ config: '\n# nothing but a comment\n' }),
+		res = runNode(`${requireLib('config')}.getProjectConfig('default')`, { cwd: dir });
+	assert.equal(res.status, 1);
+	assert.match(res.stderr, /holds no configuration/);
+});
+
+// valid YAML of the wrong shape would otherwise read as a section with no themes and no plugins
+test('a section that is not a set of settings halts', () => {
+	const dir = makeProject({ config: 'default: just-a-string\n' }),
+		res = runNode(`${requireLib('config')}.getProjectConfig('default')`, { cwd: dir });
+	assert.equal(res.status, 1);
+	assert.match(res.stderr, /is not a set of settings/);
+});
