@@ -3,7 +3,7 @@ module.exports = (data) => `
 # Modify for your project, then run \`fdk setup\` from this folder
 
 # Project settings
-slug: ${data.slug || 'fdk-project'} # lowercase letters only (also used for theme slug and PHP namespacing)
+slug: ${data.slug || 'fdk-project'} # lowercase letters, digits and hyphens (npm package name, container names, Portless alias)
 title: ${data.title || 'FDK Project'}
 
 # WordPress settings
