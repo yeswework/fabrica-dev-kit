@@ -4,8 +4,8 @@
   "description": "Fabrica Dev Kit for Wordpress",
   "main": "index.js",
   "scripts": {
-    "test": "node --test test/unit/ test/integration/",
-    "test:live": "node --test test/live/"
+    "test": "node --test \"test/unit/*.test.js\" \"test/integration/*.test.js\"",
+    "test:live": "node --test \"test/live/*.test.js\""
   },
   "repository": {
     "type": "git",
