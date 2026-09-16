@@ -34,6 +34,7 @@ const deploy = async ({
 	force = false,
 	noAcfDir = false,  // resource with no local acf-json at all
 	noResource = false, // config names a resource whose folder isn't there
+	distignore = null, // the resource's own `.distignore`, or none at all
 	lftp = true,
 	ftpCommands = [],
 	status = 0,
@@ -46,6 +47,7 @@ const deploy = async ({
 	existsStderr = '',
 } = {}) => {
 	const files = { 'style.css': '/* theme */' };
+	if (distignore !== null) { files['.distignore'] = distignore; }
 	if (!noAcfDir) {
 		// an empty .keep keeps the folder present even when the scenario has no groups
 		files['acf-json/.keep'] = '';
@@ -295,4 +297,28 @@ test('a backup probe that cannot answer stops the deploy', async () => {
 	assert.equal(run.status, 1);
 	assert.equal(run.uploaded, false);
 	assert.match(run.output, /Couldn't tell whether 'mytheme' is already on the server/);
+});
+
+// ——— tooling that must never reach a server ————
+
+// a repo's own list is hand-written and drifts: user-card-block's predated beads, so a deploy put
+// its whole workspace on a public host
+test('agent tooling is excluded even from a resource with no .distignore', async () => {
+	const run = await deploy({ noAcfDir: true });
+	assert.equal(run.uploaded, true);
+	for (const glob of ['.beads/', '.claude/', 'CLAUDE.md', 'AGENTS.md', 'eslint.config.js']) {
+		assert.match(run.upload, new RegExp(`--exclude-glob ${glob.replace('.', '\\.')}`), `${glob} should be excluded`);
+	}
+});
+
+test("a resource's own .distignore adds to the defaults rather than replacing them", async () => {
+	const run = await deploy({ noAcfDir: true, distignore: 'src/\n' });
+	assert.match(run.upload, /--exclude-glob \.beads\//);
+	assert.match(run.upload, /--exclude-glob src\//);
+});
+
+// defaults come first, so a later include wins: a resource that genuinely ships one can say so
+test('a ! line re-includes a default', async () => {
+	const run = await deploy({ noAcfDir: true, distignore: '!CLAUDE.md\n' });
+	assert.match(run.upload, /--include-glob CLAUDE\.md/);
 });
