@@ -4,5 +4,11 @@ _resources/
 .DS_Store
 .vscode/
 
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads.gate.lock
+
 # Claude Code: settings.json is committed (bd prime SessionStart hook); this one is personal
 .claude/settings.local.json

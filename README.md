@@ -122,6 +122,12 @@ If you run into any problems during development, restarting the Docker machine m
 
 Multiple projects' Docker servers running simultaneously can hog system resources, so you can safely suspend any projects not currently being developed with `fd dc stop` in the project folder (or from the Docker Dashboard). Equally it is safe to run `fdk remove` which removes the project's containers altogether (the local database is preserved); to set them up again you can run `fdk setup --reinstall`.
 
+New projects pick up the current WordPress release from the `fabricawp/wordpress` Docker image, which is rebuilt and its tag bumped in `dev/docker-compose.yml.js` when a new WordPress major version ships (see the comment above that line for the rebuild steps). An **existing** project's WordPress install doesn't move on its own — a plain `wp core update` inside its `wp` container can land on a pre-release nightly rather than the stable release, so upgrade one deliberately instead:
+```
+wp core update --version=<target> --force
+wp core update-db
+```
+
 ### Local database access
 For direct MySQL access to the development database, you can use an app such as [Sequel Pro](https://www.sequelpro.com/) while the development machine is up. The database server is accessible at `127.0.0.1`, and with the dynamic port which you'll be told when you run `fdk start` (see example output above). The username, password and database name are are `wordpress`.
 
