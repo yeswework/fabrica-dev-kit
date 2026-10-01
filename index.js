@@ -335,13 +335,13 @@ const addProjectCommands = () => {
 			.description(`Compare every resource <project> and its '<project>/*' variants deploy with the copy on the server, file by file, without changing anything. Files matching each resource's '.distignore' are left out, as in 'deploy'`)
 			.action(projectName => drift(projectName));
 		program.command('pull <project> <post> [file]')
-			.description(`Copy a post's block markup, byte for byte, from the site in <project>'s 'wp:' settings into [file] (a temp file if omitted). <post> is an ID, or type and ID such as 'pages/12' for a draft`)
+			.description(`Copy a post's block markup, byte for byte, from the site in <project>'s 'rest:' settings into [file] (a temp file if omitted). <post> is an ID, or type and ID such as 'pages/12' for a draft`)
 			.action((section, post, file) => pull(section, post, userPath(file)).catch(ex => halt(ex.message)));
 		program.command('push <project> <post> [file]')
 			.description(`Write a pulled file back into its post, then purge the site's cache. Refuses if the post changed since the pull, if a synced pattern ref isn't published on the site, or if the user can't save unfiltered HTML`)
 			.action((section, post, file) => push(section, post, userPath(file)).catch(ex => halt(ex.message)));
 		program.command('refs <project> <file> <direction>')
-			.description(`Swap the synced pattern refs in <file> between the site in <project>'s 'wp:' settings and this project's local site, matching patterns by title. <direction> is 'to-local' or 'to-live'`)
+			.description(`Swap the synced pattern refs in <file> between the site in <project>'s 'rest:' settings and this project's local site, matching patterns by title. <direction> is 'to-local' or 'to-live'`)
 			.action((section, file, direction) => refs(section, userPath(file), direction).catch(ex => halt(ex.message)));
 	}
 	addScriptCommands();
