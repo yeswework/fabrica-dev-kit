@@ -38,7 +38,7 @@ test('outside a project only init and setup are offered', async () => {
 
 test('inside a project the project commands appear', async () => {
 	const out = (await runFdk(['--help'], { cwd: makeProject({}), env: { PATH: docker() } })).stdout;
-	for (const command of ['config:url', 'config:resources', 'config:all', 'urls', 'build', 'start', 'deploy']) {
+	for (const command of ['config:url', 'config:resources', 'config:all', 'urls', 'build', 'start', 'deploy', 'pull', 'push', 'refs']) {
 		assert.ok(out.includes(command), `'${command}' missing from the help`);
 	}
 });
@@ -51,7 +51,8 @@ test("a project's package.json scripts become commands", async () => {
 		fabrica_dev_kit: { scripts_info: { logs: 'Tail WP container logs.' } },
 	}));
 	const out = (await runFdk(['--help'], { cwd: dir, env: { PATH: docker() } })).stdout;
-	assert.match(out, /logs\s+from 'package.json': Tail WP container logs\./);
+	// commander wraps descriptions to the widest command's column, so compare with the wrapping undone
+	assert.match(out.replace(/\s+/g, ' '), /logs from 'package.json': Tail WP container logs\./);
 });
 
 test('an unknown command says so and shows the help', async () => {
