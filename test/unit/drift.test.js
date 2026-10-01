@@ -5,7 +5,7 @@ const assert = require('node:assert/strict'),
 	fs = require('fs'),
 	path = require('path');
 
-const { buildIsStale, parseDiff, sectionResources } = require('../../lib/drift'),
+const { buildIsStale, parseDiff, scrub, sectionResources } = require('../../lib/drift'),
 	{ cleanTmpDirs, makeTmpDir } = require('../helpers/tmpdir');
 
 after(cleanTmpDirs);
@@ -95,4 +95,15 @@ test('a build newer than its source is not stale', () => {
 test('a resource without both folders has no build to be stale', () => {
 	assert.equal(buildIsStale(resourceWith(2000, undefined)), false);
 	assert.equal(buildIsStale(resourceWith(undefined, 1000)), false);
+});
+
+// ——— scrub ————
+
+test('a password is masked whether lftp repeats it raw or as it sits in the URL', () => {
+	const said = 'open: sftp://u:p%40ss%20w@h:22 failed; tried p@ss w twice';
+	assert.equal(scrub(said, 'p@ss w'), 'open: sftp://u:***@h:22 failed; tried *** twice');
+});
+
+test('with no password there is nothing to mask', () => {
+	assert.equal(scrub('Login failed', undefined), 'Login failed');
 });
