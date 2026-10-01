@@ -38,7 +38,7 @@ test('outside a project only init and setup are offered', async () => {
 
 test('inside a project the project commands appear', async () => {
 	const out = (await runFdk(['--help'], { cwd: makeProject({}), env: { PATH: docker() } })).stdout;
-	for (const command of ['config:url', 'config:resources', 'config:all', 'urls', 'build', 'start', 'deploy', 'pull', 'push', 'refs']) {
+	for (const command of ['config:url', 'config:resources', 'config:all', 'urls', 'build', 'start', 'deploy', 'drift', 'pull', 'push', 'refs']) {
 		assert.ok(out.includes(command), `'${command}' missing from the help`);
 	}
 });

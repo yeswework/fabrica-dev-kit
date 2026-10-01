@@ -16,6 +16,7 @@ const { echo, execWP, halt, spawn, warn } = require('./lib/util'),
 	{ getDBPort, getServicesPorts, getSiteURL, getWebPort, waitForWebContainer } = require('./lib/docker'),
 	{ init, setup } = require('./lib/setup'),
 	{ deploy } = require('./lib/deploy'),
+	{ drift } = require('./lib/drift'),
 	{ pull, push, refs } = require('./lib/content');
 
 // Fabrica Dev Kit version
@@ -342,6 +343,9 @@ const addProjectCommands = () => {
 			.option('-k, --backup', 'backup existing resources folders before updating')
 			.option('-f, --force', `deploy even if the remote 'acf-json' has diverged from the local one`)
 			.action(deploy);
+		program.command('drift [project]')
+			.description(`Compare every resource <project> and its '<project>/*' variants deploy with the copy on the server, file by file, without changing anything. Files matching each resource's '.distignore' are left out, as in 'deploy'`)
+			.action(projectName => drift(projectName));
 		program.command('pull <project> <post> [file]')
 			.description(`Copy a post's block markup, byte for byte, from the site in <project>'s 'wp:' settings into [file] (a temp file if omitted). <post> is an ID, or type and ID such as 'pages/12' for a draft`)
 			.action((section, post, file) => pull(section, post, userPath(file)).catch(ex => halt(ex.message)));

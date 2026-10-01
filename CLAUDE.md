@@ -11,6 +11,7 @@
 | `lib/docker.js` | `waitForWebContainer` and the container port and URL getters |
 | `lib/setup.js` | `init`, `setup` and everything they call |
 | `lib/deploy.js` | `deploy` and the ACF preflight helpers |
+| `lib/drift.js` | `drift`: what a server holds against what `deploy` would upload |
 | `lib/rest.js` | a section's `wp:` credential, REST requests, and the check that the site is the one configured |
 | `lib/content.js` | `pull` and `push`, and the guards a push must pass |
 
