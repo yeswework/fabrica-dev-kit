@@ -15,10 +15,17 @@ const { echo, execWP, halt, spawn, warn } = require('./lib/util'),
 	{ PORTLESS_CONFIG_EXTRA, checkPortless, removePortlessAlias, setupPortlessAlias } = require('./lib/portless'),
 	{ getDBPort, getServicesPorts, getSiteURL, getWebPort, waitForWebContainer } = require('./lib/docker'),
 	{ init, setup } = require('./lib/setup'),
-	{ deploy } = require('./lib/deploy');
+	{ deploy } = require('./lib/deploy'),
+	{ drift } = require('./lib/drift'),
+	{ pull, push, refs } = require('./lib/content');
 
 // Fabrica Dev Kit version
 const VERSION = require('./package.json')['version'];
+
+// `loadProjectSettings` moves to the project root, so a relative path the user typed has to be
+// resolved against where they typed it
+const invocationDir = process.cwd(),
+	userPath = file => file && path.resolve(invocationDir, file);
 
 // check Fabrica dependencies
 const checkDependencies = () => {
@@ -336,6 +343,18 @@ const addProjectCommands = () => {
 			.option('-k, --backup', 'backup existing resources folders before updating')
 			.option('-f, --force', `deploy even if the remote 'acf-json' has diverged from the local one`)
 			.action(deploy);
+		program.command('drift [project]')
+			.description(`Compare every resource <project> and its '<project>/*' variants deploy with the copy on the server, file by file, without changing anything. Files matching each resource's '.distignore' are left out, as in 'deploy'`)
+			.action(projectName => drift(projectName));
+		program.command('pull <project> <post> [file]')
+			.description(`Copy a post's block markup, byte for byte, from the site in <project>'s 'wp:' settings into [file] (a temp file if omitted). <post> is an ID, or type and ID such as 'pages/12' for a draft`)
+			.action((section, post, file) => pull(section, post, userPath(file)).catch(ex => halt(ex.message)));
+		program.command('push <project> <post> [file]')
+			.description(`Write a pulled file back into its post, then purge the site's cache. Refuses if the post changed since the pull, if a synced pattern ref isn't published on the site, or if the user can't save unfiltered HTML`)
+			.action((section, post, file) => push(section, post, userPath(file)).catch(ex => halt(ex.message)));
+		program.command('refs <project> <file> <direction>')
+			.description(`Swap the synced pattern refs in <file> between the site in <project>'s 'wp:' settings and this project's local site, matching patterns by title. <direction> is 'to-local' or 'to-live'`)
+			.action((section, file, direction) => refs(section, userPath(file), direction).catch(ex => halt(ex.message)));
 	}
 	addScriptCommands();
 };

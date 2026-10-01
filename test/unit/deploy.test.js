@@ -5,7 +5,7 @@ const assert = require('node:assert/strict'),
 	fs = require('fs'),
 	path = require('path');
 
-const { acfGroupsAtRisk, pullRemoteAcfJson, uncommittedFiles } = require('../../lib/deploy'),
+const { LFTP_DEFAULTS, acfGroupsAtRisk, ignoreParams, pullRemoteAcfJson, remoteCommands, uncommittedFiles } = require('../../lib/deploy'),
 	{ BROKEN_PULL, LFTP_STUB_BODY, MISSING_FOLDER } = require('../helpers/lftp-stub'),
 	{ makeProject } = require('../helpers/project'),
 	{ stubBin } = require('../helpers/stub-bin'),
@@ -165,4 +165,28 @@ test('a missing lftp binary reads as null', () => {
 test('a partial transfer reads as null even though a folder exists', () => {
 	const fixture = dirWith({ 'g.json': group('g', 100) });
 	assert.equal(pull({ fixture, status: 1, stderr: BROKEN_PULL }).result, null);
+});
+
+// ——— ignoreParams ————
+
+test('a .distignore becomes lftp filters, a root-anchored entry kept off subfolders', () => {
+	const dir = dirWith({ '.distignore': 'node_modules/\n# a comment\n./src/\n!keep.txt\n\n' });
+	assert.deepEqual(ignoreParams(dir).split(/\s+/).filter(Boolean),
+		['--exclude-glob', 'node_modules/', '--exclude-glob', 'src/', '--include-glob', '**/src/', '--include-glob', 'keep.txt']);
+});
+
+test('a resource with no .distignore has no filters', () => {
+	assert.equal(ignoreParams(dirWith({})), '');
+});
+
+// ——— remoteCommands ————
+
+test('the connection script is the defaults, the section commands, then the open', () => {
+	const { url, commands } = remoteCommands({ scheme: 'sftp', user: 'u@x', password: 'p w', host: 'h', port: 22, commands: ['set a b'] });
+	assert.equal(url, 'sftp://u%40x:p%20w@h:22');
+	assert.deepEqual(commands, [...LFTP_DEFAULTS, 'set a b', `open ${url}`]);
+});
+
+test('a section with no commands of its own still connects', () => {
+	assert.deepEqual(remoteCommands({ user: 'u', host: 'h' }).commands, [...LFTP_DEFAULTS, 'open ftp://u@h']);
 });

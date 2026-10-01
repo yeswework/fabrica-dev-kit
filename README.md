@@ -117,6 +117,22 @@ error, where before it sat there indefinitely.
 These come *before* anything in `ftp.commands`, and lftp's `set` is last-wins, so your own value
 for any of them takes precedence — raise `net:timeout` if you deploy to a slow server.
 
+### Checking what a server is missing
+`fdk drift production` tells you, resource by resource, whether the server holds what `fdk deploy
+production` would upload. It covers every resource in `production` *and* in each `production/*`
+section, since those usually exist to deploy one resource alone. Each one is downloaded into a temp
+folder and compared file by file with the local copy, both filtered through the resource's
+`.distignore`, and reported as identical, as the files that differ (`changed`, `local only` — not
+deployed yet — or `server only` — a `--delete` deploy would remove it), or as not on the server. It
+never uploads or deletes anything, and exits non-zero when anything differs.
+
+It compares contents rather than versions or timestamps, because versions aren't always bumped and
+every rebuild changes every timestamp. The flip side is that it compares your *local build*: run
+`fdk build` first, or a stale `build/` shows up as server drift. A resource whose source was edited
+after its build output last changed gets a reminder. Two builds of the same source can also differ
+when they were made with different `node_modules`, so a difference confined to `build/` with no
+source commits since the server's copy is usually that rather than missing work.
+
 ### Troubleshooting and housekeeping
 If you run into any problems during development, restarting the Docker machine may help. Stop FDK with ctrl + c and then run `fdk dc restart` followed by `fdk start` again.
 
@@ -143,6 +159,7 @@ Command                      | Description |
 `config:all [project]`       | Run all project configuration tasks (`config:url` and `config:resources`)
 `urls`                       | Output current access URLs and ports
 `deploy [project]`           | Deploy resources to server according to configuration in `config.yml` file. If no `[project]` is passed, settings under `default` will be loaded. Files and folders matching patterns in resource `.distignore` file will be ignored
+`drift [project]`            | Compare every resource `[project]` and its `[project]/*` sections deploy with the copy on the server, file by file, without changing anything. Files matching each resource's `.distignore` are left out, as in `deploy`
 `start`                      | Run Webpack in development mode. All available resources' Webpack configurations are loaded, and changed files are watched
 `build`                      | Run Webpack in production mode and build source for all available resources Webpack configurations
 `dc`                         | Run `docker-compose` commands, eg. `fdk dc ps`
