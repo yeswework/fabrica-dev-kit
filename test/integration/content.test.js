@@ -58,7 +58,7 @@ test('pull writes the stored markup byte for byte, and push of it unchanged leav
 		let res = await run(dir, 'pull', 'production', '12', file);
 		assert.equal(res.status, 0, res.stderr);
 		assert.equal(fs.readFileSync(file, 'utf8'), MARKUP);
-		assert.equal(JSON.parse(fs.readFileSync(`${file}.fdk.json`, 'utf8')).route, '/wp/v2/pages/12');
+		assert.equal(JSON.parse(fs.readFileSync(`${file}.fdk.json`, 'utf8')).post, '/wp/v2/pages/12');
 
 		res = await run(dir, 'push', 'production', '12', file);
 		assert.equal(res.status, 0, res.stderr);
@@ -189,7 +189,7 @@ test('a section with no wp: settings, or a placeholder in them, is refused befor
 		const bare = makeProject({ config: 'default:\n  themes: []\nproduction:\n  extend: default\n' });
 		let res = await run(bare, 'pull', 'production', '12');
 		assert.equal(res.status, 1);
-		assert.match(res.stderr, /No 'wp:' settings under 'production'/);
+		assert.match(res.stderr, /No way into 'production'/);
 
 		for (const settings of [{ user: '<wp username>' }, { appPassword: 'xxxx xxxx xxxx xxxx xxxx xxxx' }, { appPassword: undefined }]) {
 			res = await run(setup(wp, { settings }), 'pull', 'production', '12');
