@@ -84,6 +84,12 @@ reminder is worth.
 `fdk-test-sftp` — on high ports, seeds each with the same fixtures, and removes them afterwards.
 It also covers `file://`, which needs no server.
 
+The two FTP servers are built locally from `helpers/servers/<name>/Dockerfile`, on Debian's own
+`pure-ftpd` and `vsftpd` packages, rather than pulled. The published images were amd64-only, and
+under Docker Desktop's Rosetta emulation pure-ftpd died at start-up, so the tier could not run on
+an Apple Silicon Mac. The first run builds them, which takes a minute; later runs reuse Docker's
+cache. `atmoz/sftp` is still pulled, and runs under emulation without trouble.
+
 It exists for one thing a stub can't reproduce: the sentence a server puts after its 550. All
 three word a missing directory differently — and lftp's sftp transport words it differently again
 — which is why the deploy guard matches lftp's own `Access failed:` wrapper rather than the
