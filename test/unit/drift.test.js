@@ -21,9 +21,9 @@ test('a section and its variants are combined, each resource once', () => {
 		staging: { plugins: ['../p/staging-only'] },
 	};
 	assert.deepEqual(sectionResources(config, 'production'), [
-		{ resourceType: 'themes', resource: '../t/theme' },
-		{ resourceType: 'plugins', resource: '../p/a' },
-		{ resourceType: 'plugins', resource: '../p/b' },
+		{ resourceType: 'themes', resource: '../t/theme', name: 'theme' },
+		{ resourceType: 'plugins', resource: '../p/a', name: 'a' },
+		{ resourceType: 'plugins', resource: '../p/b', name: 'b' },
 	]);
 });
 
@@ -37,7 +37,7 @@ test('a variant that empties a list leaves the base section in charge of it', ()
 		production: { themes: ['../t/theme'] },
 		'production/theme': { extend: 'production', plugins: null },
 	};
-	assert.deepEqual(sectionResources(config, 'production'), [{ resourceType: 'themes', resource: '../t/theme' }]);
+	assert.deepEqual(sectionResources(config, 'production'), [{ resourceType: 'themes', resource: '../t/theme', name: 'theme' }]);
 });
 
 // ——— parseDiff ————
