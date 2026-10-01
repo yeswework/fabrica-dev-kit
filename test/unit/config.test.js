@@ -3,7 +3,7 @@
 const assert = require('node:assert/strict'),
 	{ after, test } = require('node:test');
 
-const { getProjectConfig } = require('../../lib/config'),
+const { getProjectConfig, projectResources } = require('../../lib/config'),
 	{ makeProject } = require('../helpers/project'),
 	{ requireLib, runNode } = require('../helpers/run'),
 	{ cleanTmpDirs } = require('../helpers/tmpdir');
@@ -72,4 +72,17 @@ test('a section that is not a set of settings halts', () => {
 		res = runNode(`${requireLib('config')}.getProjectConfig('default')`, { cwd: dir });
 	assert.equal(res.status, 1);
 	assert.match(res.stderr, /is not a set of settings/);
+});
+
+// ——— projectResources ————
+
+test('themes then plugins, each named by its folder whatever the trailing slash', () => {
+	assert.deepEqual(projectResources({ plugins: ['../p/a/'], themes: ['./src/theme'] }), [
+		{ resourceType: 'themes', resource: './src/theme', name: 'theme' },
+		{ resourceType: 'plugins', resource: '../p/a/', name: 'a' },
+	]);
+});
+
+test('a missing or emptied list contributes nothing', () => {
+	assert.deepEqual(projectResources({ themes: null }), []);
 });

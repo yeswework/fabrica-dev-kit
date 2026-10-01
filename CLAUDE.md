@@ -12,7 +12,7 @@
 | `lib/setup.js` | `init`, `setup` and everything they call |
 | `lib/deploy.js` | `deploy` and the ACF preflight helpers |
 | `lib/drift.js` | `drift`: what a server holds against what `deploy` would upload |
-| `lib/rest.js` | a section's `wp:` credential, REST requests, and the check that the site is the one configured |
+| `lib/rest.js` | a section's `rest:` credential, REST requests, and the check that the site is the one configured |
 | `lib/ssh.js` | WP-CLI over the `ssh` command a section's sftp entry already gives lftp |
 | `lib/content.js` | `pull`, `push` and `refs`: which of the two ways in a section gets, and the guards a push must pass |
 

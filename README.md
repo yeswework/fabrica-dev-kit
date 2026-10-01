@@ -54,10 +54,10 @@ default:
   themes:
     - ./src/themes/fdk-theme
   ftp:
-    - host: fdkserver.dev
-    - user: fdk
-    - password: fdk
-    - path: /public-html
+    host: fdkserver.dev
+    user: fdk
+    password: fdk
+    path: /public-html
 
 staging:
   plugins:
@@ -65,10 +65,10 @@ staging:
   themes:
     - ./src/themes/fdk-theme
   ftp:
-    - host: staging.fdkserver.dev
-    - user: staging
-    - password: staging
-    - path /staging
+    host: staging.fdkserver.dev
+    user: staging
+    password: staging
+    path: /staging
 ```
 2. FDK will invoke each resource's individual Webpack config to build resources (if it needs a build step; otherwise the folder will just be mirrored as it is). To make sure this works correctly, any paths in your Webpack config should be resolved fully with `path.resolve` and the current folder, for example `path.resolve(__dirname, 'src/js/front.js')`
 

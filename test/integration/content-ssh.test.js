@@ -18,13 +18,13 @@ after(cleanTmpDirs);
 const MARKUP = '<!-- wp:block {"ref":37827} /-->\n<!-- wp:html --><style>.x{color:red}</style><!-- /wp:html -->',
 	KEYED = 'ssh -a -x -p 18765 -i ~/.ssh/site_key';
 
-// A project whose `production` sftp entry logs in with `connect`, plus `wp` settings when given
-const project = ({ connect = KEYED, wp } = {}) => makeProject({ config: [
+// A project whose `production` sftp entry logs in with `connect`, plus `rest:` settings when given
+const project = ({ connect = KEYED, rest } = {}) => makeProject({ config: [
 	'default:', '  themes: []', 'production:', '  extend: default',
 	'  ftp:', '    scheme: sftp', '    host: ssh.example.com', '    user: u123', '    password: sftp-secret',
 	'    port: 18765', '    path: www/example.com/public_html',
 	'    commands:', `      - set sftp:connect-program "${connect}"`,
-	...(wp ? ['  wp:', ...Object.entries(wp).map(([key, value]) => `    ${key}: "${value}"`)] : []), ''].join('\n') });
+	...(rest ? ['  rest:', ...Object.entries(rest).map(([key, value]) => `    ${key}: "${value}"`)] : []), ''].join('\n') });
 
 // The remote WordPress, as a JSON file the stubbed WP-CLI reads and writes
 const remote = (overrides = {}) => {
@@ -103,9 +103,9 @@ test('over SSH, push refuses a site with no administrator to save as', async () 
 	assert.ok(!site.read().calls.some(call => call.includes('update')));
 });
 
-test('over SSH, a WordPress whose home differs from wp.url is refused', async () => {
+test('over SSH, a WordPress whose home differs from rest.url is refused', async () => {
 	const site = remote({ home: 'https://staging.example.com', posts: page('a') }),
-		res = await run(project({ wp: { url: 'https://example.com', user: 'editor', appPassword: 'abcd efgh ijkl mnop' } }),
+		res = await run(project({ rest: { url: 'https://example.com', user: 'editor', application_password: 'abcd efgh ijkl mnop' } }),
 			site, ['pull', 'production', '12']);
 	assert.equal(res.status, 1);
 	assert.match(res.stderr, /reports its home as 'https:\/\/staging\.example\.com', not 'https:\/\/example\.com'/);
@@ -117,7 +117,7 @@ test('an sftp entry with no key is not tried over SSH: REST is used', async () =
 		const site = remote(),
 			file = path.join(makeTmpDir(), 'page.html'),
 			res = await run(project({ connect: 'ssh -a -x -p 2222 -o HostKeyAlgorithms=+ssh-rsa',
-				wp: { url: wp.url, user: 'editor', appPassword: wp.password } }), site, ['pull', 'production', '12', file]);
+				rest: { url: wp.url, user: 'editor', application_password: wp.password } }), site, ['pull', 'production', '12', file]);
 		assert.equal(res.status, 0, res.stderr);
 		assert.equal(fs.readFileSync(file, 'utf8'), 'via rest');
 		assert.equal(res.ssh.length, 0);
@@ -126,14 +126,14 @@ test('an sftp entry with no key is not tried over SSH: REST is used', async () =
 	}
 });
 
-test('a host with no WP-CLI falls back to REST when wp: is set, and says so', async () => {
+test('a host with no WP-CLI falls back to REST when rest: is set, and says so', async () => {
 	const wp = await startWpStub({ posts: { 12: { type: 'page', raw: 'via rest' } } });
 	try {
 		const file = path.join(makeTmpDir(), 'page.html'),
-			res = await run(project({ wp: { url: wp.url, user: 'editor', appPassword: wp.password } }), remote(),
+			res = await run(project({ rest: { url: wp.url, user: 'editor', application_password: wp.password } }), remote(),
 				['pull', 'production', '12', file], { ssh: 'echo "This service allows sftp connections only." >&2; exit 1' });
 		assert.equal(res.status, 0, res.stderr);
-		assert.match(res.stderr, /sftp connections only[\s\S]*Using the 'wp:' settings over REST instead/);
+		assert.match(res.stderr, /sftp connections only[\s\S]*Using the 'rest:' settings over REST instead/);
 		assert.equal(fs.readFileSync(file, 'utf8'), 'via rest');
 	} finally {
 		await wp.close();

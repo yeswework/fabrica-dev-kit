@@ -10,7 +10,7 @@ const path = require('path'),
 	yaml = require('js-yaml');
 
 const { echo, execWP, halt, spawn, warn } = require('./lib/util'),
-	{ getProjectConfig } = require('./lib/config'),
+	{ RESOURCE_TYPES, getProjectConfig, projectResources } = require('./lib/config'),
 	{ loadProjectSettings, project } = require('./lib/project'),
 	{ PORTLESS_CONFIG_EXTRA, checkPortless, removePortlessAlias, setupPortlessAlias } = require('./lib/portless'),
 	{ getDBPort, getServicesPorts, getSiteURL, getWebPort, waitForWebContainer } = require('./lib/docker'),
@@ -31,7 +31,7 @@ const invocationDir = process.cwd(),
 const checkDependencies = () => {
 	const dependencies = ['docker'];
 	for (const dependency of dependencies) {
-		if (sh.exec(`hash ${dependency} 2>/dev/null`, {silent: true}).code === 0) { continue; }
+		if (sh.which(dependency)) { continue; }
 		halt(`Could not find dependency '${dependency}'.`);
 	}
 }
@@ -199,25 +199,18 @@ const configResources = (projectName='default') => {
 	let existsNewVolumes = false,
 		oldVolumes = dockerConfig.services.wp.volumes.filter(isResourceVolume);
 	// setup themes and plugins volumes
-	['themes', 'plugins'].forEach(resourceType => {
-		const resources = projectConfig[resourceType];
-		if (!resources) {
-			echo(`No ${resourceType} found in the config file.`);
-			return;
+	RESOURCE_TYPES.filter(resourceType => !projectConfig[resourceType])
+		.forEach(resourceType => echo(`No ${resourceType} found in the config file.`));
+	for (const { resourceType, resource, name } of projectResources(projectConfig)) {
+		const destPath = path.resolve('/var/www/html/wp-content/', resourceType, name),
+			rest = oldVolumes.filter(volume => volume.split(':')[0] != resource);
+		if (rest.length == oldVolumes.length) {
+			echo(`New volume for '${resource}'`);
+			existsNewVolumes = true;
 		}
-		volumes.splice(volumes.length, 0, ...resources.map(data => {
-			const sourcePath = typeof data === 'object' ? data.path : data,
-				resourceName = sourcePath.replace(/\/$/, '').split('/').pop(),
-				destPath = path.resolve('/var/www/html/wp-content/', resourceType, resourceName),
-				rest = oldVolumes.filter(volume => volume.split(':')[0] != sourcePath);
-			if (rest.length == oldVolumes.length) {
-				echo(`New volume for '${sourcePath}'`);
-				existsNewVolumes = true;
-			}
-			oldVolumes = rest;
-			return `${sourcePath}:${destPath}`;
-		}));
-	});
+		oldVolumes = rest;
+		volumes.push(`${resource}:${destPath}`);
+	}
 	// no changes if all resources were found in volumes and all volumes found in resources
 	const volumesChanged = existsNewVolumes || oldVolumes.length != 0;
 
@@ -261,27 +254,22 @@ const buildResources = (projectName='default', task='build') => {
 	try {
 		let names = [],
 			cmds = [];
-		['themes', 'plugins'].forEach(resourceType => {
-			const resources = projectConfig[resourceType];
-			if (!resources) { return; }
-			for (let resource of resources) {
-				const name = resource.replace(/\/$/, '').split('/').pop();
-				if (!sh.test('-f', `${resource}/package.json`)) {
-					warn(`'package.json' for resource '${name}' not found in '${resource}/package.json'`);
-					continue;
-				}
-
-				names.push(name);
-				cmds.push(`"cd ${resource}; npm run ${task}"`);
+		for (const { resource, name } of projectResources(projectConfig)) {
+			if (!sh.test('-f', `${resource}/package.json`)) {
+				warn(`'package.json' for resource '${name}' not found in '${resource}/package.json'`);
+				continue;
 			}
-		});
+
+			names.push(name);
+			cmds.push(`"cd ${resource}; npm run ${task}"`);
+		}
 		if (names.length <= 0) {
 			halt('No resources found in the config file to build or watch.');
 		}
 		echo(`npx concurrently -c white.dim -n ${names.join(',')} ${cmds.join(' ')}`);
 		spawn(['npx', 'concurrently', '-c', 'white.dim', '-n', names.join(','), ...cmds]);
 	} catch (ex) {
-		warn('Error watching: ' + ex);
+		warn(`Error ${task === 'start' ? 'watching' : 'building'}: ${ex}`);
 	}
 }
 
@@ -347,13 +335,13 @@ const addProjectCommands = () => {
 			.description(`Compare every resource <project> and its '<project>/*' variants deploy with the copy on the server, file by file, without changing anything. Files matching each resource's '.distignore' are left out, as in 'deploy'`)
 			.action(projectName => drift(projectName));
 		program.command('pull <project> <post> [file]')
-			.description(`Copy a post's block markup, byte for byte, from the site in <project>'s 'wp:' settings into [file] (a temp file if omitted). <post> is an ID, or type and ID such as 'pages/12' for a draft`)
+			.description(`Copy a post's block markup, byte for byte, from the site in <project>'s 'rest:' settings into [file] (a temp file if omitted). <post> is an ID, or type and ID such as 'pages/12' for a draft`)
 			.action((section, post, file) => pull(section, post, userPath(file)).catch(ex => halt(ex.message)));
 		program.command('push <project> <post> [file]')
 			.description(`Write a pulled file back into its post, then purge the site's cache. Refuses if the post changed since the pull, if a synced pattern ref isn't published on the site, or if the user can't save unfiltered HTML`)
 			.action((section, post, file) => push(section, post, userPath(file)).catch(ex => halt(ex.message)));
 		program.command('refs <project> <file> <direction>')
-			.description(`Swap the synced pattern refs in <file> between the site in <project>'s 'wp:' settings and this project's local site, matching patterns by title. <direction> is 'to-local' or 'to-live'`)
+			.description(`Swap the synced pattern refs in <file> between the site in <project>'s 'rest:' settings and this project's local site, matching patterns by title. <direction> is 'to-local' or 'to-live'`)
 			.action((section, file, direction) => refs(section, userPath(file), direction).catch(ex => halt(ex.message)));
 	}
 	addScriptCommands();

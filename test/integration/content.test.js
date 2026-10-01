@@ -25,12 +25,12 @@ const MARKUP = [
 
 const docker = () => stubBin({ docker: 'exit 0' }).path;
 
-// A project whose `production` section points at `wp`, with `wp` overrides for the credential
+// A project whose `production` section points at `wp`, with `rest:` overrides for the credential
 const setup = (wp, { section = 'production', settings = {} } = {}) => {
-	const values = { url: wp.url, user: 'editor', appPassword: wp.password, ...settings },
+	const values = { url: wp.url, user: 'editor', application_password: wp.password, ...settings },
 		lines = Object.entries(values).filter(([, value]) => value !== undefined)
 			.map(([key, value]) => `    ${key}: "${value}"`);
-	return makeProject({ config: ['default:', '  themes: []', `${section}:`, '  extend: default', '  wp:', ...lines, ''].join('\n') });
+	return makeProject({ config: ['default:', '  themes: []', `${section}:`, '  extend: default', '  rest:', ...lines, ''].join('\n') });
 };
 
 const fdk = (dir, ...args) => runFdk(args, { cwd: dir, env: { PATH: docker() } });
@@ -191,7 +191,7 @@ test('a section with no wp: settings, or a placeholder in them, is refused befor
 		assert.equal(res.status, 1);
 		assert.match(res.stderr, /No way into 'production'/);
 
-		for (const settings of [{ user: '<wp username>' }, { appPassword: 'xxxx xxxx xxxx xxxx xxxx xxxx' }, { appPassword: undefined }]) {
+		for (const settings of [{ user: '<wp username>' }, { application_password: 'xxxx xxxx xxxx xxxx xxxx xxxx' }, { application_password: undefined }]) {
 			res = await run(setup(wp, { settings }), 'pull', 'production', '12');
 			assert.equal(res.status, 1);
 			assert.match(res.stderr, /missing or still a placeholder/);
