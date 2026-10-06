@@ -6,7 +6,7 @@ const assert = require('node:assert/strict'),
 	fs = require('fs'),
 	path = require('path');
 
-const { LFTP_DEFAULTS, pullRemoteAcfJson, remoteFolderExists } = require('../../lib/deploy'),
+const { LFTP_DEFAULTS, backupRemoteFolder, pullRemoteAcfJson, remoteFolderExists } = require('../../lib/deploy'),
 	{ FIXTURE_GROUP, SERVERS, commandsFor, missingRequirements, seedFixtures, startServers, stopServers }
 		= require('../helpers/ftp-servers'),
 	{ cleanTmpDirs, makeTmpDir } = require('../helpers/tmpdir');
@@ -139,6 +139,25 @@ describe('the ACF preflight against real servers',
 				'set ftp:ssl-allow no', `open ftp://fdk:wrong@127.0.0.1:${SERVERS.vsftpd.port}`],
 			'acf-json'), null);
 		});
+
+		// by the home-relative path a section's `ftp.path` usually is, and under the dated name a
+		// deploy gives it: the old remote-to-remote mirror resolved that path from the server's root
+		// instead (fabrica-dev-kit-dy8)
+		for (const name of Object.keys(SERVERS)) {
+			test(`${name}: a backup copies the folder beside itself, by a relative path`, () => {
+				const commands = commandsFor(name),
+					theme = makeTmpDir('fdk-live-theme-'),
+					backup = `themes/mytheme_${(new Date()).toISOString()}`,
+					dest = path.join(makeTmpDir('fdk-live-pull-'), 'copy');
+				fs.writeFileSync(path.join(theme, 'style.css'), '/* theme */');
+				const upload = spawnSync('lftp', ['-c', [...commands, `mirror --reverse ${theme} themes/mytheme`].join('; ') + '; ']);
+				assert.equal(upload.status, 0, 'could not seed the theme');
+
+				assert.equal(backupRemoteFolder({ host: name }, commands, 'themes/mytheme', backup), true);
+				assert.equal(pullRemoteAcfJson(commands, backup, dest), true);
+				assert.equal(fs.readFileSync(path.join(dest, 'style.css'), 'utf8'), '/* theme */');
+			});
+		}
 
 		test('a rejected sftp password reads as null', () => {
 			const dest = path.join(makeTmpDir('fdk-live-pull-'), 'copy'),

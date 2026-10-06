@@ -33,7 +33,7 @@ const SERVERS = {
 		port: 2232,
 		run: ['-p', '2232:22'],
 		// atmoz/sftp chroots to the user's home and only pre-declared folders are writable
-		args: ['fdk:secret:::acf-json,empty-json'],
+		args: ['fdk:secret:::acf-json,empty-json,themes'],
 	},
 };
 
@@ -104,7 +104,7 @@ const stopServers = () => {
 };
 
 // Every server gets the same three remote paths: one folder holding a field group, one folder
-// holding nothing, and one that was never created
+// holding nothing, and one that was never created — plus an empty `themes` for backups to work in
 const FIXTURE_GROUP = JSON.stringify({ key: 'g_live', modified: 500 });
 
 const seedFixtures = () => {
@@ -113,8 +113,8 @@ const seedFixtures = () => {
 	fs.writeFileSync(local, FIXTURE_GROUP);
 
 	for (const name of Object.keys(SERVERS)) {
-		// the sftp chroot already holds both folders and refuses `mkdir` at its root
-		const prepare = name === 'sftp' ? [] : ['mkdir -p acf-json', 'mkdir -p empty-json'],
+		// the sftp chroot already holds these folders and refuses `mkdir` at its root
+		const prepare = name === 'sftp' ? [] : ['mkdir -p acf-json', 'mkdir -p empty-json', 'mkdir -p themes'],
 			result = lftp(commandsFor(name), [...prepare, `put -O acf-json ${local} -o g.json`]);
 		if (result.status !== 0) {
 			throw new Error(`could not seed ${name}: ${result.stderr}`);
