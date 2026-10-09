@@ -6,7 +6,7 @@ default:
 #  use: [mailpit, phpunit, portless] # optional services to add (portless gives you https://<slug>.localhost)
   ftp:
 #     user:
-#     password: # optional (will be prompted if not set)
+#     password: # optional (will be prompted if not set); bw://<item name> reads it from Bitwarden
 #     scheme: "ftps" # optional (default "ftp")
 #     host:
 #     port: "3308" # optional (for exotic configs)

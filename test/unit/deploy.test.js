@@ -8,6 +8,7 @@ const assert = require('node:assert/strict'),
 const { LFTP_DEFAULTS, acfGroupsAtRisk, ignoreParams, pullRemoteAcfJson, remoteCommands, uncommittedFiles } = require('../../lib/deploy'),
 	{ BROKEN_PULL, LFTP_STUB_BODY, MISSING_FOLDER } = require('../helpers/lftp-stub'),
 	{ makeProject } = require('../helpers/project'),
+	{ requireLib, runNode } = require('../helpers/run'),
 	{ stubBin } = require('../helpers/stub-bin'),
 	{ cleanTmpDirs, makeTmpDir } = require('../helpers/tmpdir');
 
@@ -189,4 +190,14 @@ test('the connection script is the defaults, the section commands, then the open
 
 test('a section with no commands of its own still connects', () => {
 	assert.deepEqual(remoteCommands({ user: 'u', host: 'h' }).commands, [...LFTP_DEFAULTS, 'open ftp://u@h']);
+});
+
+// in a child process, so the stub `bw` is the one on PATH
+test('a Bitwarden reference connects with the password it names, handed back for masking', () => {
+	const bw = stubBin({ bw: `printf 'p w'` }),
+		res = runNode(`const { url, password } = ${requireLib('deploy')}.remoteCommands({ user: 'u', password: 'bw://site-ftp', host: 'h' });
+			console.log(JSON.stringify({ url, password }))`, { env: { PATH: bw.path, BW_SESSION: 'exported' } });
+	assert.equal(res.status, 0, res.stderr);
+	assert.deepEqual(JSON.parse(res.stdout), { url: 'ftp://u:p%20w@h', password: 'p w' });
+	assert.deepEqual(bw.calls(), ['bw get password --nointeraction site-ftp']);
 });
