@@ -19,6 +19,10 @@ const startWpStub = async ({
 	user = 'editor',
 	password = 'abcd efgh ijkl mnop qrst uvwx',
 	capabilities = { edit_posts: true, unfiltered_html: true },
+	// what `current_user_can( 'unfiltered_html' )` answers once multisite and
+	// DISALLOW_UNFILTERED_HTML apply, which `capabilities` (the role's) doesn't reflect: served, as
+	// WordPress serves it, as the post's `wp:action-unfiltered-html` link
+	unfilteredHtml = capabilities.unfiltered_html,
 	home,
 	namespaces = ['wp/v2'],
 	posts = {},
@@ -84,7 +88,9 @@ const startWpStub = async ({
 					post.raw = JSON.parse(body).content;
 					post.modified_gmt = nextModified();
 				}
-				return send(200, { content: { raw: post.raw }, modified_gmt: post.modified_gmt });
+				return send(200, { content: { raw: post.raw }, modified_gmt: post.modified_gmt,
+					...(unfilteredHtml && url.searchParams.get('context') === 'edit'
+						&& { _links: { 'wp:action-unfiltered-html': [{ href: `${stub.url}/wp-json${route}` }] } }) });
 			}
 			send(404, { code: 'rest_no_route', message: 'No route was found matching the URL and request method.' });
 		});

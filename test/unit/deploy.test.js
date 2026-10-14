@@ -5,9 +5,10 @@ const assert = require('node:assert/strict'),
 	fs = require('fs'),
 	path = require('path');
 
-const { LFTP_DEFAULTS, acfGroupsAtRisk, ignoreParams, pullRemoteAcfJson, remoteCommands, uncommittedFiles } = require('../../lib/deploy'),
+const { LFTP_DEFAULTS, acfGroupsAtRisk, ignoreParams, lftp, pullRemoteAcfJson, remoteCommands, scrub, uncommittedFiles } = require('../../lib/deploy'),
 	{ BROKEN_PULL, LFTP_STUB_BODY, MISSING_FOLDER } = require('../helpers/lftp-stub'),
 	{ makeProject } = require('../helpers/project'),
+	{ requireLib, runNode } = require('../helpers/run'),
 	{ stubBin } = require('../helpers/stub-bin'),
 	{ cleanTmpDirs, makeTmpDir } = require('../helpers/tmpdir');
 
@@ -181,12 +182,49 @@ test('a resource with no .distignore has no filters', () => {
 
 // ——— remoteCommands ————
 
-test('the connection script is the defaults, the section commands, then the open', () => {
-	const { url, commands } = remoteCommands({ scheme: 'sftp', user: 'u@x', password: 'p w', host: 'h', port: 22, commands: ['set a b'] });
-	assert.equal(url, 'sftp://u%40x:p%20w@h:22');
-	assert.deepEqual(commands, [...LFTP_DEFAULTS, 'set a b', `open ${url}`]);
+test('the connection script is the defaults, the section commands, then the open, with no password in it', () => {
+	const { url, commands, password } = remoteCommands({ scheme: 'sftp', user: 'u@x', password: 'p w', host: 'h', port: 22, commands: ['set a b'] });
+	assert.equal(url, 'sftp://u%40x@h:22');
+	assert.equal(password, 'p w');
+	assert.deepEqual(commands, [...LFTP_DEFAULTS, 'set a b', `open --env-password ${url}`]);
 });
 
 test('a section with no commands of its own still connects', () => {
 	assert.deepEqual(remoteCommands({ user: 'u', host: 'h' }).commands, [...LFTP_DEFAULTS, 'open ftp://u@h']);
+});
+
+// in a child process, so the stub `bw` is the one on PATH
+test('a Bitwarden reference connects with the password it names, handed back for masking', () => {
+	const bw = stubBin({ bw: `printf 'p w'` }),
+		res = runNode(`const { url, password } = ${requireLib('deploy')}.remoteCommands({ user: 'u', password: 'bw://site-ftp', host: 'h' });
+			console.log(JSON.stringify({ url, password }))`, { env: { PATH: bw.path, BW_SESSION: 'exported' } });
+	assert.equal(res.status, 0, res.stderr);
+	assert.deepEqual(JSON.parse(res.stdout), { url: 'ftp://u@h', password: 'p w' });
+	assert.deepEqual(bw.calls(), ['bw get password --nointeraction site-ftp']);
+});
+
+// ——— lftp ————
+
+// the script is an argument any user can read in `ps`, so the password goes in the environment
+test('lftp hands the password over in its environment, never its arguments, and masks it in what it says', () => {
+	const stub = stubBin({ lftp: `printf 'env:%s\\n' "$LFTP_PASSWORD" >&2; echo 'Login failed: p w / p%20w' >&2; exit 1` }),
+		saved = process.env.PATH;
+	process.env.PATH = stub.path;
+	try {
+		const { commands, password } = remoteCommands({ user: 'u', password: 'p w', host: 'h' }),
+			result = lftp([...commands, 'cls -d x'], password);
+		assert.equal(result.status, 1);
+		assert.equal(result.stderr, 'env:***\nLogin failed: *** / ***\n');
+		assert.doesNotMatch(stub.calls()[0], /p w|p%20w/);
+	} finally {
+		process.env.PATH = saved;
+	}
+});
+
+test('a password is masked whether it is repeated raw or URL-encoded', () => {
+	assert.equal(scrub('open: sftp://u:p%40ss%20w@h:22 failed; tried p@ss w twice', 'p@ss w'), 'open: sftp://u:***@h:22 failed; tried *** twice');
+});
+
+test('with no password there is nothing to mask', () => {
+	assert.equal(scrub('Login failed', undefined), 'Login failed');
 });
