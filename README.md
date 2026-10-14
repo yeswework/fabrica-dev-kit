@@ -1,7 +1,5 @@
 # <img src="https://fabri.ca/_static/fdk3.png" width="424" height="100" alt="Fabrica Dev Kit for WordPress" title="Fabrica Dev Kit for WordPress">
-## A toolkit for faster, smoother WordPress 5 development ##
-
-**May 2020: version 3.0 just released!** Completely new architecture for the Gutenberg / Block era.
+## A toolkit for faster, smoother WordPress development ##
 
 ## Key features
 
@@ -10,6 +8,7 @@
 * Compatible with `@wordpress/scripts` and custom Webpack configs
 * Starter theme and block available, but works with yours; agnostic on code frameworks
 * Instantly build and deploy to multiple environments
+* Check what a server holds against what a deploy would upload, and edit a live post's block markup as a local file
 
 ## FDK 3 features in detail
 
@@ -137,6 +136,43 @@ after its build output last changed gets a reminder. Two builds of the same sour
 when they were made with different `node_modules`, so a difference confined to `build/` with no
 source commits since the server's copy is usually that rather than missing work.
 
+### Editing a live post's block markup
+`fdk pull production 12` copies post 12's block markup from the `production` site into a local
+file, byte for byte, and says where: a temp file, unless you name one with `fdk pull production 12
+page.html`. A post that isn't published needs its type as well, such as `pages/12`. Edit the file,
+then `fdk push production 12 page.html` writes it back and purges the site's cache (SiteGround's,
+where the site has it). WordPress keeps the previous content as a revision, so a push can be undone
+from the editor.
+
+`push` refuses anything that would lose or break content: a post that has changed on the site since
+the pull, a file pulled from a different site or post, a user who can't save unfiltered HTML (so
+WordPress would strip markup — on multisite, or with `DISALLOW_UNFILTERED_HTML`), or a synced pattern
+that isn't published on the site, which would render as nothing. What it checks against is kept
+beside the file, in `page.html.fdk.json`.
+
+Synced pattern IDs differ between the live site and your local one. `fdk refs production page.html
+to-local` swaps each pattern in the file for the local pattern with the same title, so the markup
+renders locally, and `to-live` swaps them back. A file that still holds local IDs can't be pushed.
+
+Each section gets in one of two ways:
+
+* **SSH**, running WP-CLI on the server, when its `ftp:` is sftp and `ftp.commands` sets
+  `sftp:connect-program` to an `ssh` that logs in with a key (`-i`). There's nothing more to set up.
+* **The REST API** otherwise, with a `wp:` block naming the site's https URL, a user and an
+  application password (created under Users → Profile):
+
+```
+production:
+  wp:
+    url: https://example.com
+    user: editor
+    appPassword: bw://example-wp
+```
+
+A section with both uses SSH, and falls back to `wp:` with a warning if WP-CLI doesn't answer.
+Wherever `wp.url` is set, over SSH too, FDK first checks that the site reports that URL as its
+home, so a credential for one site is never used on a copy of it.
+
 ### Troubleshooting and housekeeping
 If you run into any problems during development, restarting the Docker machine may help. Stop FDK with ctrl + c and then run `fdk dc restart` followed by `fdk start` again.
 
@@ -164,8 +200,11 @@ Command                      | Description |
 `urls`                       | Output current access URLs and ports
 `deploy [project]`           | Deploy resources to server according to configuration in `config.yml` file. If no `[project]` is passed, settings under `default` will be loaded. Files and folders matching patterns in resource `.distignore` file will be ignored
 `drift [project]`            | Compare every resource `[project]` and its `[project]/*` sections deploy with the copy on the server, file by file, without changing anything. Files excluded by `ftp.params` or each resource's `.distignore` are left out, as in `deploy`
-`start`                      | Run Webpack in development mode. All available resources' Webpack configurations are loaded, and changed files are watched
-`build`                      | Run Webpack in production mode and build source for all available resources Webpack configurations
+`pull <project> <post> [file]` | Copy a post's block markup, byte for byte, from the `<project>` site into `[file]` (a temp file if omitted). `<post>` is an ID, or type and ID such as `pages/12` for a draft
+`push <project> <post> [file]` | Write a pulled file back into its post, then purge the site's cache. Refuses if the post changed since the pull, if a synced pattern ref isn't published on the site, or if the user can't save unfiltered HTML
+`refs <project> <file> <direction>` | Swap the synced pattern refs in `<file>` between the `<project>` site and the local one, matching patterns by title. `<direction>` is `to-local` or `to-live`
+`start [project]`            | Run Webpack in development mode. All available resources' Webpack configurations are loaded, and changed files are watched
+`build [project]`            | Run Webpack in production mode and build source for all available resources Webpack configurations
 `dc`                         | Run `docker-compose` commands, eg. `fdk dc ps`
 `sh`                         | Start shell on WP container
 `shroot`                     | Start shell as root on WP container
