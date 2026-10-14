@@ -120,6 +120,18 @@ test('push refuses a user who cannot save unfiltered HTML', () =>
 		assert.equal(wp.writes().length, 0);
 	}));
 
+// `users/me` reports the role's capabilities, which still list unfiltered_html where multisite or
+// DISALLOW_UNFILTERED_HTML takes it away: only the post's own edit context says
+test('push refuses a user whose role lists unfiltered HTML but who cannot save it', () =>
+	withSite({ posts: { 12: { type: 'page', raw: 'a' } }, unfilteredHtml: false }, async (wp, dir, tmp) => {
+		const file = path.join(tmp, 'page.html');
+		await run(dir, 'pull', 'production', '12', file);
+		const res = await run(dir, 'push', 'production', '12', file);
+		assert.equal(res.status, 1);
+		assert.match(res.stderr, /can't save unfiltered HTML in '\/wp\/v2\/pages\/12'/);
+		assert.equal(wp.writes().length, 0);
+	}));
+
 test('push refuses a file with no record of a pull', () =>
 	withSite({ posts: { 12: { type: 'page', raw: 'a' } } }, async (wp, dir, tmp) => {
 		const file = path.join(tmp, 'page.html');

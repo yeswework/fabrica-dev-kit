@@ -92,16 +92,20 @@ test('over SSH, push refuses a post changed since the pull, and an unpublished p
 	assert.ok(!site.read().calls.some(call => call.includes('update')));
 });
 
-test('over SSH, push refuses a site with no administrator to save as', async () => {
-	const site = remote({ posts: page('a'), admins: [] }),
-		dir = project(),
-		file = path.join(makeTmpDir(), 'page.html');
-	await run(dir, site, ['pull', 'production', '12', file]);
-	const res = await run(dir, site, ['push', 'production', '12', file]);
-	assert.equal(res.status, 1);
-	assert.match(res.stderr, /no administrator to save as/);
-	assert.ok(!site.read().calls.some(call => call.includes('update')));
-});
+// no administrators at all, or administrators `user_can` turns down: a multisite subsite's, or
+// any under DISALLOW_UNFILTERED_HTML
+for (const [label, settings] of [['no administrator', { admins: [] }], ['administrators who cannot save unfiltered HTML', { unfilteredHtml: false }]]) {
+	test(`over SSH, push refuses a site with ${label}`, async () => {
+		const site = remote({ posts: page('a'), ...settings }),
+			dir = project(),
+			file = path.join(makeTmpDir(), 'page.html');
+		await run(dir, site, ['pull', 'production', '12', file]);
+		const res = await run(dir, site, ['push', 'production', '12', file]);
+		assert.equal(res.status, 1);
+		assert.match(res.stderr, /has no user who can save unfiltered HTML/);
+		assert.ok(!site.read().calls.some(call => call.includes('update')));
+	});
+}
 
 test('over SSH, a WordPress whose home differs from wp.url is refused', async () => {
 	const site = remote({ home: 'https://staging.example.com', posts: page('a') }),

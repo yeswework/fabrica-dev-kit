@@ -7,8 +7,9 @@
 //   const bin = stubBin({ ssh: SSH_STUB_BODY, wp: WP_STUB_BODY, docker: 'exit 0' });
 //
 // State: `{ home, posts: { id: { raw, modified_gmt } }, patterns: { id: title }, admins: ['1'],
-// commands: ['sg purge'], purgeFails, calls }`. A post saved as anyone but an administrator has its
-// <style> stripped, as kses would.
+// unfilteredHtml, commands: ['sg purge'], purgeFails, calls }`. `unfilteredHtml: false` is a site
+// where `user_can` denies it even to administrators (multisite, DISALLOW_UNFILTERED_HTML). A post
+// saved as anyone who can't has its <style> stripped, as kses would.
 const fs = require('fs');
 
 const SSH_STUB_BODY = 'for last; do :; done; exec sh -c "$last"',
@@ -27,7 +28,8 @@ if (require.main === module) {
 	state.calls.push(process.argv.slice(2));
 	const args = process.argv.slice(2).filter(arg => !arg.startsWith('--path=')),
 		[group, command, subject] = args,
-		post = state.posts[subject];
+		post = state.posts[subject],
+		canSaveUnfiltered = user => state.unfilteredHtml !== false && state.admins.includes(user);
 
 	if (group === 'option' && command === 'get' && subject === 'home') {
 		out(`${state.home}\n`);
@@ -37,11 +39,11 @@ if (require.main === module) {
 	} else if (group === 'post' && command === 'update') {
 		const user = args.find(arg => arg.startsWith('--user='))?.slice('--user='.length),
 			content = fs.readFileSync(0, 'utf8');
-		post.raw = state.admins.includes(user) ? content : content.replace(/<style>[\s\S]*?<\/style>/g, '');
+		post.raw = canSaveUnfiltered(user) ? content : content.replace(/<style>[\s\S]*?<\/style>/g, '');
 		post.modified_gmt = `2026-09-01 00:01:${String(state.calls.length).padStart(2, '0')}`;
 		out(`Success: Updated post ${subject}.\n`);
-	} else if (group === 'user' && command === 'list') {
-		out(state.admins.map(id => `${id}\n`).join(''));
+	} else if (group === 'eval' && command.includes("user_can($id, 'unfiltered_html')")) {
+		out(state.admins.find(canSaveUnfiltered) ?? '');
 	} else if (group === 'post' && command === 'list') {
 		out(JSON.stringify(Object.entries(state.patterns).map(([ID, post_title]) => ({ ID: Number(ID), post_title }))));
 	} else if (group === 'cli' && command === 'has-command') {
