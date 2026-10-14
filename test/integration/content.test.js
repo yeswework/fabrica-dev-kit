@@ -247,6 +247,15 @@ test('a request that arrives without credentials is reported as a stripped heade
 		assert.match(res.stderr, /stripping the Authorization header/);
 	}));
 
+// the application password is sent as Basic auth, which the stub checks byte for byte
+test("a bw:// application password logs in without the line break bw ends with", () =>
+	withSite({ posts: { 12: { type: 'page', raw: 'a' } } }, async (wp, dir, tmp) => {
+		const project = setup({ url: wp.url, password: 'unused' }, { settings: { appPassword: 'bw://site-wp' } }),
+			bin = stubBin({ docker: 'exit 0', bw: `printf '%s\\n' '${wp.password}'` }),
+			res = await runFdk(['pull', 'production', '12', path.join(tmp, 'page.html')], { cwd: project, env: { PATH: bin.path, BW_SESSION: 'exported' } });
+		assert.equal(res.status, 0, res.stderr);
+	}));
+
 // `docker compose exec … wp post list` answers with the local site's patterns, as WP-CLI's JSON
 const localSite = patterns => stubBin({
 	docker: `case "$*" in *"post list"*) printf '%s' '${JSON.stringify(patterns.map(([ID, post_title]) => ({ ID, post_title })))}';; esac`,

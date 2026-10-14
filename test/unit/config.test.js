@@ -97,6 +97,18 @@ test('with no session exported, the keychain one is read once for every referenc
 	assert.deepEqual(bin.calls(), ['security find-generic-password -s bw-session -w', 'bw get password --nointeraction a-ftp', 'bw get password --nointeraction b-rest']);
 });
 
+// the real CLI ends its answer with a line break; whitespace inside the password is the password
+for (const [ending, label] of [['\\n', 'LF'], ['\\r\\n', 'CRLF']]) {
+	test(`the line break bw ends with (${label}) is not part of the password, nor of the lftp login`, () => {
+		const bin = stubBin({ bw: `printf ' p w ${ending}'` }),
+			res = runNode(`const { resolveSecret } = ${requireLib('config')}, { remoteCommands } = ${requireLib('deploy')};
+				console.log(JSON.stringify([resolveSecret('bw://site-ftp'), remoteCommands({ user: 'u', password: 'bw://site-ftp', host: 'h' }).password]))`,
+			{ env: { PATH: bin.path, BW_SESSION: 'exported' } });
+		assert.equal(res.status, 0, res.stderr);
+		assert.deepEqual(JSON.parse(res.stdout), [' p w ', ' p w ']);
+	});
+}
+
 test('a value that is not a reference is returned as written, without running bw', () => {
 	const bin = bwStub(),
 		res = resolve(`console.log(JSON.stringify(['hunter2', undefined, 3].map(resolveSecret)))`, { PATH: bin.path });
