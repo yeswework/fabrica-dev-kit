@@ -284,6 +284,36 @@ test('refs swaps pattern IDs by title and back, touching nothing else, and push 
 		assert.equal(res.status, 0, res.stderr);
 	}));
 
+// a local pattern with no counterpart on the site keeps its local ID, which can happen to be an
+// unrelated published pattern there: push's ref check alone would pass it (fabrica-dev-kit-aoz 12)
+test('a to-live that leaves a local ID behind keeps push refused, until a later run maps it', () => {
+	const patterns = { 37827: { status: 'publish', title: 'Monetization Kit subnav' }, 412: { status: 'publish', title: 'Unrelated' } };
+	return withSite({ posts: { 12: { type: 'page', raw: '<!-- wp:block {"ref":37827} /-->' } }, patterns }, async (wp, dir, tmp) => {
+		const file = path.join(tmp, 'page.html'),
+			local = [[455, 'Monetization Kit subnav'], [412, 'New CTA']];
+		await run(dir, 'pull', 'production', '12', file);
+		await refsRun(dir, local, 'refs', 'production', file, 'to-local');
+		// the edit adds a local pattern, spaced the way a hand edit might be
+		fs.appendFileSync(file, '<!-- wp:block { "ref": 412 } /-->');
+
+		let res = await refsRun(dir, local, 'refs', 'production', file, 'to-live');
+		assert.equal(res.status, 0, res.stderr);
+		assert.match(res.stderr, /Ref\(s\) 412 are still the local site's IDs/);
+		assert.equal(fs.readFileSync(file, 'utf8'), '<!-- wp:block {"ref":37827} /--><!-- wp:block { "ref": 412 } /-->');
+		res = await run(dir, 'push', 'production', '12', file);
+		assert.equal(res.status, 1);
+		assert.match(res.stderr, /holds the local site's pattern IDs/);
+		assert.equal(wp.writes().length, 0);
+
+		patterns[500] = { status: 'publish', title: 'New CTA' };
+		res = await refsRun(dir, local, 'refs', 'production', file, 'to-live');
+		assert.equal(res.status, 0, res.stderr);
+		assert.equal(fs.readFileSync(file, 'utf8'), '<!-- wp:block {"ref":37827} /--><!-- wp:block { "ref": 500 } /-->');
+		res = await run(dir, 'push', 'production', '12', file);
+		assert.equal(res.status, 0, res.stderr);
+	});
+});
+
 test("refs reads every page of the site's patterns", () => {
 	const patterns = Object.fromEntries(Array.from({ length: 150 }, (_, i) => [1000 + i, { status: 'publish', title: `Pattern ${i}` }]));
 	return withSite({ patterns }, async (wp, dir, tmp) => {
