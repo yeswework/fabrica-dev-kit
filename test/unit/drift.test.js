@@ -5,7 +5,7 @@ const assert = require('node:assert/strict'),
 	fs = require('fs'),
 	path = require('path');
 
-const { buildIsStale, filterParams, parseDiff, sectionResources } = require('../../lib/drift'),
+const { buildIsStale, compare, filterParams, parseDiff, sectionResources } = require('../../lib/drift'),
 	{ cleanTmpDirs, makeTmpDir } = require('../helpers/tmpdir');
 
 after(cleanTmpDirs);
@@ -139,4 +139,46 @@ test('a build newer than its source is not stale', () => {
 test('a resource without both folders has no build to be stale', () => {
 	assert.equal(buildIsStale(resourceWith(2000, undefined)), false);
 	assert.equal(buildIsStale(resourceWith(undefined, 1000)), false);
+});
+
+// ——— compare ————
+
+const copies = (local, server) => [local, server].map(files => {
+	const dir = makeTmpDir('fdk-drift-copy-');
+	for (const [file, body] of Object.entries(files)) { fs.writeFileSync(path.join(dir, file), body); }
+	return dir;
+});
+
+test('identical copies have no differences, and differing ones list them', () => {
+	assert.deepEqual(compare(...copies({ a: '1' }, { a: '1' })), { differences: [] });
+	const [local, server] = copies({ a: '1' }, { a: '2' });
+	assert.deepEqual(compare(local, server), { differences: [{ kind: 'changed', file: 'a' }] });
+});
+
+// diff exits 2 and may print nothing on stdout, which used to read as identical
+test('a file diff cannot read means the copies were not compared',
+	{ skip: process.getuid && process.getuid() === 0 ? 'running as root' : false }, () => {
+		const [local, server] = copies({ a: '1' }, { a: '1' });
+		fs.chmodSync(path.join(server, 'a'), 0o000);
+		const result = compare(local, server);
+		fs.chmodSync(path.join(server, 'a'), 0o644);
+		assert.equal(result.differences, undefined);
+		assert.match(result.error, /Permission denied/);
+	});
+
+test('a dangling symlink means the copies were not compared', () => {
+	const [local, server] = copies({}, {});
+	fs.symlinkSync('nowhere', path.join(local, 'link'));
+	fs.symlinkSync('nowhere', path.join(server, 'link'));
+	assert.ok(compare(local, server).error);
+});
+
+test('no diff to run means the copies were not compared', () => {
+	const saved = process.env.PATH;
+	process.env.PATH = makeTmpDir('fdk-no-diff-');
+	try {
+		assert.match(compare(...copies({}, {})).error, /ENOENT/);
+	} finally {
+		process.env.PATH = saved;
+	}
 });
