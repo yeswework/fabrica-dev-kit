@@ -3,7 +3,7 @@
 const assert = require('node:assert/strict'),
 	{ after, test } = require('node:test');
 
-const { getProjectConfig } = require('../../lib/config'),
+const { getProjectConfig, projectResources } = require('../../lib/config'),
 	{ makeProject } = require('../helpers/project'),
 	{ requireLib, runNode } = require('../helpers/run'),
 	{ stubBin } = require('../helpers/stub-bin'),
@@ -148,4 +148,17 @@ test('a reference with no bw installed halts naming the CLI', () => {
 		res = resolve(`resolveSecret('bw://site-ftp')`, { PATH: bin.path, BW_SESSION: 'exported' });
 	assert.equal(res.status, 1);
 	assert.match(res.stderr, /the Bitwarden CLI \('bw'\) could not be run/);
+});
+
+// ——— projectResources ————
+
+test('themes then plugins, each named by its folder whatever the trailing slash', () => {
+	assert.deepEqual(projectResources({ plugins: ['../p/a/'], themes: ['./src/theme'] }), [
+		{ resourceType: 'themes', resource: './src/theme', name: 'theme' },
+		{ resourceType: 'plugins', resource: '../p/a/', name: 'a' },
+	]);
+});
+
+test('a missing or emptied list contributes nothing', () => {
+	assert.deepEqual(projectResources({ themes: null }), []);
 });
