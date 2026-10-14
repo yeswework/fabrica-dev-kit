@@ -43,6 +43,7 @@ const deploy = async ({
 	uncommitted = {},  // other files left uncommitted on top of them
 	dryRun = '',       // what lftp's `--dry-run` of the upload prints
 	dryRunStatus = 0,
+	home = false,      // the resource configured as `~/mytheme`, with HOME at the project
 	status = 0,
 	stderr = '',
 	signal = false,
@@ -59,7 +60,7 @@ const deploy = async ({
 		for (const [name, body] of Object.entries(local)) { files[`acf-json/${name}`] = body; }
 	}
 	const dir = makeProject({
-		config: config(ftpCommands, params),
+		config: home ? config(ftpCommands, params).replace(`./${RESOURCE}`, `~/${RESOURCE}`) : config(ftpCommands, params),
 		resources: noResource ? {} : { [RESOURCE]: {
 			files,
 			dirty: { ...Object.fromEntries(Object.entries(dirty).map(([n, b]) => [`acf-json/${n}`, b])), ...uncommitted },
@@ -81,6 +82,7 @@ const deploy = async ({
 	const res = await runFdk(['deploy', ...(force ? ['--force'] : []), ...(strict ? ['--strict'] : []), ...(backup ? ['--backup'] : [])], {
 		cwd: dir,
 		env: {
+			...(home ? { HOME: dir } : {}),
 			PATH: stubs.path,
 			LFTP_STUB_DEST: acfPullDest(RESOURCE),
 			LFTP_STUB_FIXTURE: fixture,
@@ -361,6 +363,14 @@ test('uncommitted changes stop the upload and are listed, deletions included', a
 	assert.match(run.output, /it has uncommitted changes this deploy would upload:/);
 	assert.match(run.output, /      new\.php/);
 	assert.match(run.output, /      style\.css/);
+});
+
+// git and `fs` take a `~` literally, so unexpanded it read as no repository and the check passed
+test('uncommitted changes in a resource configured under ~ are found', async () => {
+	const run = await deploy({ noAcfDir: true, home: true, uncommitted: { 'new.php': '<?php' } });
+	assert.equal(run.uploaded, false);
+	assert.match(run.output, /it has uncommitted changes this deploy would upload:\n      new\.php/);
+	assert.doesNotMatch(run.output, /Couldn't ask git/);
 });
 
 test('a resource that is not a git repository is deployed with a warning', async () => {
