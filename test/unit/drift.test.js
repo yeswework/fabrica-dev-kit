@@ -5,7 +5,8 @@ const assert = require('node:assert/strict'),
 	fs = require('fs'),
 	path = require('path');
 
-const { buildIsStale, compare, filterParams, parseDiff, sectionResources } = require('../../lib/drift'),
+const { buildIsStale, filterParams } = require('../../lib/deploy'),
+	{ compare, parseDiff, sectionResources } = require('../../lib/drift'),
 	{ cleanTmpDirs, makeTmpDir } = require('../helpers/tmpdir');
 
 after(cleanTmpDirs);
