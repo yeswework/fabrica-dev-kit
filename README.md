@@ -117,6 +117,27 @@ error, where before it sat there indefinitely.
 These come *before* anything in `ftp.commands`, and lftp's `set` is last-wins, so your own value
 for any of them takes precedence — raise `net:timeout` if you deploy to a slow server.
 
+Before uploading a resource, `fdk deploy` checks what it would ship. A deploy mirrors the working
+folder as it stands, and with `--delete` in `ftp.params` it also removes from the server whatever
+the folder lacks, so each of these stops the resource:
+
+* a `composer.json` and no `vendor/`: run `composer install` first
+* a `build` script in `package.json` and no `build/`: run `fdk build` first
+* a `.js` file under `build/` containing `webpackMissingModule`, the stub webpack writes for an
+  import it couldn't resolve. The stub throws at runtime, but the build still exits 0
+* uncommitted changes to files the deploy would upload (edits, new files and deletions). Files
+  that `ftp.params` or `.distignore` leave out don't count. A resource that isn't in a git
+  repository is deployed with a warning
+* with `--delete`, any folder at the top of the resource on the server that the upload would
+  remove. FDK asks lftp by running the same mirror with `--dry-run` first
+
+Run from a terminal, `fdk deploy` lists what failed and asks whether to deploy that resource
+anyway. Wherever there's no terminal to ask on (a script, CI, an agent's shell), or with `-s,
+--strict`, it refuses that resource and exits non-zero. `-f, --force` skips every check, including
+the ACF preflight, and can't be combined with `--strict`. A `src/` edited after the newest file in
+`build/` is only warned about, since webpack doesn't rewrite output whose contents are unchanged:
+an older `build/` may still be fresh.
+
 ### Checking what a server is missing
 `fdk drift production` tells you, resource by resource, whether the server holds what `fdk deploy
 production` would upload. It covers every resource in `production` *and* in each `production/*`
@@ -198,7 +219,7 @@ Command                      | Description |
 `config:resources [project]` | Configure Docker volumes to match resources' paths in the `config.yml` settings file if there are new resources under `[project]`. If no `[project]` is passed,  resources under `default` will be checked
 `config:all [project]`       | Run all project configuration tasks (`config:url` and `config:resources`)
 `urls`                       | Output current access URLs and ports
-`deploy [project]`           | Deploy resources to server according to configuration in `config.yml` file. If no `[project]` is passed, settings under `default` will be loaded. Files and folders matching patterns in resource `.distignore` file will be ignored
+`deploy [project]`           | Deploy resources to server according to configuration in `config.yml` file. If no `[project]` is passed, settings under `default` will be loaded. Files and folders matching patterns in resource `.distignore` file will be ignored. Checks each resource first and asks before deploying one that fails (see Deployment); `--strict` refuses instead, `--force` skips the checks
 `drift [project]`            | Compare every resource `[project]` and its `[project]/*` sections deploy with the copy on the server, file by file, without changing anything. Files excluded by `ftp.params` or each resource's `.distignore` are left out, as in `deploy`
 `pull <project> <post> [file]` | Copy a post's block markup, byte for byte, from the `<project>` site into `[file]` (a temp file if omitted). `<post>` is an ID, or type and ID such as `pages/12` for a draft
 `push <project> <post> [file]` | Write a pulled file back into its post, then purge the site's cache. Refuses if the post changed since the pull, if a synced pattern ref isn't published on the site, or if the user can't save unfiltered HTML

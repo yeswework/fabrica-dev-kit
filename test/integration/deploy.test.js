@@ -15,10 +15,11 @@ const { LFTP_DEFAULTS } = require('../../lib/deploy'),
 after(cleanTmpDirs);
 
 const RESOURCE = 'mytheme',
-	config = (ftpCommands = []) => ['default:', '  ftp:', '    host: ftp.test', '    user: u',
+	config = (ftpCommands = [], params = []) => ['default:', '  ftp:', '    host: ftp.test', '    user: u',
 		'    password: p', '    path: /',
 		...(ftpCommands.length ? ['    commands:', ...ftpCommands.map(command => `      - ${command}`)]
 			: ['    commands: []']),
+		...(params.length ? [`    params: [${params.map(param => `'${param}'`).join(', ')}]`] : []),
 		'  themes:', `    - ./${RESOURCE}`, ''].join('\n');
 
 const group = (key, modified) => JSON.stringify({ key, modified });
@@ -32,10 +33,17 @@ const deploy = async ({
 	server = null,     // acf-json files the stubbed pull delivers, or null for none
 	git = true,
 	force = false,
+	strict = false,
 	noAcfDir = false,  // resource with no local acf-json at all
 	noResource = false, // config names a resource whose folder isn't there
 	lftp = true,
 	ftpCommands = [],
+	params = [],
+	extra = {},        // other files committed in the resource
+	uncommitted = {},  // other files left uncommitted on top of them
+	dryRun = '',       // what lftp's `--dry-run` of the upload prints
+	dryRunStatus = 0,
+	home = false,      // the resource configured as `~/mytheme`, with HOME at the project
 	status = 0,
 	stderr = '',
 	signal = false,
@@ -45,17 +53,17 @@ const deploy = async ({
 	existsStatus = 0,
 	existsStderr = '',
 } = {}) => {
-	const files = { 'style.css': '/* theme */' };
+	const files = { 'style.css': '/* theme */', ...extra };
 	if (!noAcfDir) {
 		// an empty .keep keeps the folder present even when the scenario has no groups
 		files['acf-json/.keep'] = '';
 		for (const [name, body] of Object.entries(local)) { files[`acf-json/${name}`] = body; }
 	}
 	const dir = makeProject({
-		config: config(ftpCommands),
+		config: home ? config(ftpCommands, params).replace(`./${RESOURCE}`, `~/${RESOURCE}`) : config(ftpCommands, params),
 		resources: noResource ? {} : { [RESOURCE]: {
 			files,
-			dirty: Object.fromEntries(Object.entries(dirty).map(([n, b]) => [`acf-json/${n}`, b])),
+			dirty: { ...Object.fromEntries(Object.entries(dirty).map(([n, b]) => [`acf-json/${n}`, b])), ...uncommitted },
 			git,
 		} },
 	});
@@ -71,9 +79,10 @@ const deploy = async ({
 	const stubs = lftp
 		? stubBin({ docker: 'exit 0', lftp: LFTP_STUB_BODY })
 		: stubBin({ docker: 'exit 0' }, { absent: ['lftp'] });
-	const res = await runFdk(['deploy', ...(force ? ['--force'] : []), ...(backup ? ['--backup'] : [])], {
+	const res = await runFdk(['deploy', ...(force ? ['--force'] : []), ...(strict ? ['--strict'] : []), ...(backup ? ['--backup'] : [])], {
 		cwd: dir,
 		env: {
+			...(home ? { HOME: dir } : {}),
 			PATH: stubs.path,
 			LFTP_STUB_DEST: acfPullDest(RESOURCE),
 			LFTP_STUB_FIXTURE: fixture,
@@ -83,18 +92,21 @@ const deploy = async ({
 			LFTP_STUB_EXISTS_STATUS: String(existsStatus),
 			LFTP_STUB_EXISTS_STDERR: existsStderr,
 			LFTP_STUB_UPLOAD_STATUS: String(uploadStatus),
+			LFTP_STUB_DRY_RUN: dryRun,
+			LFTP_STUB_DRY_RUN_STATUS: String(dryRunStatus),
 		},
 	});
 
 	const calls = stubs.calls();
 	return {
 		calls,
-		upload: calls.find(call => call.includes('--reverse')) || '',
+		upload: calls.find(call => call.includes('--reverse') && !call.includes('--dry-run')) || '',
+		dryRuns: calls.filter(call => call.includes('--dry-run')).length,
 		lftpRuns: calls.filter(c => c.includes('mirror')).length,
 		output: res.stdout + res.stderr,
 		read: file => fs.readFileSync(path.join(dir, RESOURCE, 'acf-json', file), 'utf8'),
 		status: res.status,
-		uploaded: calls.some(c => c.includes('--reverse')),
+		uploaded: calls.some(c => c.includes('--reverse') && !c.includes('--dry-run')),
 	};
 };
 
@@ -295,4 +307,123 @@ test('a backup probe that cannot answer stops the deploy', async () => {
 	assert.equal(run.status, 1);
 	assert.equal(run.uploaded, false);
 	assert.match(run.output, /Couldn't tell whether 'mytheme' is already on the server/);
+});
+
+// ——— the payload checks: what the working tree would ship (fabrica-dev-kit-p9h, -43j) ————
+// `runFdk` gives no terminal, so a resource that fails one is refused rather than asked about
+
+test("a 'composer.json' with no 'vendor/' stops the upload", async () => {
+	const run = await deploy({ noAcfDir: true, extra: { 'composer.json': '{}' } });
+	assert.equal(run.uploaded, false);
+	assert.equal(run.status, 1);
+	assert.match(run.output, /'mytheme' isn't ready to deploy:\n  - it has a 'composer.json' and no 'vendor\/'/);
+	assert.match(run.output, /re-run with '--force' to deploy regardless/);
+	assert.match(run.output, /not uploaded: mytheme/);
+});
+
+test("a 'composer.json' with its 'vendor/' uploads", async () => {
+	const run = await deploy({ noAcfDir: true, extra: { 'composer.json': '{}', 'vendor/autoload.php': '<?php' } });
+	assert.equal(run.uploaded, true);
+	assert.equal(run.status, 0);
+});
+
+test("a build script with no 'build/' stops the upload, and one with no build script needs none", async () => {
+	let run = await deploy({ noAcfDir: true, extra: { 'package.json': JSON.stringify({ scripts: { build: 'wp-scripts build' } }) } });
+	assert.equal(run.uploaded, false);
+	assert.match(run.output, /it has a build script and no 'build\/'/);
+
+	run = await deploy({ noAcfDir: true, extra: { 'package.json': JSON.stringify({ scripts: { lint: 'x' } }) } });
+	assert.equal(run.uploaded, true);
+	assert.equal(run.status, 0);
+});
+
+test('a bundle webpack built around a missing module stops the upload, and names it', async () => {
+	const run = await deploy({ noAcfDir: true, extra: {
+		'build/index.js': `!(function webpackMissingModule() { var e = new Error("Cannot find module '@wordpress/icons'"); throw e; }())`,
+		'build/view.js': 'ok()',
+	} });
+	assert.equal(run.uploaded, false);
+	assert.match(run.output, /couldn't find, and they throw at runtime:\n      build\/index\.js\n/);
+	assert.doesNotMatch(run.output, /build\/view\.js/);
+});
+
+// webpack leaves unchanged output with its old mtimes, so an older `build/` only suggests a stale
+// one: it is warned about and never listed as a reason to stop
+test('a source edited after the build output is a warning, not a stop', async () => {
+	// committed first and edited after, so `src/` is the newer for certain
+	const run = await deploy({ noAcfDir: true, extra: { 'build/index.js': 'ok()', 'src/index.js': 'x' }, uncommitted: { 'src/index.js': 'y' } });
+	assert.match(run.output, /'mytheme' source was edited after its build output last changed/);
+	assert.match(run.output, /isn't ready to deploy:\n  - it has uncommitted changes this deploy would upload:\n      src\/index\.js\n[^-]*Deploy of 'mytheme' stopped/);
+});
+
+test('uncommitted changes stop the upload and are listed, deletions included', async () => {
+	const run = await deploy({ noAcfDir: true, extra: { 'gone.php': '<?php' }, uncommitted: { 'style.css': '/* edited */', 'new.php': '<?php' } });
+	assert.equal(run.uploaded, false);
+	assert.equal(run.status, 1);
+	assert.match(run.output, /it has uncommitted changes this deploy would upload:/);
+	assert.match(run.output, /      new\.php/);
+	assert.match(run.output, /      style\.css/);
+});
+
+// git and `fs` take a `~` literally, so unexpanded it read as no repository and the check passed
+test('uncommitted changes in a resource configured under ~ are found', async () => {
+	const run = await deploy({ noAcfDir: true, home: true, uncommitted: { 'new.php': '<?php' } });
+	assert.equal(run.uploaded, false);
+	assert.match(run.output, /it has uncommitted changes this deploy would upload:\n      new\.php/);
+	assert.doesNotMatch(run.output, /Couldn't ask git/);
+});
+
+test('a resource that is not a git repository is deployed with a warning', async () => {
+	const run = await deploy({ noAcfDir: true, git: false });
+	assert.equal(run.uploaded, true);
+	assert.equal(run.status, 0);
+	assert.match(run.output, /Couldn't ask git whether 'mytheme' has uncommitted changes/);
+});
+
+test("with '--delete', the folders the dry run would remove stop the upload; files and nested folders don't", async () => {
+	const dryRun = ['rm -r ftp://u@ftp.test/wp-content/themes/mytheme/vendor',
+		'rm -r ftp://u@ftp.test/wp-content/themes/mytheme/build/chunks',
+		'rm ftp://u@ftp.test/wp-content/themes/mytheme/old.php', 'put -O ftp://u@ftp.test/wp-content/themes/mytheme style.css', ''].join('\n');
+	let run = await deploy({ noAcfDir: true, params: ['--delete'], dryRun });
+	assert.equal(run.dryRuns, 1);
+	assert.equal(run.uploaded, false);
+	assert.match(run.output, /'--delete' would remove these folders from the server's copy:\n      vendor\n/);
+	assert.doesNotMatch(run.output, /chunks|old\.php/);
+
+	// nothing to remove, or no `--delete` to remove it with: no question to ask
+	run = await deploy({ noAcfDir: true, params: ['--delete'], dryRun: dryRun.split('\n').slice(1).join('\n') });
+	assert.equal(run.uploaded, true);
+	run = await deploy({ noAcfDir: true, dryRun });
+	assert.equal(run.dryRuns, 0);
+	assert.equal(run.uploaded, true);
+});
+
+test('a dry run that fails stops the upload; one on a first deploy has nothing to remove', async () => {
+	let run = await deploy({ noAcfDir: true, params: ['--delete'], dryRunStatus: 1, stderr: BROKEN_PULL });
+	assert.equal(run.uploaded, false);
+	assert.match(run.output, /max-retries exceeded/);
+	assert.match(run.output, /the server couldn't say which folders '--delete' would remove/);
+
+	run = await deploy({ noAcfDir: true, params: ['--delete'], dryRunStatus: 1, stderr: MISSING_FOLDER.vsftpd });
+	assert.equal(run.uploaded, true);
+	assert.equal(run.status, 0);
+});
+
+test('--force skips every check, --strict refuses, and the two together are an error', async () => {
+	const failing = { noAcfDir: true, params: ['--delete'], dryRun: 'rm -r ftp://u@ftp.test/wp-content/themes/mytheme/vendor\n',
+		extra: { 'composer.json': '{}' }, uncommitted: { 'new.php': '<?php' } };
+	let run = await deploy({ ...failing, force: true });
+	assert.equal(run.uploaded, true);
+	assert.equal(run.status, 0);
+	assert.equal(run.dryRuns, 0);
+	assert.doesNotMatch(run.output, /isn't ready to deploy/);
+
+	run = await deploy({ ...failing, strict: true });
+	assert.equal(run.uploaded, false);
+	assert.match(run.output, /composer\.json[\s\S]*new\.php[\s\S]*vendor/);
+
+	run = await deploy({ ...failing, force: true, strict: true });
+	assert.equal(run.status, 1);
+	assert.equal(run.lftpRuns, 0);
+	assert.match(run.output, /'-f, --force' cannot be used with option '-s, --strict'/);
 });
