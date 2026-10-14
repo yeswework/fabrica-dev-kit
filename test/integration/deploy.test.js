@@ -259,7 +259,7 @@ test('every script opens with the deploy defaults', async () => {
 	for (const setting of LFTP_DEFAULTS) {
 		assert.ok(run.upload.includes(setting), `missing from the script: ${setting}`);
 	}
-	assert.ok(run.upload.indexOf(LFTP_DEFAULTS[0]) < run.upload.indexOf('open ftp://'));
+	assert.ok(run.upload.indexOf(LFTP_DEFAULTS[0]) < run.upload.indexOf('open --env-password ftp://'));
 });
 
 // `set` is last-wins in lftp, so a project's own value has to come after ours to take effect
@@ -267,7 +267,7 @@ test("a project's own ftp.commands come after the defaults, and so win", async (
 	const run = await deploy({ noAcfDir: true, force: true,
 		ftpCommands: ['set net:max-retries 9'] });
 	assert.ok(run.upload.indexOf('set net:max-retries 3') < run.upload.indexOf('set net:max-retries 9'));
-	assert.ok(run.upload.indexOf('set net:max-retries 9') < run.upload.indexOf('open ftp://'));
+	assert.ok(run.upload.indexOf('set net:max-retries 9') < run.upload.indexOf('open --env-password ftp://'));
 });
 
 test('a successful upload still exits 0', async () => {
