@@ -70,6 +70,7 @@ staging:
     - password: staging
     - path /staging
 ```
+   To keep a password out of `config.yml` — so the file can be committed — write a Bitwarden reference in its place: `bw://` followed by the name of the item that holds it, such as `password: bw://coda-production-ftp`. This works for `ftp.password` and `wp.appPassword`. FDK reads the item's password with the Bitwarden CLI (`bw`) only when it connects to the server (`deploy`, `drift`, `pull`, `push`, `refs`), so `fdk start` and `config:*` never prompt. `bw` needs an unlocked vault: FDK uses `BW_SESSION` if it is exported, and otherwise the session saved in the login keychain by `security add-generic-password -U -a "$USER" -s bw-session -w "$(bw unlock --raw)"`, which lasts until `bw lock`. Item names must not be part of another item's name, since `bw` matches by substring and stops on more than one result; after an item is added, `bw sync` makes it visible.
 2. FDK will invoke each resource's individual Webpack config to build resources (if it needs a build step; otherwise the folder will just be mirrored as it is). To make sure this works correctly, any paths in your Webpack config should be resolved fully with `path.resolve` and the current folder, for example `path.resolve(__dirname, 'src/js/front.js')`
 
 ### Running the master Webpack during active development
@@ -117,6 +118,25 @@ error, where before it sat there indefinitely.
 These come *before* anything in `ftp.commands`, and lftp's `set` is last-wins, so your own value
 for any of them takes precedence — raise `net:timeout` if you deploy to a slow server.
 
+### Checking what a server is missing
+`fdk drift production` tells you, resource by resource, whether the server holds what `fdk deploy
+production` would upload. It covers every resource in `production` *and* in each `production/*`
+section, since those usually exist to deploy one resource alone, each against the server of the
+section that deploys it: a `production/*` section with an `ftp:` of its own is compared with that
+server, and one whose `ftp:` has no `host` is skipped with a warning, since it can't deploy either.
+Each one is downloaded into a temp folder and compared file by file with the local copy, both
+filtered as `deploy` filters them — the include and exclude options in `ftp.params`, then the
+resource's `.distignore` — and reported as identical, as the files that differ (`changed`, `local only` — not
+deployed yet — or `server only` — a `--delete` deploy would remove it), or as not on the server. It
+never uploads or deletes anything, and exits non-zero when anything differs.
+
+It compares contents rather than versions or timestamps, because versions aren't always bumped and
+every rebuild changes every timestamp. The flip side is that it compares your *local build*: run
+`fdk build` first, or a stale `build/` shows up as server drift. A resource whose source was edited
+after its build output last changed gets a reminder. Two builds of the same source can also differ
+when they were made with different `node_modules`, so a difference confined to `build/` with no
+source commits since the server's copy is usually that rather than missing work.
+
 ### Troubleshooting and housekeeping
 If you run into any problems during development, restarting the Docker machine may help. Stop FDK with ctrl + c and then run `fdk dc restart` followed by `fdk start` again.
 
@@ -143,6 +163,7 @@ Command                      | Description |
 `config:all [project]`       | Run all project configuration tasks (`config:url` and `config:resources`)
 `urls`                       | Output current access URLs and ports
 `deploy [project]`           | Deploy resources to server according to configuration in `config.yml` file. If no `[project]` is passed, settings under `default` will be loaded. Files and folders matching patterns in resource `.distignore` file will be ignored
+`drift [project]`            | Compare every resource `[project]` and its `[project]/*` sections deploy with the copy on the server, file by file, without changing anything. Files excluded by `ftp.params` or each resource's `.distignore` are left out, as in `deploy`
 `start`                      | Run Webpack in development mode. All available resources' Webpack configurations are loaded, and changed files are watched
 `build`                      | Run Webpack in production mode and build source for all available resources Webpack configurations
 `dc`                         | Run `docker-compose` commands, eg. `fdk dc ps`

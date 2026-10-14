@@ -6,7 +6,9 @@ const assert = require('node:assert/strict'),
 	fs = require('fs'),
 	path = require('path');
 
-const { LFTP_DEFAULTS, pullRemoteAcfJson, remoteFolderExists } = require('../../lib/deploy'),
+const { LFTP_DEFAULTS, pullRemoteAcfJson, remoteCommands, remoteFolderExists } = require('../../lib/deploy'),
+	{ makeProject } = require('../helpers/project'),
+	{ runFdk } = require('../helpers/run'),
 	{ FIXTURE_GROUP, SERVERS, commandsFor, missingRequirements, seedFixtures, startServers, stopServers }
 		= require('../helpers/ftp-servers'),
 	{ cleanTmpDirs, makeTmpDir } = require('../helpers/tmpdir');
@@ -147,5 +149,56 @@ describe('the ACF preflight against real servers',
 					.replace('fdk:secret@', 'fdk:wrong@')
 					.replace('-o StrictHostKeyChecking=yes', '-o StrictHostKeyChecking=yes -o BatchMode=yes'));
 			assert.equal(pullRemoteAcfJson(commands, 'acf-json', dest), null);
+		});
+
+		// the password reaches lftp through `open --env-password`, out of the script any user can read
+		// in `ps`: both transports have to log in that way, and a wrong one still has to fail. Not
+		// checked over sftp, where only BatchMode stops ssh asking again, and it refuses any password
+		test('a section logs in with its password from the environment, over ftp and sftp', () => {
+			const vsftpd = { user: 'fdk', host: '127.0.0.1', port: SERVERS.vsftpd.port,
+					commands: ['set ftp:ssl-allow no', 'set ftp:passive-mode yes'] },
+				sftp = { scheme: 'sftp', user: 'fdk', host: '127.0.0.1', port: SERVERS.sftp.port,
+					commands: commandsFor('sftp').filter(command => !command.startsWith('open ')) };
+			for (const ftp of [vsftpd, sftp]) {
+				const { commands, password } = remoteCommands({ ...ftp, password: 'secret' });
+				assert.ok(!commands.join('; ').includes('secret'));
+				assert.equal(remoteFolderExists(commands, 'acf-json', password), true, ftp.scheme || 'ftp');
+			}
+			const wrong = remoteCommands({ ...vsftpd, password: 'wrong' });
+			assert.equal(remoteFolderExists([...wrong.commands.slice(0, -1), 'set net:max-retries 1', wrong.commands.at(-1)],
+				'acf-json', wrong.password), null);
+		});
+
+		// drift has to see what deploy would upload: `ftp.params` filters apply, and a variant with an
+		// `ftp:` of its own is compared with its own server
+		test('fdk drift compares through ftp.params filters, against each variant\'s own server', async () => {
+			const seed = makeTmpDir('fdk-live-drift-');
+			fs.mkdirSync(path.join(seed, 'myplugin'));
+			fs.writeFileSync(path.join(seed, 'myplugin', 'index.php'), '<?php // a');
+			const seeded = spawnSync('lftp', ['-c', [...commandsFor('vsftpd'), 'mkdir -p wp-content/plugins',
+				`mirror --reverse ${path.join(seed, 'myplugin')} wp-content/plugins/myplugin`].join('; ')], { encoding: 'utf8' });
+			assert.equal(seeded.status, 0, seeded.stderr);
+
+			const ftp = port => [`    scheme: ftp`, `    host: 127.0.0.1`, `    port: ${port}`, `    user: fdk`, `    password: secret`,
+					`    commands: ['set ftp:ssl-allow no', 'set ftp:passive-mode yes', 'set net:max-retries 1', 'set net:timeout 5']`,
+					`    params: ['--delete', '--exclude-glob *.map']`],
+				config = variants => ['production:', '  ftp:', ...ftp(SERVERS.vsftpd.port), '  plugins: [./myplugin]',
+					// can't be deployed (fabrica-dev-kit-hsg), so it is skipped rather than compared
+					'production/dry:', '  extend: production', '  ftp:', "    params: ['--dry-run']", ...variants].join('\n') + '\n',
+				resources = { myplugin: { files: { 'index.php': '<?php // a', 'app.js.map': '{}' }, git: false } };
+
+			let dir = makeProject({ config: config([]), resources }),
+				res = await runFdk(['drift', 'production'], { cwd: dir });
+			assert.equal(res.status, 0, res.stdout + res.stderr);
+			assert.match(res.stdout, /myplugin: identical/);
+			assert.match(res.stderr, /'production\/dry' has no FTP host/);
+			assert.doesNotMatch(res.stdout + res.stderr, /secret/);
+
+			dir = makeProject({ config: config(['production/elsewhere:', '  extend: production', '  plugins: [./myplugin]',
+				'  ftp:', ...ftp(SERVERS['pure-ftpd'].port)]), resources });
+			res = await runFdk(['drift', 'production'], { cwd: dir });
+			assert.equal(res.status, 1);
+			assert.match(res.stdout, /myplugin: identical/);
+			assert.match(res.stdout, /myplugin: not on the server/);
 		});
 	});
