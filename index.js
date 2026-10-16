@@ -17,7 +17,8 @@ const { echo, execWP, halt, spawn, warn } = require('./lib/util'),
 	{ init, setup } = require('./lib/setup'),
 	{ deploy } = require('./lib/deploy'),
 	{ drift } = require('./lib/drift'),
-	{ pull, push, refs } = require('./lib/content');
+	{ pull, push, refs } = require('./lib/content'),
+	{ seed } = require('./lib/seed');
 
 // Fabrica Dev Kit version
 const VERSION = require('./package.json')['version'];
@@ -355,6 +356,15 @@ const addProjectCommands = () => {
 		program.command('refs <project> <file> <direction>')
 			.description(`Swap the synced pattern refs in <file> between the site in <project>'s 'wp:' settings and this project's local site, matching patterns by title. <direction> is 'to-local' or 'to-live'`)
 			.action((section, file, direction) => refs(section, userPath(file), direction).catch(ex => halt(ex.message)));
+		program.command('seed <project>')
+			.description(`Fill this project's local site with content read from the site in <project>'s settings, keeping its post IDs so patterns, navigation, the front page and images still resolve. Chooses as Fabrica Export does: posts from the last 6 months, every page, pattern, template, template part, navigation, menu, ACF group and the global styles, plus their media, terms, comments and authors; <project>'s 'seed:' block and the options below change that. Reads the site only. Refuses, writing nothing, when an ID is taken locally`)
+			.option('--only <types>', 'copy only these post types, comma-separated')
+			.option('--limit <n>', 'the latest <n> of each type')
+			.option('--months <n>', 'those from the last <n> months (0 for all)')
+			.option('--ids <ids>', 'only these post IDs, comma-separated')
+			.option('--replace', 'overwrite local posts and comments whose IDs are taken')
+			.option('--dry-run', 'list what would be copied and what clashes, writing nothing')
+			.action((section, options) => seed(section, options).catch(ex => halt(ex.message)));
 	}
 	addScriptCommands();
 };

@@ -173,6 +173,39 @@ A section with both uses SSH, and falls back to `wp:` with a warning if WP-CLI d
 Wherever `wp.url` is set, over SSH too, FDK first checks that the site reports that URL as its
 home, so a credential for one site is never used on a copy of it.
 
+### Filling the local site from a live one
+`fdk seed production` copies the `production` site's content into your local site, reached the same
+way as `pull`. Posts keep their live IDs, so synced patterns, navigation, the front page and images
+all still find what they refer to. The live site is only read. Afterwards the live URL is replaced
+with the local one throughout the database.
+
+It copies what the Fabrica Export plugin does by default: posts from the last 6 months, and every
+page, synced pattern, template, template part, navigation menu, classic menu item and ACF field
+group, plus the active theme's global styles. The media, terms, comments and authors those posts
+use come along, as do the settings that pick the front page. Authors get a placeholder email
+address, so nothing the local site sends can reach a real person. A `seed:` block under the section
+changes the choice, per post type:
+
+```
+production:
+  seed:
+    post: { months: 12 }  # or { limit: 20 }, { ids: [12, 40] }
+    product: true         # a type the defaults leave out
+    acf-field: false      # one they include
+```
+
+`--only page,wp_template`, `--limit`, `--months` (`0` for all) and `--ids` change it for one run.
+`--dry-run` lists what would be copied, and anything in the way, without writing.
+
+If a post or comment ID is already taken on the local site, nothing is written and the clashes are
+listed. `--replace` overwrites those, and only those. Nothing local is ever deleted. Templates, template
+parts and global styles are matched by theme and slug, not ID, as WordPress itself finds them.
+
+The media library entries come across, the files don't: proxy missing uploads from the live site in
+`provision/web/wordpress-fpm.conf`, and `seed` warns until you have. Over SSH everything is read as
+stored. Over the REST API, post meta that isn't registered for REST (most ACF fields) and ACF field
+groups can't be read, and `seed` says so.
+
 ### Troubleshooting and housekeeping
 If you run into any problems during development, restarting the Docker machine may help. Stop FDK with ctrl + c and then run `fdk dc restart` followed by `fdk start` again.
 
@@ -203,6 +236,7 @@ Command                      | Description |
 `pull <project> <post> [file]` | Copy a post's block markup, byte for byte, from the `<project>` site into `[file]` (a temp file if omitted). `<post>` is an ID, or type and ID such as `pages/12` for a draft
 `push <project> <post> [file]` | Write a pulled file back into its post, then purge the site's cache. Refuses if the post changed since the pull, if a synced pattern ref isn't published on the site, or if the user can't save unfiltered HTML
 `refs <project> <file> <direction>` | Swap the synced pattern refs in `<file>` between the `<project>` site and the local one, matching patterns by title. `<direction>` is `to-local` or `to-live`
+`seed <project>`             | Fill the local site with the `<project>` site's content under its live IDs, chosen as Fabrica Export does or by `<project>`'s `seed:` block and `--only`, `--limit`, `--months`, `--ids`. Refuses on a taken ID unless `--replace`; `--dry-run` writes nothing
 `start [project]`            | Run Webpack in development mode. All available resources' Webpack configurations are loaded, and changed files are watched
 `build [project]`            | Run Webpack in production mode and build source for all available resources Webpack configurations
 `dc`                         | Run `docker-compose` commands, eg. `fdk dc ps`
