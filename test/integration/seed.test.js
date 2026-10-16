@@ -9,7 +9,8 @@ const assert = require('node:assert/strict'),
 const { makeProject } = require('../helpers/project'),
 	{ runFdk } = require('../helpers/run'),
 	{ stubBin } = require('../helpers/stub-bin'),
-	{ cleanTmpDirs, makeTmpDir } = require('../helpers/tmpdir');
+	{ cleanTmpDirs, makeTmpDir } = require('../helpers/tmpdir'),
+	{ SSH_STUB_BODY, WP_STUB_BODY } = require('../helpers/wp-cli-stub');
 
 after(cleanTmpDirs);
 
@@ -71,10 +72,10 @@ const startSite = async () => {
 
 // `docker` standing in for the local site: it keeps what the writer was sent and answers with the
 // report it is given
-const localSite = report => {
+const localSite = (report, stubs = {}) => {
 	const tmp = makeTmpDir(),
 		input = path.join(tmp, 'input.php');
-	const bin = stubBin({ docker: `case "$*" in *eval-file*) cat > '${input}'; printf '\\nFDK-SEED %s\\n' '${JSON.stringify(report)}';; esac` });
+	const bin = stubBin({ docker: `case "$*" in *eval-file*) cat > '${input}'; printf '\\nFDK-SEED %s\\n' '${JSON.stringify(report)}';; esac`, ...stubs });
 	return {
 		...bin,
 		// the snapshot the writer received
@@ -151,3 +152,36 @@ test("the section's seed: block and --only narrow what is read", () =>
 		assert.ok(site.requests.some(request => request.route === '/wp/v2/posts'));
 		assert.ok(!site.requests.some(request => request.route === '/wp/v2/templates'));
 	}, '  seed:\n    post: false'));
+
+test('over SSH, the reader gets the selection, and its raw rows reach the writer untouched', async () => {
+	const state = path.join(makeTmpDir(), 'site.json'),
+		// stored rows as the reader prints them: serialized meta and options stay raw strings
+		snapshot = {
+			source: { home: 'https://example.com', siteurl: 'https://example.com', stylesheet: 'theme' },
+			posts: [{ ID: '7', post_type: 'page', post_status: 'draft', post_content: '<!-- wp:paragraph -->' }],
+			meta: [{ post_id: 7, key: '_custom', raw: 'a:1:{s:1:"a";s:1:"b";}' }],
+			terms: [], relationships: [], comments: [], users: [],
+			options: [{ name: 'page_on_front', raw: '7' }], menuLocations: {}, gaps: [],
+		};
+	fs.writeFileSync(state, JSON.stringify({ home: 'https://example.com', posts: {}, patterns: {}, admins: ['1'], commands: [], calls: [], snapshot }));
+	const dir = makeProject({ config: ['default:', '  themes: []', 'production:', '  extend: default',
+		'  ftp:', '    scheme: sftp', '    host: ssh.example.com', '    user: u123', '    password: sftp-secret', '    path: wordpress',
+		'    commands:', '      - set sftp:connect-program "ssh -a -x -i ~/.ssh/site_key"', ''].join('\n') });
+	const local = localSite(REPORT, { ssh: SSH_STUB_BODY, wp: WP_STUB_BODY }),
+		res = await runFdk(['seed', 'production', '--only', 'page', '--ids', '7'], { cwd: dir, env: { PATH: local.path, FDK_WP_STATE: state } });
+	assert.equal(res.status, 0, res.stderr);
+
+	const site = JSON.parse(fs.readFileSync(state, 'utf8'));
+	assert.deepEqual(site.evalInput.types, { page: { ids: [7] } });
+	assert.ok(site.evalInput.options.includes('page_on_front'));
+	assert.deepEqual(local.sent().snapshot.meta, snapshot.meta);
+	assert.deepEqual(local.sent().snapshot.options, snapshot.options);
+
+	// logged in with the entry's key, non-interactively, never with its password
+	const ssh = local.calls().filter(call => call.startsWith('ssh '));
+	assert.ok(ssh.length > 0 && ssh.every(call => call.includes('-o BatchMode=yes') && !call.includes('sftp-secret')), ssh.join('\n'));
+	assert.ok(ssh.some(call => call.includes("u123@ssh.example.com wp --path='wordpress' 'eval-file' '-'")), ssh.join('\n'));
+	// no gaps over SSH, and the live URL is replaced locally afterwards
+	assert.doesNotMatch(res.stderr, /exposed over REST/);
+	assert.ok(local.calls().some(call => call.includes('search-replace') && call.includes('https://example.com https://local.localhost')));
+});

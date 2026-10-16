@@ -7,9 +7,11 @@
 //   const bin = stubBin({ ssh: SSH_STUB_BODY, wp: WP_STUB_BODY, docker: 'exit 0' });
 //
 // State: `{ home, posts: { id: { raw, modified_gmt } }, patterns: { id: title }, admins: ['1'],
-// unfilteredHtml, commands: ['sg purge'], purgeFails, calls }`. `unfilteredHtml: false` is a site
-// where `user_can` denies it even to administrators (multisite, DISALLOW_UNFILTERED_HTML). A post
-// saved as anyone who can't has its <style> stripped, as kses would.
+// unfilteredHtml, commands: ['sg purge'], purgeFails, calls, snapshot }`. `unfilteredHtml: false` is
+// a site where `user_can` denies it even to administrators (multisite, DISALLOW_UNFILTERED_HTML). A
+// post saved as anyone who can't has its <style> stripped, as kses would. `eval-file -` stands in
+// for `fdk seed`'s reader: it keeps the `$input` the PHP was given as `evalInput` and prints
+// `snapshot` as the reader would.
 const fs = require('fs');
 
 const SSH_STUB_BODY = 'for last; do :; done; exec sh -c "$last"',
@@ -48,6 +50,10 @@ if (require.main === module) {
 		out(JSON.stringify(Object.entries(state.patterns).map(([ID, post_title]) => ({ ID: Number(ID), post_title }))));
 	} else if (group === 'cli' && command === 'has-command') {
 		if (!state.commands.includes(subject)) { save(); process.exit(1); }
+	} else if (group === 'eval-file' && command === '-') {
+		const code = fs.readFileSync(0, 'utf8');
+		state.evalInput = JSON.parse(Buffer.from(/base64_decode\('([^']+)'\)/.exec(code)[1], 'base64').toString());
+		out(`\nFDK-SEED ${JSON.stringify(state.snapshot)}\n`);
 	} else if (group === 'sg' && command === 'purge') {
 		if (state.purgeFails) { fail('Purge failed.'); }
 		out('Success: Purged.\n');
