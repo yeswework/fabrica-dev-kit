@@ -15,6 +15,7 @@
 | `lib/rest.js` | a section's `wp:` credential, REST requests, and the check that the site is the one configured |
 | `lib/ssh.js` | WP-CLI over the `ssh` command a section's sftp entry already gives lftp |
 | `lib/content.js` | `pull`, `push` and `refs`: which of the two ways in a section gets, and the guards a push must pass |
+| `lib/seed.js` | `seed`: what to copy, reading it over REST, and handing it to the PHP halves — `lib/seed-read.php` (the live site, over SSH) and `lib/seed-write.php` (the local site, keeping live's IDs) — both run with `wp eval-file -` and `$input` prepended |
 
 `project` is a single object mutated in place and imported by reference — never reassign it and never spread it into a copy, or the copy stops seeing later writes. `__dirname` inside `lib/` is not the package root, so anything reaching for `dev/` or `setup.yml.js` goes through `lib/setup.js`'s `FDK_ROOT`.
 
