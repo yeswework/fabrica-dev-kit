@@ -17,7 +17,9 @@ $themed = $wpdb->prepare(
 
 $posts = [];
 foreach ($input['types'] as $type => $filter) {
-	$where = $wpdb->prepare("post_type = %s and post_status not in ('draft', 'auto-draft', 'trash')", $type);
+	// a post named by ID is wanted whatever its state
+	$skipped = empty($filter['ids']) ? "'draft', 'auto-draft', 'trash'" : "'auto-draft', 'trash'";
+	$where = $wpdb->prepare("post_type = %s and post_status not in ({$skipped})", $type);
 	if (in_array($type, ['wp_template', 'wp_template_part', 'wp_global_styles'], true)) { $where .= " and {$themed}"; }
 	if (!empty($filter['months'])) {
 		$where .= $wpdb->prepare(' and post_date > %s', date('Y-m-d', strtotime("-{$filter['months']} months")));

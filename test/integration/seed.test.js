@@ -145,7 +145,8 @@ test("the section's seed: block and --only narrow what is read", () =>
 			res = await runFdk(['seed', 'production', '--dry-run', '--only', 'page,post', '--ids', '8'], { cwd: dir, env: { PATH: local.path } });
 		assert.equal(res.status, 0, res.stderr);
 		assert.deepEqual(local.sent().snapshot.posts.filter(post => post.post_type === 'page').map(post => post.ID).sort(), [6, 8]);
-		assert.ok(site.requests.some(request => request.route === '/wp/v2/pages' && /include=8/.test(request.query)));
+		// named by ID, so a draft is fetched too
+		assert.ok(site.requests.some(request => request.route === '/wp/v2/pages' && /include=8/.test(request.query) && /status=[^&]*draft/.test(request.query)));
 		// --only overrides the config's `post: false`, and leaves out every type it doesn't name
 		assert.ok(site.requests.some(request => request.route === '/wp/v2/posts'));
 		assert.ok(!site.requests.some(request => request.route === '/wp/v2/templates'));

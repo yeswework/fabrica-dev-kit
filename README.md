@@ -195,6 +195,7 @@ production:
 ```
 
 `--only page,wp_template`, `--limit`, `--months` (`0` for all) and `--ids` change it for one run.
+Drafts are left out, as Fabrica Export leaves them, except a post named in `ids`.
 `--dry-run` lists what would be copied, and anything in the way, without writing.
 
 If a post or comment ID is already taken on the local site, nothing is written and the clashes are
