@@ -335,6 +335,31 @@ test('a to-live that leaves a local ID behind keeps push refused, until a later 
 	});
 });
 
+// a local pattern deleted or unpublished since to-local leaves no title to map its ID by, and that
+// ID can name an unrelated published pattern on the site (fabrica-dev-kit-aoz 12)
+// …whether the record lists the local IDs, or only says there are some, as before they were listed
+for (const record of ['listed', 'unlisted']) test(`a to-live that meets a local pattern gone since to-local keeps push refused (${record})`, () => {
+	const patterns = { 37827: { status: 'publish', title: 'Monetization Kit subnav' }, 455: { status: 'publish', title: 'Unrelated' } };
+	return withSite({ posts: { 12: { type: 'page', raw: '<!-- wp:block {"ref":37827} /-->' } }, patterns }, async (wp, dir, tmp) => {
+		const file = path.join(tmp, 'page.html');
+		await run(dir, 'pull', 'production', '12', file);
+		await refsRun(dir, [[455, 'Monetization Kit subnav']], 'refs', 'production', file, 'to-local');
+		if (record === 'unlisted') {
+			const state = JSON.parse(fs.readFileSync(`${file}.fdk.json`, 'utf8'));
+			fs.writeFileSync(`${file}.fdk.json`, JSON.stringify({ ...state, localRefs: true }));
+		}
+
+		let res = await refsRun(dir, [], 'refs', 'production', file, 'to-live');
+		assert.equal(res.status, 0, res.stderr);
+		assert.match(res.stderr, /Ref\(s\) 455 are still the local site's IDs/);
+		assert.equal(fs.readFileSync(file, 'utf8'), '<!-- wp:block {"ref":455} /-->');
+		res = await run(dir, 'push', 'production', '12', file);
+		assert.equal(res.status, 1);
+		assert.match(res.stderr, /holds the local site's pattern IDs/);
+		assert.equal(wp.writes().length, 0);
+	});
+});
+
 test("refs reads every page of the site's patterns", () => {
 	const patterns = Object.fromEntries(Array.from({ length: 150 }, (_, i) => [1000 + i, { status: 'publish', title: `Pattern ${i}` }]));
 	return withSite({ patterns }, async (wp, dir, tmp) => {
