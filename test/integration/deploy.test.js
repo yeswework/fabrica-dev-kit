@@ -34,6 +34,7 @@ const deploy = async ({
 	git = true,
 	force = false,
 	strict = false,
+	skip = [],         // each a `--skip` value
 	noAcfDir = false,  // resource with no local acf-json at all
 	noResource = false, // config names a resource whose folder isn't there
 	lftp = true,
@@ -41,6 +42,8 @@ const deploy = async ({
 	params = [],
 	extra = {},        // other files committed in the resource
 	uncommitted = {},  // other files left uncommitted on top of them
+	removed = [],      // committed files deleted from the working tree
+	replacing = {},    // files written once those are gone, as a file replaced by a folder needs
 	dryRun = '',       // what lftp's `--dry-run` of the upload prints
 	dryRunStatus = 0,
 	home = false,      // the resource configured as `~/mytheme`, with HOME at the project
@@ -67,6 +70,11 @@ const deploy = async ({
 			git,
 		} },
 	});
+	removed.forEach(file => fs.rmSync(path.join(dir, RESOURCE, file)));
+	for (const [file, body] of Object.entries(replacing)) {
+		fs.mkdirSync(path.dirname(path.join(dir, RESOURCE, file)), { recursive: true });
+		fs.writeFileSync(path.join(dir, RESOURCE, file), body);
+	}
 
 	let fixture = '';
 	if (server) {
@@ -79,7 +87,7 @@ const deploy = async ({
 	const stubs = lftp
 		? stubBin({ docker: 'exit 0', lftp: LFTP_STUB_BODY })
 		: stubBin({ docker: 'exit 0' }, { absent: ['lftp'] });
-	const res = await runFdk(['deploy', ...(force ? ['--force'] : []), ...(strict ? ['--strict'] : []), ...(backup ? ['--backup'] : [])], {
+	const res = await runFdk(['deploy', ...(force ? ['--force'] : []), ...(strict ? ['--strict'] : []), ...skip.flatMap(value => ['--skip', value]), ...(backup ? ['--backup'] : [])], {
 		cwd: dir,
 		env: {
 			...(home ? { HOME: dir } : {}),
@@ -102,6 +110,7 @@ const deploy = async ({
 		calls,
 		upload: calls.find(call => call.includes('--reverse') && !call.includes('--dry-run')) || '',
 		dryRuns: calls.filter(call => call.includes('--dry-run')).length,
+		dryRun: calls.find(call => call.includes('--dry-run')) || '',
 		lftpRuns: calls.filter(c => c.includes('mirror')).length,
 		output: res.stdout + res.stderr,
 		read: file => fs.readFileSync(path.join(dir, RESOURCE, 'acf-json', file), 'utf8'),
@@ -316,8 +325,8 @@ test("a 'composer.json' with no 'vendor/' stops the upload", async () => {
 	const run = await deploy({ noAcfDir: true, extra: { 'composer.json': '{}' } });
 	assert.equal(run.uploaded, false);
 	assert.equal(run.status, 1);
-	assert.match(run.output, /'mytheme' isn't ready to deploy:\n  - it has a 'composer.json' and no 'vendor\/'/);
-	assert.match(run.output, /re-run with '--force' to deploy regardless/);
+	assert.match(run.output, /'mytheme' isn't ready to deploy:\n  - vendor: it has a 'composer.json' and no 'vendor\/autoload\.php'/);
+	assert.match(run.output, /re-run with '--skip vendor' to deploy regardless/);
 	assert.match(run.output, /not uploaded: mytheme/);
 });
 
@@ -353,7 +362,7 @@ test('a source edited after the build output is a warning, not a stop', async ()
 	// committed first and edited after, so `src/` is the newer for certain
 	const run = await deploy({ noAcfDir: true, extra: { 'build/index.js': 'ok()', 'src/index.js': 'x' }, uncommitted: { 'src/index.js': 'y' } });
 	assert.match(run.output, /'mytheme' source was edited after its build output last changed/);
-	assert.match(run.output, /isn't ready to deploy:\n  - it has uncommitted changes this deploy would upload:\n      src\/index\.js\n[^-]*Deploy of 'mytheme' stopped/);
+	assert.match(run.output, /isn't ready to deploy:\n  - uncommitted: it has uncommitted changes this deploy would upload:\n      src\/index\.js\n[^-]*Deploy of 'mytheme' stopped/);
 });
 
 test('uncommitted changes stop the upload and are listed, deletions included', async () => {
@@ -398,15 +407,36 @@ test("with '--delete', the folders the dry run would remove stop the upload; fil
 	assert.equal(run.uploaded, true);
 });
 
-test('a dry run that fails stops the upload; one on a first deploy has nothing to remove', async () => {
+test('a dry run that fails stops the upload, however it words the failure', async () => {
 	let run = await deploy({ noAcfDir: true, params: ['--delete'], dryRunStatus: 1, stderr: BROKEN_PULL });
 	assert.equal(run.uploaded, false);
 	assert.match(run.output, /max-retries exceeded/);
 	assert.match(run.output, /the server couldn't say which folders '--delete' would remove/);
 
+	// a 550 from inside the dry run is no proof the resource isn't on the server
 	run = await deploy({ noAcfDir: true, params: ['--delete'], dryRunStatus: 1, stderr: MISSING_FOLDER.vsftpd });
+	assert.equal(run.uploaded, false);
+	assert.match(run.output, /the server couldn't say which folders '--delete' would remove/);
+});
+
+test('a resource not on the server yet has nothing for --delete to remove, and no dry run is made', async () => {
+	let run = await deploy({ noAcfDir: true, params: ['--delete'], existsStatus: 1, existsStderr: MISSING_FOLDER.vsftpd });
 	assert.equal(run.uploaded, true);
 	assert.equal(run.status, 0);
+	assert.equal(run.dryRuns, 0);
+
+	run = await deploy({ noAcfDir: true, params: ['--delete'], existsStatus: 1, existsStderr: BROKEN_PULL });
+	assert.equal(run.uploaded, false);
+	assert.match(run.output, /the server couldn't say which folders '--delete' would remove/);
+});
+
+// the dry run shares the upload's script, so a backup queued before it would really be copied
+test('--backup is copied in the upload alone, never in the dry run', async () => {
+	const run = await deploy({ noAcfDir: true, backup: true, params: ['--delete'] });
+	assert.equal(run.uploaded, true);
+	assert.equal(run.dryRuns, 1);
+	assert.doesNotMatch(run.dryRun, /use-fxp|Copying original resource folder/);
+	assert.match(run.upload, /set ftp:use-fxp yes/);
 });
 
 test('--force skips every check, --strict refuses, and the two together are an error', async () => {
@@ -426,4 +456,97 @@ test('--force skips every check, --strict refuses, and the two together are an e
 	assert.equal(run.status, 1);
 	assert.equal(run.lftpRuns, 0);
 	assert.match(run.output, /'-f, --force' cannot be used with option '-s, --strict'/);
+});
+
+test("a 'vendor/' with no 'autoload.php' is no install", async () => {
+	const run = await deploy({ noAcfDir: true, extra: { 'composer.json': '{}', 'vendor/.keep': '' } });
+	assert.equal(run.uploaded, false);
+	assert.match(run.output, /no 'vendor\/autoload\.php': run 'composer install' first/);
+});
+
+// a mirror without `--delete` leaves the server's copy of a deleted file alone
+test('a deletion counts as an uncommitted upload only with --delete', async () => {
+	const deleted = { noAcfDir: true, extra: { 'gone.php': '<?php' }, removed: ['gone.php'] };
+	let run = await deploy(deleted);
+	assert.equal(run.uploaded, true);
+	assert.equal(run.status, 0);
+
+	run = await deploy({ ...deleted, params: ['--delete'] });
+	assert.equal(run.uploaded, false);
+	assert.match(run.output, /it has uncommitted changes this deploy would upload:\n      gone\.php/);
+});
+
+// a file deleted and a folder of the same name added in its place can't both be laid out
+test('a file replaced by a folder of the same name is checked rather than crashing the deploy', async () => {
+	const run = await deploy({ noAcfDir: true, params: ['--delete'], extra: { lib: '<?php' }, removed: ['lib'],
+		replacing: { 'lib/x.php': '<?php' } });
+	assert.equal(run.uploaded, false);
+	assert.doesNotMatch(run.output, /Error deploying/);
+	assert.match(run.output, /it has uncommitted changes this deploy would upload:\n      lib\/x\.php/);
+});
+
+test("a 'package.json' that isn't JSON is reported, not thrown", async () => {
+	const run = await deploy({ noAcfDir: true, extra: { 'package.json': '{ "scripts":' } });
+	assert.equal(run.uploaded, false);
+	assert.doesNotMatch(run.output, /Error deploying/);
+	assert.match(run.output, /  - build: its 'package\.json' isn't valid JSON/);
+	assert.match(run.output, /re-run with '--skip build'/);
+});
+
+// git takes a `~` literally, so the ACF preflight read a resource under it as no repository
+test('newer server groups of a resource configured under ~ are pulled as in any repository', async () => {
+	const run = await deploy({ home: true, local: { 'g.json': group('g', 100) }, server: { 'g.json': group('g', 900) } });
+	assert.equal(run.uploaded, false);
+	assert.match(run.output, /pulled into the working tree/);
+	assert.doesNotMatch(run.output, /isn't a git repository/);
+	assert.equal(run.read('g.json'), group('g', 900));
+});
+
+// ——— --skip: one named check off for one run ————
+
+test('--skip with a name that is no check is an error naming the checks', async () => {
+	const run = await deploy({ noAcfDir: true, skip: ['vendor,vendro'] });
+	assert.equal(run.status, 1);
+	assert.equal(run.lftpRuns, 0);
+	assert.match(run.output, /No check named 'vendro': the checks are acf, vendor, build, webpack, uncommitted, delete/);
+});
+
+const failingCheck = {
+	acf: { local: { 'g.json': group('g', 100) }, server: { 'g.json': group('g', 900) } },
+	vendor: { noAcfDir: true, extra: { 'composer.json': '{}' } },
+	build: { noAcfDir: true, extra: { 'package.json': JSON.stringify({ scripts: { build: 'wp-scripts build' } }) } },
+	webpack: { noAcfDir: true, extra: { 'build/index.js': 'function webpackMissingModule() {}' } },
+	uncommitted: { noAcfDir: true, uncommitted: { 'new.php': '<?php' } },
+	delete: { noAcfDir: true, params: ['--delete'], dryRun: 'rm -r ftp://u@ftp.test/wp-content/themes/mytheme/vendor\n' },
+};
+for (const [check, scenario] of Object.entries(failingCheck)) {
+	test(`'${check}' stops the upload, names '--skip ${check}', and is skipped by it`, async () => {
+		let run = await deploy(scenario);
+		assert.equal(run.uploaded, false);
+		assert.match(run.output, new RegExp(`--skip ${check}'`));
+
+		run = await deploy({ ...scenario, skip: [check] });
+		assert.equal(run.uploaded, true, run.output);
+		assert.equal(run.status, 0);
+		if (check === 'acf') { assert.equal(run.read('g.json'), group('g', 100)); }
+		if (check === 'delete') { assert.equal(run.dryRuns, 0); }
+	});
+}
+
+test('--strict combines with --skip and refuses on the checks left; repeated --skip adds up', async () => {
+	const failing = { noAcfDir: true, params: ['--delete'], dryRun: 'rm -r ftp://u@ftp.test/wp-content/themes/mytheme/vendor\n',
+		extra: { 'composer.json': '{}' }, uncommitted: { 'new.php': '<?php' } };
+	let run = await deploy({ ...failing, strict: true, skip: ['vendor,uncommitted'] });
+	assert.equal(run.uploaded, false);
+	assert.doesNotMatch(run.output, /cannot be used with/);
+	assert.doesNotMatch(run.output, /composer\.json|new\.php/);
+	assert.match(run.output, /re-run with '--skip delete' to deploy regardless/);
+
+	run = await deploy({ ...failing, strict: true, skip: ['vendor', 'uncommitted', 'delete'] });
+	assert.equal(run.uploaded, true);
+	assert.equal(run.status, 0);
+
+	// every failing check is named, once each
+	run = await deploy(failing);
+	assert.match(run.output, /re-run with '--skip vendor,uncommitted,delete' to deploy regardless/);
 });

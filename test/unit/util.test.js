@@ -1,9 +1,10 @@
 'use strict';
 
 const assert = require('node:assert/strict'),
-	{ test } = require('node:test');
+	{ test } = require('node:test'),
+	os = require('os');
 
-const { echo, execGet, warn } = require('../../lib/util'),
+const { echo, execGet, expandHome, warn } = require('../../lib/util'),
 	{ runNode } = require('../helpers/run');
 
 const capture = (stream, fn) => {
@@ -37,4 +38,11 @@ test('halt warns and exits non-zero', () => {
 	assert.equal(res.status, 1);
 	assert.match(res.stderr, /stop right there/);
 	assert.doesNotMatch(res.stdout, /unreachable/);
+});
+
+test('expandHome expands a leading ~ alone or before a slash, and nothing else', () => {
+	assert.equal(expandHome('~/themes/x'), `${os.homedir()}/themes/x`);
+	assert.equal(expandHome('~'), os.homedir());
+	assert.equal(expandHome('~other/x'), '~other/x');
+	assert.equal(expandHome('./a/~/b'), './a/~/b');
 });

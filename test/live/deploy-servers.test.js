@@ -6,7 +6,7 @@ const assert = require('node:assert/strict'),
 	fs = require('fs'),
 	path = require('path');
 
-const { LFTP_DEFAULTS, deletedFolders, pullRemoteAcfJson, remoteCommands, remoteFolderExists, uncommittedUploads } = require('../../lib/deploy'),
+const { LFTP_DEFAULTS, deletedFolders, ignoreParams, payloadProblems, pullRemoteAcfJson, remoteCommands, remoteFolderExists, uncommittedUploads } = require('../../lib/deploy'),
 	{ makeProject } = require('../helpers/project'),
 	{ runFdk } = require('../helpers/run'),
 	{ FIXTURE_GROUP, SERVERS, commandsFor, missingRequirements, seedFixtures, startServers, stopServers }
@@ -246,7 +246,7 @@ describe('uncommitted changes deploy would upload, through real lftp filters',
 	{ skip: spawnSync('sh', ['-c', 'hash lftp 2>/dev/null']).status ? 'needs lftp' : false }, () => {
 		after(cleanTmpDirs);
 
-		test('edits, new files and deletions count; .distignored ones and committed ones do not', () => {
+		test('edits, new files and deletions count, deletions only with --delete; .distignored ones and committed ones do not', () => {
 			const dir = makeProject({ resources: { plugin: {
 					files: { 'index.php': '<?php', 'gone.php': '<?php', 'kept.php': '<?php', 'old-name.php': '<?php', 'README.md': '#' },
 					dirty: { 'index.php': '<?php // edited', 'new dir/new file.php': '<?php', 'README.md': '# edited',
@@ -255,8 +255,11 @@ describe('uncommitted changes deploy would upload, through real lftp filters',
 				plugin = path.join(dir, 'plugin');
 			fs.rmSync(path.join(plugin, 'gone.php'));
 			spawnSync('git', ['-C', plugin, 'mv', 'old-name.php', 'new-name.php']);
-			assert.deepEqual(uncommittedUploads(plugin, '--exclude-glob README.md --exclude-glob docs/ --exclude-glob *.map').sort(),
+			const filters = '--exclude-glob README.md --exclude-glob docs/ --exclude-glob *.map';
+			assert.deepEqual(uncommittedUploads(plugin, filters, true).sort(),
 				['gone.php', 'index.php', 'new dir/new file.php', 'new-name.php']);
+			assert.deepEqual(uncommittedUploads(plugin, filters, false).sort(),
+				['index.php', 'new dir/new file.php', 'new-name.php']);
 		});
 
 		test('a resource below the top of its repository answers relative to itself', () => {
@@ -268,5 +271,34 @@ describe('uncommitted changes deploy would upload, through real lftp filters',
 
 		test('a folder outside any repository reads as null', () => {
 			assert.equal(uncommittedUploads(makeTmpDir('fdk-live-norepo-'), ''), null);
+		});
+
+		// `lib` can't be laid out as a file and a folder at once; it used to throw and leave the
+		// layout behind in the temp folder
+		test('a file replaced by a folder of the same name is laid out as the folder, and nothing is left in tmp', () => {
+			const dir = makeProject({ resources: { plugin: { files: { lib: '<?php', 'index.php': '<?php' } } } }),
+				plugin = path.join(dir, 'plugin'),
+				tmp = makeTmpDir('fdk-live-tmp-'),
+				saved = process.env.TMPDIR;
+			fs.rmSync(path.join(plugin, 'lib'));
+			fs.mkdirSync(path.join(plugin, 'lib'));
+			fs.writeFileSync(path.join(plugin, 'lib', 'x.php'), '<?php');
+			process.env.TMPDIR = tmp;
+			try {
+				assert.deepEqual(uncommittedUploads(plugin, '', true), ['lib/x.php']);
+			} finally {
+				process.env.TMPDIR = saved;
+			}
+			assert.deepEqual(fs.readdirSync(tmp), []);
+		});
+
+		// a folder deploy leaves out anyway has nothing to lose on the server
+		test("a missing 'vendor/' or 'build/' that .distignore leaves out is no problem", () => {
+			const dir = makeProject({ resources: { plugin: { files: {
+					'composer.json': '{}', 'package.json': JSON.stringify({ scripts: { build: 'wp-scripts build' } }) } } } }),
+				plugin = path.join(dir, 'plugin');
+			assert.deepEqual(payloadProblems(plugin, ignoreParams(plugin)).map(([check]) => check), ['vendor', 'build']);
+			fs.writeFileSync(path.join(plugin, '.distignore'), 'vendor/\n/build/\n');
+			assert.deepEqual(payloadProblems(plugin, ignoreParams(plugin)), []);
 		});
 	});

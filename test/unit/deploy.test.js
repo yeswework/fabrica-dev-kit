@@ -5,7 +5,7 @@ const assert = require('node:assert/strict'),
 	fs = require('fs'),
 	path = require('path');
 
-const { LFTP_DEFAULTS, acfGroupsAtRisk, ignoreParams, lftp, pullRemoteAcfJson, remoteCommands, scrub, uncommittedFiles } = require('../../lib/deploy'),
+const { CHECKS, LFTP_DEFAULTS, acfGroupsAtRisk, ignoreParams, lftp, pullRemoteAcfJson, remoteCommands, scrub, skipOption, uncommittedFiles } = require('../../lib/deploy'),
 	{ BROKEN_PULL, LFTP_STUB_BODY, MISSING_FOLDER } = require('../helpers/lftp-stub'),
 	{ makeProject } = require('../helpers/project'),
 	{ requireLib, runNode } = require('../helpers/run'),
@@ -227,4 +227,19 @@ test('a password is masked whether it is repeated raw or URL-encoded', () => {
 
 test('with no password there is nothing to mask', () => {
 	assert.equal(scrub('Login failed', undefined), 'Login failed');
+});
+
+// ——— skipOption: `--skip`'s parser ————
+
+test('--skip names add up across repeats, spaces and empty items aside', () => {
+	assert.deepEqual(skipOption(' vendor, ,build', []), ['vendor', 'build']);
+	assert.deepEqual(skipOption('delete', ['vendor']), ['vendor', 'delete']);
+	assert.deepEqual(skipOption(CHECKS.join(',')), CHECKS);
+});
+
+test('a --skip name that is no check throws, naming every one that is', () => {
+	assert.throws(() => skipOption('acf,ACF,vendors'), {
+		code: 'commander.invalidArgument',
+		message: `No check named 'ACF', 'vendors': the checks are ${CHECKS.join(', ')}.`,
+	});
 });

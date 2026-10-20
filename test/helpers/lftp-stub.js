@@ -9,7 +9,7 @@
 // it as `<tmpdir>/fdk-acf-<resource>`, which a test can compute for itself with `acfPullDest`.
 //
 // The upload is the `--reverse` branch: `LFTP_STUB_UPLOAD_STATUS` is what it exits with. `--backup`
-// probes for the resource on the server first, with `cls -d`: `LFTP_STUB_EXISTS_STATUS` and
+// and a `--delete` dry run probe for the resource on the server first, with `cls -d`: `LFTP_STUB_EXISTS_STATUS` and
 // `LFTP_STUB_EXISTS_STDERR` answer that. A section with `--delete` in its params has the upload
 // run with `--dry-run` first, which prints `LFTP_STUB_DRY_RUN` and exits with
 // `LFTP_STUB_DRY_RUN_STATUS`. The uncommitted-changes check mirrors locally over `file:///`, which
