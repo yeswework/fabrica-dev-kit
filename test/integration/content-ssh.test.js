@@ -144,7 +144,7 @@ test('a host with no WP-CLI falls back to REST when rest: is set, and says so', 
 	}
 });
 
-test('a host with no WP-CLI and no wp: settings is an error naming what the host said', async () => {
+test('a host with no WP-CLI and no rest: settings is an error naming what the host said', async () => {
 	const res = await run(project(), remote(), ['pull', 'production', '12'],
 		{ ssh: 'echo "bash: wp: command not found" >&2; exit 127' });
 	assert.equal(res.status, 1);

@@ -75,6 +75,26 @@ test('a section that is not a set of settings halts', () => {
 	assert.match(res.stderr, /is not a set of settings/);
 });
 
+test('settings under their old names halt naming the new ones, inherited through extend too', () => {
+	for (const [config, message] of [
+		['default:\n  themes: []\nproduction:\n  extend: default\n  wp:\n    url: https://example.com\n', /'production' in 'config.yml' has 'wp:' settings, which FDK now reads as 'rest:'/],
+		['default:\n  themes: []\n  wp:\n    url: https://example.com\nproduction:\n  extend: default\n', /'production' in 'config.yml' has 'wp:' settings/],
+		['production:\n  rest:\n    appPassword: abcd\n', /'rest\.appPassword' under 'production' in 'config\.yml' is now 'rest\.application_password'/],
+	]) {
+		const res = runNode(`${requireLib('config')}.getProjectConfig('production')`, { cwd: makeProject({ config }) });
+		assert.equal(res.status, 1);
+		assert.match(res.stderr, message);
+	}
+});
+
+test('a resource entry that is not a path halts naming the list, rather than throwing later', () => {
+	for (const config of ['default:\n  themes:\n    - path: ./src/theme\n', 'default:\n  plugins:\n    - ./a\n    -\n', 'default:\n  themes: ./src/theme\n']) {
+		const res = runNode(`${requireLib('config')}.getProjectConfig('default')`, { cwd: makeProject({ config }) });
+		assert.equal(res.status, 1);
+		assert.match(res.stderr, /under 'default' in 'config\.yml' must be a list of paths/);
+	}
+});
+
 // Bitwarden references, read through a stub `bw` that answers with the session it was handed and
 // the item name reversed, so each answer can be told apart from the reference it came from. The
 // developer's own BW_SESSION is cleared unless a test sets one

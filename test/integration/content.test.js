@@ -195,7 +195,7 @@ test('a bare ID is resolved through search; a draft needs its type named', () =>
 		assert.equal(fs.readFileSync(path.join(tmp, 'draft.html'), 'utf8'), 'd');
 	}));
 
-test('a section with no wp: settings, or a placeholder in them, is refused before any request', async () => {
+test('a section with no rest: settings, or a placeholder in them, is refused before any request', async () => {
 	const wp = await startWpStub();
 	try {
 		const bare = makeProject({ config: 'default:\n  themes: []\nproduction:\n  extend: default\n' });
