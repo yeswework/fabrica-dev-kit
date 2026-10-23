@@ -102,8 +102,9 @@ first deploy says there is nothing to back up and carries on rather than stoppin
 The backup is a copy beside the live folder, named `<resource>_<timestamp>`, taken as its own step:
 if it fails, nothing is uploaded and the live folder is untouched. Where the environment logs in
 over SFTP with a key — an `ssh … -i <key>` `sftp:connect-program` in `ftp.commands` — the copy is
-one `cp -a` on the server and takes seconds. Otherwise every file comes down to your machine and
-goes back up, so it takes about as long as a full upload.
+one `cp -a` on the server and takes seconds. Otherwise, or if that login is refused a shell (an
+SFTP-only host), every file comes down to your machine and goes back up, so it takes about as long
+as a full upload.
 
 Every deploy script also opens with bounded network settings, because lftp's own defaults are 1000
 retries and a five-minute response timeout — against a server that is down or firewalled it never

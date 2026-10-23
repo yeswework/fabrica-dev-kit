@@ -46,7 +46,8 @@ const deploy = async ({
 	existsStderr = '',
 	backupStatus = 0, // what the backup's own lftp run exits with
 	sshKey = false,   // an sftp section that logs in with a key, so the backup goes over SSH
-	sshStatus = 0,
+	sshStatus = 0,    // non-zero answers as an SFTP-only host does
+	sshAbsent = false,
 } = {}) => {
 	const files = { 'style.css': '/* theme */' };
 	if (!noAcfDir) {
@@ -71,9 +72,13 @@ const deploy = async ({
 		}
 	}
 
-	const stubs = lftp
-		? stubBin({ docker: 'exit 0', lftp: LFTP_STUB_BODY, ssh: `exit ${sshStatus}` })
-		: stubBin({ docker: 'exit 0' }, { absent: ['lftp'] });
+	// ssh handed fdk's own stdin would forward whatever a script feeds fdk to the server, so
+	// anything but /dev/null fails
+	const ssh = `[ -c /dev/stdin ] || { echo 'ssh was handed stdin' >&2; exit 9; }
+${sshStatus ? `echo 'This service allows sftp connections only.' >&2; exit ${sshStatus}` : 'exit 0'}`,
+		stubs = !lftp ? stubBin({ docker: 'exit 0' }, { absent: ['lftp'] })
+			: sshAbsent ? stubBin({ docker: 'exit 0', lftp: LFTP_STUB_BODY }, { absent: ['ssh'] })
+			: stubBin({ docker: 'exit 0', lftp: LFTP_STUB_BODY, ssh });
 	const res = await runFdk(['deploy', ...(force ? ['--force'] : []), ...(backup ? ['--backup'] : [])], {
 		cwd: dir,
 		env: {
@@ -294,12 +299,32 @@ test('with an SSH key, the backup is one cp -a on the server', async () => {
 	const run = await deploy({ noAcfDir: true, backup: true, existsStatus: 0, sshKey: true });
 	assert.equal(run.status, 0);
 	assert.match(run.backup, /^ssh -i \/key .*u@ftp\.test cp -a '\/wp-content\/themes\/mytheme' '\/wp-content\/themes\/mytheme_/);
+	// the stub refuses stdin by failing, which would show here as a copy through this machine
 	assert.ok(!run.calls.some(call => call.includes('fdk-backup-')), 'nothing should pass through this machine');
+	assert.doesNotMatch(run.output, /ssh was handed stdin/);
+	assert.equal(run.uploaded, true);
+});
+
+// a key gets the login, but an SFTP-only host refuses the shell `cp` needs
+test('a login refused a shell says what ssh said, then backs up through this machine', async () => {
+	const run = await deploy({ noAcfDir: true, backup: true, existsStatus: 0, sshKey: true, sshStatus: 1 });
+	assert.equal(run.status, 0);
+	assert.match(run.output, /The copy over SSH failed: This service allows sftp connections only\.\nCopying through this machine instead/);
+	const copy = run.calls.findIndex(call => call.includes('fdk-backup-'));
+	assert.ok(copy > run.calls.indexOf(run.backup), 'the copy through this machine should follow the ssh attempt');
+	assert.ok(copy < run.calls.indexOf(run.upload), 'the backup should run before the upload');
+});
+
+test('an ssh that cannot be started says why, then backs up through this machine', async () => {
+	const run = await deploy({ noAcfDir: true, backup: true, existsStatus: 0, sshKey: true, sshAbsent: true });
+	assert.equal(run.status, 0);
+	assert.match(run.output, /The copy over SSH failed: spawnSync ssh ENOENT/);
+	assert.ok(run.calls.some(call => call.includes('fdk-backup-')));
 	assert.equal(run.uploaded, true);
 });
 
 // the upload is a separate run, so a failed backup reads as nothing sent rather than a partial upload
-for (const [route, options] of [['lftp', { backupStatus: 1 }], ['SSH', { sshKey: true, sshStatus: 1 }]]) {
+for (const [route, options] of [['lftp', { backupStatus: 1 }], ['SSH and then lftp', { sshKey: true, sshStatus: 1, backupStatus: 1 }]]) {
 	test(`a backup that fails over ${route} stops the deploy before anything is uploaded`, async () => {
 		const run = await deploy({ noAcfDir: true, backup: true, existsStatus: 0, ...options });
 		assert.equal(run.status, 1);
