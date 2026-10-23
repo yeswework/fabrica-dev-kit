@@ -39,7 +39,7 @@ const acfPullDest = name => require('path').join(require('os').tmpdir(), `fdk-ac
 // lftp's own wrapper around whatever the far end said. The wording after a 550 is the server's,
 // not lftp's, so the guard matches the wrapper — these are the four shapes seen in the wild
 const MISSING_FOLDER = {
-	pureFtpd: `mirror: Access failed: 550 Can't change directory to /nope: No such file or directory (/nope)`,
+	pureFtpd: `mirror: Access failed: 550 Can't change directory to /nope: No such file or directory`,
 	pyftpdlib: 'mirror: Access failed: 550 No such file or directory. (/nope)',
 	sftp: 'mirror: Access failed: No such file (/nope)',
 	vsftpd: 'mirror: Access failed: 550 Failed to change directory. (/nope)',
