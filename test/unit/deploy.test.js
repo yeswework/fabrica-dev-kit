@@ -221,6 +221,17 @@ test('lftp hands the password over in its environment, never its arguments, and 
 	}
 });
 
+// `open --env-password` with nothing in the environment would fail every FTP-only `--backup`
+test('a backup through this machine logs in the same way, and masks what lftp says', () => {
+	const stub = stubBin({ lftp: `printf 'env:%s\\n' "$LFTP_PASSWORD" >&2; exit 1` }),
+		res = runNode(`const { backupRemoteFolder, remoteCommands } = ${requireLib('deploy')},
+			{ commands, password } = remoteCommands({ user: 'u', password: 'p w', host: 'h' });
+			console.log(backupRemoteFolder({ host: 'h' }, commands, 'a', 'b', password))`, { env: { PATH: stub.path } });
+	assert.equal(res.stdout.trim().split('\n').pop(), 'false', res.stderr);
+	assert.match(res.stderr, /^env:\*\*\*$/m);
+	assert.doesNotMatch(stub.calls()[0], /p w|p%20w/);
+});
+
 test('a password is masked whether it is repeated raw or URL-encoded', () => {
 	assert.equal(scrub('open: sftp://u:p%40ss%20w@h:22 failed; tried p@ss w twice', 'p@ss w'), 'open: sftp://u:***@h:22 failed; tried *** twice');
 });
