@@ -10,11 +10,12 @@
 //
 // The upload is the `--reverse` branch: `LFTP_STUB_UPLOAD_STATUS` is what it exits with. `--backup`
 // and a `--delete` dry run probe for the resource on the server first, with `cls -d`: `LFTP_STUB_EXISTS_STATUS` and
-// `LFTP_STUB_EXISTS_STDERR` answer that. A section with `--delete` in its params has the upload
-// run with `--dry-run` first, which prints `LFTP_STUB_DRY_RUN` and exits with
-// `LFTP_STUB_DRY_RUN_STATUS`. The uncommitted-changes check mirrors locally over `file:///`, which
-// the stub answers with a plain copy: the filters it passes are lftp's to apply, and the live tier
-// runs them for real.
+// `LFTP_STUB_EXISTS_STDERR` answer that. The backup itself passes through a local `fdk-backup-`
+// folder, which is how it is told apart from the upload: `LFTP_STUB_BACKUP_STATUS` answers it. A
+// section with `--delete` in its params has the upload run with `--dry-run` first, which prints
+// `LFTP_STUB_DRY_RUN` and exits with `LFTP_STUB_DRY_RUN_STATUS`. The uncommitted-changes check
+// mirrors locally over `file:///`, which the stub answers with a plain copy: the filters it passes
+// are lftp's to apply, and the live tier runs them for real.
 //
 // Preflight outcomes, matching the ones the guard has to distinguish:
 //   status  0 + fixture   a copy arrived
@@ -28,6 +29,7 @@ case "$*" in
 		if [ -n "\${LFTP_STUB_STDERR:-}" ]; then printf '%s\\n' "$LFTP_STUB_STDERR" >&2; fi
 		printf '%s' "\${LFTP_STUB_DRY_RUN:-}"
 		exit \${LFTP_STUB_DRY_RUN_STATUS:-0} ;;
+	*fdk-backup-*) exit \${LFTP_STUB_BACKUP_STATUS:-0} ;;
 	*--reverse*) exit \${LFTP_STUB_UPLOAD_STATUS:-0} ;;
 	*"open file:///"*)
 		set -- $(printf '%s' "$2" | sed 's/; *$//; s/.*; //')
@@ -52,7 +54,7 @@ const acfPullDest = name => require('path').join(require('os').tmpdir(), `fdk-ac
 // lftp's own wrapper around whatever the far end said. The wording after a 550 is the server's,
 // not lftp's, so the guard matches the wrapper — these are the four shapes seen in the wild
 const MISSING_FOLDER = {
-	pureFtpd: `mirror: Access failed: 550 Can't change directory to /nope: No such file or directory (/nope)`,
+	pureFtpd: `mirror: Access failed: 550 Can't change directory to /nope: No such file or directory`,
 	pyftpdlib: 'mirror: Access failed: 550 No such file or directory. (/nope)',
 	sftp: 'mirror: Access failed: No such file (/nope)',
 	vsftpd: 'mirror: Access failed: 550 Failed to change directory. (/nope)',

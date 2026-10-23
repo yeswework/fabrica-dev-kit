@@ -10,22 +10,22 @@ const { makeTmpDir } = require('./tmpdir');
 // lftp's, and it is the thing the deploy guard has to see through — no stub can stand in for that.
 //
 // Names are prefixed and ports are high so a run can't collide with anything else on the machine.
+// The two FTP servers are built from `servers/<name>` rather than pulled; see the Dockerfiles
 const SERVERS = {
 	'pure-ftpd': {
 		container: 'fdk-test-pureftpd',
-		image: 'stilliard/pure-ftpd',
+		image: 'fdk-test-pureftpd',
+		build: 'pure-ftpd',
 		port: 2132,
-		run: ['-p', '2132:21', '-p', '30100-30104:30100-30104',
-			'-e', 'PUBLICHOST=localhost', '-e', 'FTP_USER_NAME=fdk', '-e', 'FTP_USER_PASS=secret',
-			'-e', 'FTP_USER_HOME=/home/fdk', '-e', 'FTP_PASSIVE_PORTS=30100:30104'],
+		// Debian's build asks for both at start-up and exits 252, silently, when Docker refuses them
+		run: ['-p', '2132:21', '-p', '30100-30104:30100-30104', '--cap-add', 'DAC_READ_SEARCH', '--cap-add', 'SYS_NICE'],
 	},
 	vsftpd: {
 		container: 'fdk-test-vsftpd',
-		image: 'fauria/vsftpd',
+		image: 'fdk-test-vsftpd',
+		build: 'vsftpd',
 		port: 2133,
-		run: ['-p', '2133:21', '-p', '21200-21204:21200-21204',
-			'-e', 'FTP_USER=fdk', '-e', 'FTP_PASS=secret', '-e', 'PASV_ADDRESS=127.0.0.1',
-			'-e', 'PASV_MIN_PORT=21200', '-e', 'PASV_MAX_PORT=21204'],
+		run: ['-p', '2133:21', '-p', '21200-21204:21200-21204'],
 	},
 	sftp: {
 		container: 'fdk-test-sftp',
@@ -33,7 +33,7 @@ const SERVERS = {
 		port: 2232,
 		run: ['-p', '2232:22'],
 		// atmoz/sftp chroots to the user's home and only pre-declared folders are writable
-		args: ['fdk:secret:::acf-json,empty-json,site'],
+		args: ['fdk:secret:::acf-json,empty-json,site,themes'],
 	},
 };
 
@@ -75,8 +75,15 @@ const waitFor = (label, check, attempts = 60) => {
 };
 
 const startServers = () => {
-	for (const { args = [], container, image, run } of Object.values(SERVERS)) {
+	for (const { args = [], build, container, image, run } of Object.values(SERVERS)) {
 		docker(['rm', '-f', container], { stdio: 'ignore' });
+		if (build) {
+			// Docker's layer cache makes every build after the first take a second
+			const built = docker(['build', '-q', '-t', image, path.join(__dirname, 'servers', build)]);
+			if (built.status !== 0) {
+				throw new Error(`could not build ${image}: ${built.stderr}`);
+			}
+		}
 		const started = docker(['run', '-d', '--name', container, ...run, image, ...args]);
 		if (started.status !== 0) {
 			throw new Error(`could not start ${container}: ${started.stderr}`);
@@ -104,7 +111,7 @@ const stopServers = () => {
 };
 
 // Every server gets the same three remote paths: one folder holding a field group, one folder
-// holding nothing, and one that was never created
+// holding nothing, and one that was never created — plus an empty `themes` for backups to work in
 const FIXTURE_GROUP = JSON.stringify({ key: 'g_live', modified: 500 });
 
 const seedFixtures = () => {
@@ -113,8 +120,8 @@ const seedFixtures = () => {
 	fs.writeFileSync(local, FIXTURE_GROUP);
 
 	for (const name of Object.keys(SERVERS)) {
-		// the sftp chroot already holds both folders and refuses `mkdir` at its root
-		const prepare = name === 'sftp' ? [] : ['mkdir -p acf-json', 'mkdir -p empty-json'],
+		// the sftp chroot already holds these folders and refuses `mkdir` at its root
+		const prepare = name === 'sftp' ? [] : ['mkdir -p acf-json', 'mkdir -p empty-json', 'mkdir -p themes'],
 			result = lftp(commandsFor(name), [...prepare, `put -O acf-json ${local} -o g.json`]);
 		if (result.status !== 0) {
 			throw new Error(`could not seed ${name}: ${result.stderr}`);

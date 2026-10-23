@@ -15,8 +15,8 @@ const { LFTP_DEFAULTS } = require('../../lib/deploy'),
 after(cleanTmpDirs);
 
 const RESOURCE = 'mytheme',
-	config = (ftpCommands = [], params = []) => ['default:', '  ftp:', '    host: ftp.test', '    user: u',
-		'    password: p', '    path: /',
+	config = (ftpCommands = [], params = [], scheme = '') => ['default:', '  ftp:', '    host: ftp.test', '    user: u',
+		'    password: p', '    path: /', ...(scheme ? [`    scheme: ${scheme}`] : []),
 		...(ftpCommands.length ? ['    commands:', ...ftpCommands.map(command => `      - ${command}`)]
 			: ['    commands: []']),
 		...(params.length ? [`    params: [${params.map(param => `'${param}'`).join(', ')}]`] : []),
@@ -55,6 +55,10 @@ const deploy = async ({
 	// what the `--backup` probe for the resource on the server answers
 	existsStatus = 0,
 	existsStderr = '',
+	backupStatus = 0, // what the backup's own lftp run exits with
+	sshKey = false,   // an sftp section that logs in with a key, so the backup goes over SSH
+	sshStatus = 0,    // non-zero answers as an SFTP-only host does
+	sshAbsent = false,
 } = {}) => {
 	const files = { 'style.css': '/* theme */', ...extra };
 	if (!noAcfDir) {
@@ -63,7 +67,9 @@ const deploy = async ({
 		for (const [name, body] of Object.entries(local)) { files[`acf-json/${name}`] = body; }
 	}
 	const dir = makeProject({
-		config: home ? config(ftpCommands, params).replace(`./${RESOURCE}`, `~/${RESOURCE}`) : config(ftpCommands, params),
+		config: (configured => home ? configured.replace(`./${RESOURCE}`, `~/${RESOURCE}`) : configured)(sshKey
+			? config([...ftpCommands, 'set sftp:connect-program "ssh -i /key"'], params, 'sftp')
+			: config(ftpCommands, params)),
 		resources: noResource ? {} : { [RESOURCE]: {
 			files,
 			dirty: { ...Object.fromEntries(Object.entries(dirty).map(([n, b]) => [`acf-json/${n}`, b])), ...uncommitted },
@@ -84,9 +90,13 @@ const deploy = async ({
 		}
 	}
 
-	const stubs = lftp
-		? stubBin({ docker: 'exit 0', lftp: LFTP_STUB_BODY })
-		: stubBin({ docker: 'exit 0' }, { absent: ['lftp'] });
+	// ssh handed fdk's own stdin would forward whatever a script feeds fdk to the server, so
+	// anything but /dev/null fails
+	const ssh = `[ -c /dev/stdin ] || { echo 'ssh was handed stdin' >&2; exit 9; }
+${sshStatus ? `echo 'This service allows sftp connections only.' >&2; exit ${sshStatus}` : 'exit 0'}`,
+		stubs = !lftp ? stubBin({ docker: 'exit 0' }, { absent: ['lftp'] })
+			: sshAbsent ? stubBin({ docker: 'exit 0', lftp: LFTP_STUB_BODY }, { absent: ['ssh'] })
+			: stubBin({ docker: 'exit 0', lftp: LFTP_STUB_BODY, ssh });
 	const res = await runFdk(['deploy', ...(force ? ['--force'] : []), ...(strict ? ['--strict'] : []), ...skip.flatMap(value => ['--skip', value]), ...(backup ? ['--backup'] : [])], {
 		cwd: dir,
 		env: {
@@ -102,20 +112,25 @@ const deploy = async ({
 			LFTP_STUB_UPLOAD_STATUS: String(uploadStatus),
 			LFTP_STUB_DRY_RUN: dryRun,
 			LFTP_STUB_DRY_RUN_STATUS: String(dryRunStatus),
+			LFTP_STUB_BACKUP_STATUS: String(backupStatus),
 		},
 	});
 
-	const calls = stubs.calls();
+	const calls = stubs.calls(),
+		// the backup's own run uploads too, into the backup folder, and the `--delete` check's dry run
+		// is the upload's own command
+		isUpload = call => call.includes('--reverse') && !call.includes('fdk-backup-') && !call.includes('--dry-run');
 	return {
 		calls,
-		upload: calls.find(call => call.includes('--reverse') && !call.includes('--dry-run')) || '',
+		backup: calls.find(call => call.includes('fdk-backup-') || call.startsWith('ssh ')) || '',
+		upload: calls.find(isUpload) || '',
 		dryRuns: calls.filter(call => call.includes('--dry-run')).length,
 		dryRun: calls.find(call => call.includes('--dry-run')) || '',
 		lftpRuns: calls.filter(c => c.includes('mirror')).length,
 		output: res.stdout + res.stderr,
 		read: file => fs.readFileSync(path.join(dir, RESOURCE, 'acf-json', file), 'utf8'),
 		status: res.status,
-		uploaded: calls.some(c => c.includes('--reverse') && !c.includes('--dry-run')),
+		uploaded: calls.some(isUpload),
 	};
 };
 
@@ -290,14 +305,59 @@ test('a successful upload still exits 0', async () => {
 	assert.doesNotMatch(run.output, /failed while uploading/);
 });
 
-// ——— --backup, which runs before the upload in the same script ————
+// ——— --backup, its own step before the upload ————
 
-test('a backup is queued when the resource is already on the server', async () => {
+// a remote-to-remote mirror needed a URL target, which made a home-relative path absolute, and
+// leaned on FXP, which shared hosts refuse (fabrica-dev-kit-dy8, fabrica-dev-kit-e64)
+test('without SSH, the backup passes through this machine, then the upload runs', async () => {
 	const run = await deploy({ noAcfDir: true, backup: true, existsStatus: 0 });
 	assert.equal(run.status, 0);
-	assert.match(run.upload, /set ftp:use-fxp yes/);
-	assert.match(run.upload, /Copying original resource folder/);
+	assert.match(run.backup, /mirror --verbose=1 \/wp-content\/themes\/mytheme \S*fdk-backup-mytheme_/);
+	assert.match(run.backup, /mirror --reverse --verbose=1 \S*fdk-backup-mytheme_\S* \/wp-content\/themes\/mytheme_/);
+	assert.doesNotMatch(run.backup, /use-fxp|mirror \S+ ftp:\/\//);
+	assert.ok(run.calls.indexOf(run.backup) < run.calls.indexOf(run.upload), 'the backup should run first');
+	assert.match(run.output, /takes about as long as a full upload/);
 });
+
+test('with an SSH key, the backup is one cp -a on the server', async () => {
+	const run = await deploy({ noAcfDir: true, backup: true, existsStatus: 0, sshKey: true });
+	assert.equal(run.status, 0);
+	assert.match(run.backup, /^ssh -i \/key .*u@ftp\.test cp -a '\/wp-content\/themes\/mytheme' '\/wp-content\/themes\/mytheme_/);
+	// the stub refuses stdin by failing, which would show here as a copy through this machine
+	assert.ok(!run.calls.some(call => call.includes('fdk-backup-')), 'nothing should pass through this machine');
+	assert.doesNotMatch(run.output, /ssh was handed stdin/);
+	assert.equal(run.uploaded, true);
+});
+
+// a key gets the login, but an SFTP-only host refuses the shell `cp` needs
+test('a login refused a shell says what ssh said, then backs up through this machine', async () => {
+	const run = await deploy({ noAcfDir: true, backup: true, existsStatus: 0, sshKey: true, sshStatus: 1 });
+	assert.equal(run.status, 0);
+	assert.match(run.output, /The copy over SSH failed: This service allows sftp connections only\.\nCopying through this machine instead/);
+	const copy = run.calls.findIndex(call => call.includes('fdk-backup-'));
+	assert.ok(copy > run.calls.indexOf(run.backup), 'the copy through this machine should follow the ssh attempt');
+	assert.ok(copy < run.calls.indexOf(run.upload), 'the backup should run before the upload');
+});
+
+test('an ssh that cannot be started says why, then backs up through this machine', async () => {
+	const run = await deploy({ noAcfDir: true, backup: true, existsStatus: 0, sshKey: true, sshAbsent: true });
+	assert.equal(run.status, 0);
+	assert.match(run.output, /The copy over SSH failed: spawnSync ssh ENOENT/);
+	assert.ok(run.calls.some(call => call.includes('fdk-backup-')));
+	assert.equal(run.uploaded, true);
+});
+
+// the upload is a separate run, so a failed backup reads as nothing sent rather than a partial upload
+for (const [route, options] of [['lftp', { backupStatus: 1 }], ['SSH and then lftp', { sshKey: true, sshStatus: 1, backupStatus: 1 }]]) {
+	test(`a backup that fails over ${route} stops the deploy before anything is uploaded`, async () => {
+		const run = await deploy({ noAcfDir: true, backup: true, existsStatus: 0, ...options });
+		assert.equal(run.status, 1);
+		assert.equal(run.uploaded, false);
+		assert.match(run.output, /live copy is untouched/);
+		assert.match(run.output, /not uploaded: mytheme/);
+		assert.doesNotMatch(run.output, /may hold a partial copy/);
+	});
+}
 
 // fail-fast would otherwise abort a legitimate first deploy on the backup of a folder that was
 // never there
@@ -306,7 +366,7 @@ test('nothing is backed up on a first deploy, and the upload still happens', asy
 		existsStatus: 1, existsStderr: MISSING_FOLDER.vsftpd });
 	assert.equal(run.status, 0);
 	assert.equal(run.uploaded, true);
-	assert.doesNotMatch(run.upload, /use-fxp/, 'no backup should have been queued');
+	assert.equal(run.backup, '', 'no backup should have run');
 	assert.match(run.output, /Nothing to back up/);
 });
 
@@ -430,13 +490,18 @@ test('a resource not on the server yet has nothing for --delete to remove, and n
 	assert.match(run.output, /the server couldn't say which folders '--delete' would remove/);
 });
 
-// the dry run shares the upload's script, so a backup queued before it would really be copied
-test('--backup is copied in the upload alone, never in the dry run', async () => {
-	const run = await deploy({ noAcfDir: true, backup: true, params: ['--delete'] });
+// the checks run before the backup, so the dry run copies nothing and a refused resource keeps no copy
+test('--backup runs after the dry run, never in it, and never for a resource the checks refuse', async () => {
+	let run = await deploy({ noAcfDir: true, backup: true, params: ['--delete'] });
 	assert.equal(run.uploaded, true);
 	assert.equal(run.dryRuns, 1);
-	assert.doesNotMatch(run.dryRun, /use-fxp|Copying original resource folder/);
-	assert.match(run.upload, /set ftp:use-fxp yes/);
+	assert.doesNotMatch(run.dryRun, /fdk-backup-|cp -a/);
+	assert.ok(run.calls.indexOf(run.dryRun) < run.calls.indexOf(run.backup), 'the dry run should come before the backup');
+
+	run = await deploy({ noAcfDir: true, backup: true, strict: true, params: ['--delete'],
+		dryRun: 'rm -r ftp://u@ftp.test/wp-content/themes/mytheme/vendor\n' });
+	assert.equal(run.uploaded, false);
+	assert.equal(run.backup, '', 'a refused resource should not be backed up');
 });
 
 test('--force skips every check, --strict refuses, and the two together are an error', async () => {
