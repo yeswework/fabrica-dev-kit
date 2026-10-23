@@ -6,7 +6,7 @@ const assert = require('node:assert/strict'),
 	fs = require('fs'),
 	path = require('path');
 
-const { LFTP_DEFAULTS, backupRemoteFolder, pullRemoteAcfJson, remoteCommands, remoteFolderExists } = require('../../lib/deploy'),
+const { LFTP_DEFAULTS, backupRemoteFolder, deletedFolders, ignoreParams, payloadProblems, pullRemoteAcfJson, remoteCommands, remoteFolderExists, uncommittedUploads } = require('../../lib/deploy'),
 	{ makeProject } = require('../helpers/project'),
 	{ runFdk } = require('../helpers/run'),
 	{ FIXTURE_GROUP, SERVERS, commandsFor, missingRequirements, seedFixtures, startServers, stopServers }
@@ -219,5 +219,105 @@ describe('the ACF preflight against real servers',
 			assert.equal(res.status, 1);
 			assert.match(res.stdout, /myplugin: identical/);
 			assert.match(res.stdout, /myplugin: not on the server/);
+		});
+
+		// the deploy asks lftp, with the upload's own mirror under `--dry-run`, which folders
+		// `--delete` would remove, and reads them back out of the URLs each server prints
+		for (const name of Object.keys(SERVERS)) {
+			test(`${name}: a dry run of the upload names the top-level folders --delete would remove`, () => {
+				const seed = makeTmpDir('fdk-live-delete-'),
+					local = makeTmpDir('fdk-live-delete-'),
+					write = (root, file) => {
+						fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+						fs.writeFileSync(path.join(root, file), file);
+					};
+				['index.php', 'old.php', 'vendor/autoload.php', 'lib/old/a.php', 'lib/b.php'].forEach(file => write(seed, file));
+				['index.php', 'lib/b.php'].forEach(file => write(local, file));
+				// the sftp chroot refuses `mkdir` at its root, so every server is seeded under `site`
+				const remotePath = `site/wp-content/plugins/${name}-plugin`,
+					seeded = spawnSync('lftp', ['-c', [...commandsFor(name), `mkdir -p ${path.dirname(remotePath)}`,
+						`mirror --reverse ${seed} ${remotePath}`].join('; ')], { encoding: 'utf8' });
+				assert.equal(seeded.status, 0, seeded.stderr);
+
+				const mirror = `mirror --reverse --verbose=1 --delete ${local} ${remotePath}`;
+				assert.deepEqual(deletedFolders(commandsFor(name), undefined, mirror, remotePath), ['vendor']);
+				// and nothing was removed by asking
+				const listed = spawnSync('lftp', ['-c', [...commandsFor(name), `cls -1 ${remotePath}/`].join('; ')], { encoding: 'utf8' });
+				assert.match(listed.stdout, /vendor/);
+			});
+		}
+
+		// lftp's dry run takes a target it can't reach for one that isn't there, and exits 0
+		test('a dry run that cannot connect reads as null, and a first deploy as nothing to remove', () => {
+			const empty = makeTmpDir('fdk-live-delete-');
+			assert.equal(deletedFolders(['set net:max-retries 1', 'set net:timeout 5', 'open ftp://fdk:secret@127.0.0.1:2199'],
+				undefined, `mirror --reverse --delete ${empty} site/never-created`, 'site/never-created'), null);
+			for (const name of Object.keys(SERVERS)) {
+				assert.deepEqual(deletedFolders(commandsFor(name), undefined,
+					`mirror --reverse --delete ${empty} site/never-created`, 'site/never-created'), [], name);
+			}
+		});
+	});
+
+// The uncommitted-changes check has lftp apply a resource's filters to the paths git reports, so
+// only a real lftp can show that a `.distignore`d change doesn't count. No server: it mirrors locally
+describe('uncommitted changes deploy would upload, through real lftp filters',
+	{ skip: spawnSync('sh', ['-c', 'hash lftp 2>/dev/null']).status ? 'needs lftp' : false }, () => {
+		after(cleanTmpDirs);
+
+		test('edits, new files and deletions count, deletions only with --delete; .distignored ones and committed ones do not', () => {
+			const dir = makeProject({ resources: { plugin: {
+					files: { 'index.php': '<?php', 'gone.php': '<?php', 'kept.php': '<?php', 'old-name.php': '<?php', 'README.md': '#' },
+					dirty: { 'index.php': '<?php // edited', 'new dir/new file.php': '<?php', 'README.md': '# edited',
+						'docs/guide.md': '#', 'build/index.js.map': '{}' },
+				} } }),
+				plugin = path.join(dir, 'plugin');
+			fs.rmSync(path.join(plugin, 'gone.php'));
+			spawnSync('git', ['-C', plugin, 'mv', 'old-name.php', 'new-name.php']);
+			const filters = '--exclude-glob README.md --exclude-glob docs/ --exclude-glob *.map';
+			assert.deepEqual(uncommittedUploads(plugin, filters, true).sort(),
+				['gone.php', 'index.php', 'new dir/new file.php', 'new-name.php']);
+			assert.deepEqual(uncommittedUploads(plugin, filters, false).sort(),
+				['index.php', 'new dir/new file.php', 'new-name.php']);
+		});
+
+		test('a resource below the top of its repository answers relative to itself', () => {
+			const dir = makeProject({ resources: { repo: { files: { 'plugin/index.php': '<?php', 'other.php': '<?php' },
+					dirty: { 'plugin/index.php': '<?php // edited', 'other.php': '<?php // edited' } } } }),
+				plugin = path.join(dir, 'repo', 'plugin');
+			assert.deepEqual(uncommittedUploads(plugin, ''), ['index.php']);
+		});
+
+		test('a folder outside any repository reads as null', () => {
+			assert.equal(uncommittedUploads(makeTmpDir('fdk-live-norepo-'), ''), null);
+		});
+
+		// `lib` can't be laid out as a file and a folder at once; it used to throw and leave the
+		// layout behind in the temp folder
+		test('a file replaced by a folder of the same name is laid out as the folder, and nothing is left in tmp', () => {
+			const dir = makeProject({ resources: { plugin: { files: { lib: '<?php', 'index.php': '<?php' } } } }),
+				plugin = path.join(dir, 'plugin'),
+				tmp = makeTmpDir('fdk-live-tmp-'),
+				saved = process.env.TMPDIR;
+			fs.rmSync(path.join(plugin, 'lib'));
+			fs.mkdirSync(path.join(plugin, 'lib'));
+			fs.writeFileSync(path.join(plugin, 'lib', 'x.php'), '<?php');
+			process.env.TMPDIR = tmp;
+			try {
+				assert.deepEqual(uncommittedUploads(plugin, '', true), ['lib/x.php']);
+			} finally {
+				process.env.TMPDIR = saved;
+			}
+			assert.deepEqual(fs.readdirSync(tmp), []);
+		});
+
+		// a folder deploy leaves out anyway has nothing to lose on the server
+		test("a missing 'vendor/' or 'build/' that .distignore leaves out is no problem", () => {
+			const dir = makeProject({ resources: { plugin: { files: {
+					'composer.json': '{}', 'package.json': JSON.stringify({ scripts: { build: 'wp-scripts build' } }) } } } }),
+				plugin = path.join(dir, 'plugin');
+			assert.deepEqual(payloadProblems(plugin, ignoreParams(plugin)).map(([check]) => check), ['vendor', 'build']);
+			fs.writeFileSync(path.join(plugin, '.distignore'), 'vendor/\n/build/\n');
+			assert.deepEqual(payloadProblems(plugin, ignoreParams(plugin)), []);
 		});
 	});

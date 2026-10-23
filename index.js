@@ -15,7 +15,7 @@ const { echo, execWP, halt, spawn, warn } = require('./lib/util'),
 	{ PORTLESS_CONFIG_EXTRA, checkPortless, removePortlessAlias, setupPortlessAlias } = require('./lib/portless'),
 	{ getDBPort, getServicesPorts, getSiteURL, getWebPort, waitForWebContainer } = require('./lib/docker'),
 	{ init, setup } = require('./lib/setup'),
-	{ deploy } = require('./lib/deploy'),
+	{ CHECKS, deploy, skipOption } = require('./lib/deploy'),
 	{ drift } = require('./lib/drift'),
 	{ pull, push, refs } = require('./lib/content');
 
@@ -329,7 +329,9 @@ const addProjectCommands = () => {
 		program.command('deploy [project]')
 			.description(`Deploy resources to server according to configuration in 'config.yml' file. If no <project> is passed, settings under 'default' will be loaded. Files and folders matching patterns in resource '.distignore' file will be ignored`)
 			.option('-k, --backup', 'backup existing resources folders before updating')
-			.option('-f, --force', `deploy even if the remote 'acf-json' has diverged from the local one`)
+			.option('--skip <checks>', `deploy without these checks, comma-separated: 'acf' (a server 'acf-json' newer than the local one), 'vendor' (a 'composer.json' with no 'vendor/autoload.php'), 'build' (a build script with no 'build/'), 'webpack' (a bundle webpack built around a missing module), 'uncommitted' (uncommitted changes it would upload), 'delete' (folders '--delete' would remove)`, skipOption)
+			.addOption(new program.Option('-f, --force', `deploy without any of the checks, as '--skip ${CHECKS.join(',')}' would`).conflicts('strict'))
+			.option('-s, --strict', `refuse a resource that fails a check instead of asking whether to deploy it anyway, as happens wherever there's no terminal to ask on`)
 			.action(deploy);
 		program.command('drift [project]')
 			.description(`Compare every resource <project> and its '<project>/*' variants deploy with the copy on the server, file by file, without changing anything. Files matching each resource's '.distignore' are left out, as in 'deploy'`)
