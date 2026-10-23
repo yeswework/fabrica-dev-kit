@@ -53,10 +53,10 @@ default:
   themes:
     - ./src/themes/fdk-theme
   ftp:
-    - host: fdkserver.dev
-    - user: fdk
-    - password: fdk
-    - path: /public-html
+    host: fdkserver.dev
+    user: fdk
+    password: fdk
+    path: /public-html
 
 staging:
   plugins:
@@ -64,12 +64,12 @@ staging:
   themes:
     - ./src/themes/fdk-theme
   ftp:
-    - host: staging.fdkserver.dev
-    - user: staging
-    - password: staging
-    - path /staging
+    host: staging.fdkserver.dev
+    user: staging
+    password: staging
+    path: /staging
 ```
-   To keep a password out of `config.yml` — so the file can be committed — write a Bitwarden reference in its place: `bw://` followed by the name of the item that holds it, such as `password: bw://coda-production-ftp`. This works for `ftp.password` and `wp.appPassword`. FDK reads the item's password with the Bitwarden CLI (`bw`) only when it connects to the server (`deploy`, `drift`, `pull`, `push`, `refs`), so `fdk start` and `config:*` never prompt. `bw` needs an unlocked vault: FDK uses `BW_SESSION` if it is exported, and otherwise the session saved in the login keychain by `security add-generic-password -U -a "$USER" -s bw-session -w "$(bw unlock --raw)"`, which lasts until `bw lock`. Item names must not be part of another item's name, since `bw` matches by substring and stops on more than one result; after an item is added, `bw sync` makes it visible.
+   To keep a password out of `config.yml` — so the file can be committed — write a Bitwarden reference in its place: `bw://` followed by the name of the item that holds it, such as `password: bw://coda-production-ftp`. This works for `ftp.password` and `rest.application_password`. FDK reads the item's password with the Bitwarden CLI (`bw`) only when it connects to the server (`deploy`, `drift`, `pull`, `push`, `refs`), so `fdk start` and `config:*` never prompt. `bw` needs an unlocked vault: FDK uses `BW_SESSION` if it is exported, and otherwise the session saved in the login keychain by `security add-generic-password -U -a "$USER" -s bw-session -w "$(bw unlock --raw)"`, which lasts until `bw lock`. Item names must not be part of another item's name, since `bw` matches by substring and stops on more than one result; after an item is added, `bw sync` makes it visible.
 2. FDK will invoke each resource's individual Webpack config to build resources (if it needs a build step; otherwise the folder will just be mirrored as it is). To make sure this works correctly, any paths in your Webpack config should be resolved fully with `path.resolve` and the current folder, for example `path.resolve(__dirname, 'src/js/front.js')`
 
 ### Running the master Webpack during active development
@@ -158,19 +158,19 @@ Each section gets in one of two ways:
 
 * **SSH**, running WP-CLI on the server, when its `ftp:` is sftp and `ftp.commands` sets
   `sftp:connect-program` to an `ssh` that logs in with a key (`-i`). There's nothing more to set up.
-* **The REST API** otherwise, with a `wp:` block naming the site's https URL, a user and an
+* **The REST API** otherwise, with a `rest:` block naming the site's https URL, a user and an
   application password (created under Users → Profile):
 
 ```
 production:
-  wp:
+  rest:
     url: https://example.com
     user: editor
-    appPassword: bw://example-wp
+    application_password: bw://example-wp
 ```
 
-A section with both uses SSH, and falls back to `wp:` with a warning if WP-CLI doesn't answer.
-Wherever `wp.url` is set, over SSH too, FDK first checks that the site reports that URL as its
+A section with both uses SSH, and falls back to `rest:` with a warning if WP-CLI doesn't answer.
+Wherever `rest.url` is set, over SSH too, FDK first checks that the site reports that URL as its
 home, so a credential for one site is never used on a copy of it.
 
 ### Troubleshooting and housekeeping

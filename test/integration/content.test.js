@@ -25,12 +25,12 @@ const MARKUP = [
 
 const docker = () => stubBin({ docker: 'exit 0' }).path;
 
-// A project whose `production` section points at `wp`, with `wp` overrides for the credential
+// A project whose `production` section points at `wp`, with `rest:` overrides for the credential
 const setup = (wp, { section = 'production', settings = {} } = {}) => {
-	const values = { url: wp.url, user: 'editor', appPassword: wp.password, ...settings },
+	const values = { url: wp.url, user: 'editor', application_password: wp.password, ...settings },
 		lines = Object.entries(values).filter(([, value]) => value !== undefined)
 			.map(([key, value]) => `    ${key}: "${value}"`);
-	return makeProject({ config: ['default:', '  themes: []', `${section}:`, '  extend: default', '  wp:', ...lines, ''].join('\n') });
+	return makeProject({ config: ['default:', '  themes: []', `${section}:`, '  extend: default', '  rest:', ...lines, ''].join('\n') });
 };
 
 const fdk = (dir, ...args) => runFdk(args, { cwd: dir, env: { PATH: docker() } });
@@ -195,7 +195,7 @@ test('a bare ID is resolved through search; a draft needs its type named', () =>
 		assert.equal(fs.readFileSync(path.join(tmp, 'draft.html'), 'utf8'), 'd');
 	}));
 
-test('a section with no wp: settings, or a placeholder in them, is refused before any request', async () => {
+test('a section with no rest: settings, or a placeholder in them, is refused before any request', async () => {
 	const wp = await startWpStub();
 	try {
 		const bare = makeProject({ config: 'default:\n  themes: []\nproduction:\n  extend: default\n' });
@@ -203,7 +203,7 @@ test('a section with no wp: settings, or a placeholder in them, is refused befor
 		assert.equal(res.status, 1);
 		assert.match(res.stderr, /No way into 'production'/);
 
-		for (const settings of [{ user: '<wp username>' }, { appPassword: 'xxxx xxxx xxxx xxxx xxxx xxxx' }, { appPassword: undefined }]) {
+		for (const settings of [{ user: '<wp username>' }, { application_password: 'xxxx xxxx xxxx xxxx xxxx xxxx' }, { application_password: undefined }]) {
 			res = await run(setup(wp, { settings }), 'pull', 'production', '12');
 			assert.equal(res.status, 1);
 			assert.match(res.stderr, /missing or still a placeholder/);
@@ -262,7 +262,7 @@ test('a request that arrives without credentials is reported as a stripped heade
 // the application password is sent as Basic auth, which the stub checks byte for byte
 test("a bw:// application password logs in without the line break bw ends with", () =>
 	withSite({ posts: { 12: { type: 'page', raw: 'a' } } }, async (wp, dir, tmp) => {
-		const project = setup({ url: wp.url, password: 'unused' }, { settings: { appPassword: 'bw://site-wp' } }),
+		const project = setup({ url: wp.url, password: 'unused' }, { settings: { application_password: 'bw://site-wp' } }),
 			bin = stubBin({ docker: 'exit 0', bw: `printf '%s\\n' '${wp.password}'` }),
 			res = await runFdk(['pull', 'production', '12', path.join(tmp, 'page.html')], { cwd: project, env: { PATH: bin.path, BW_SESSION: 'exported' } });
 		assert.equal(res.status, 0, res.stderr);
