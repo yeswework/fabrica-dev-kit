@@ -352,6 +352,8 @@ for (const record of ['listed', 'unlisted']) test(`a to-live that meets a local 
 		let res = await refsRun(dir, [], 'refs', 'production', file, 'to-live');
 		assert.equal(res.status, 0, res.stderr);
 		assert.match(res.stderr, /Ref\(s\) 455 are still the local site's IDs/);
+		// recreating 455's pattern would get it a new ID, so the way out is a fresh pull
+		assert.match(res.stderr, /or pull the page again if it was deleted/);
 		assert.equal(fs.readFileSync(file, 'utf8'), '<!-- wp:block {"ref":455} /-->');
 		res = await run(dir, 'push', 'production', '12', file);
 		assert.equal(res.status, 1);
@@ -359,6 +361,20 @@ for (const record of ['listed', 'unlisted']) test(`a to-live that meets a local 
 		assert.equal(wp.writes().length, 0);
 	});
 });
+
+// a pattern with the same ID on both sides needs no swap, and leaves no local ID behind
+test('a to-local that swaps nothing leaves push allowed', () =>
+	withSite({ posts: { 12: { type: 'page', raw: '<!-- wp:block {"ref":37827} /-->' } },
+		patterns: { 37827: { status: 'publish', title: 'Monetization Kit subnav' } } },
+	async (wp, dir, tmp) => {
+		const file = path.join(tmp, 'page.html');
+		await run(dir, 'pull', 'production', '12', file);
+		let res = await refsRun(dir, [[37827, 'Monetization Kit subnav']], 'refs', 'production', file, 'to-local');
+		assert.equal(res.status, 0, res.stderr);
+		assert.equal(JSON.parse(fs.readFileSync(`${file}.fdk.json`, 'utf8')).localRefs, undefined);
+		res = await run(dir, 'push', 'production', '12', file);
+		assert.equal(res.status, 0, res.stderr);
+	}));
 
 test("refs reads every page of the site's patterns", () => {
 	const patterns = Object.fromEntries(Array.from({ length: 150 }, (_, i) => [1000 + i, { status: 'publish', title: `Pattern ${i}` }]));
