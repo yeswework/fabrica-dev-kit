@@ -33,7 +33,7 @@ const SERVERS = {
 		port: 2232,
 		run: ['-p', '2232:22'],
 		// atmoz/sftp chroots to the user's home and only pre-declared folders are writable
-		args: ['fdk:secret:::acf-json,empty-json,themes'],
+		args: ['fdk:secret:::acf-json,empty-json,site,themes'],
 	},
 };
 

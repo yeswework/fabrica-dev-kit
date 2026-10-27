@@ -9,9 +9,13 @@
 // it as `<tmpdir>/fdk-acf-<resource>`, which a test can compute for itself with `acfPullDest`.
 //
 // The upload is the `--reverse` branch: `LFTP_STUB_UPLOAD_STATUS` is what it exits with. `--backup`
-// probes for the resource on the server first, with `cls -d`: `LFTP_STUB_EXISTS_STATUS` and
+// and a `--delete` dry run probe for the resource on the server first, with `cls -d`: `LFTP_STUB_EXISTS_STATUS` and
 // `LFTP_STUB_EXISTS_STDERR` answer that. The backup itself passes through a local `fdk-backup-`
-// folder, which is how it is told apart from the upload: `LFTP_STUB_BACKUP_STATUS` answers it.
+// folder, which is how it is told apart from the upload: `LFTP_STUB_BACKUP_STATUS` answers it. A
+// section with `--delete` in its params has the upload run with `--dry-run` first, which prints
+// `LFTP_STUB_DRY_RUN` and exits with `LFTP_STUB_DRY_RUN_STATUS`. The uncommitted-changes check
+// mirrors locally over `file:///`, which the stub answers with a plain copy: the filters it passes
+// are lftp's to apply, and the live tier runs them for real.
 //
 // Preflight outcomes, matching the ones the guard has to distinguish:
 //   status  0 + fixture   a copy arrived
@@ -21,8 +25,17 @@
 //   (no stub at all)                the binary isn't installed
 const LFTP_STUB_BODY = `
 case "$*" in
+	*--dry-run*)
+		if [ -n "\${LFTP_STUB_STDERR:-}" ]; then printf '%s\\n' "$LFTP_STUB_STDERR" >&2; fi
+		printf '%s' "\${LFTP_STUB_DRY_RUN:-}"
+		exit \${LFTP_STUB_DRY_RUN_STATUS:-0} ;;
 	*fdk-backup-*) exit \${LFTP_STUB_BACKUP_STATUS:-0} ;;
 	*--reverse*) exit \${LFTP_STUB_UPLOAD_STATUS:-0} ;;
+	*"open file:///"*)
+		set -- $(printf '%s' "$2" | sed 's/; *$//; s/.*; //')
+		eval "src=\\\${$(($# - 1))} dest=\\\${$#}"
+		mkdir -p "$dest" && cp -R "$src/." "$dest/"
+		exit 0 ;;
 	*"cls -d"*)
 		if [ -n "\${LFTP_STUB_EXISTS_STDERR:-}" ]; then printf '%s\\n' "$LFTP_STUB_EXISTS_STDERR" >&2; fi
 		exit \${LFTP_STUB_EXISTS_STATUS:-0} ;;

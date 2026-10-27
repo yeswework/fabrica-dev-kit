@@ -5,7 +5,7 @@ const assert = require('node:assert/strict'),
 	fs = require('fs'),
 	path = require('path');
 
-const { LFTP_DEFAULTS, acfGroupsAtRisk, ignoreParams, lftp, pullRemoteAcfJson, remoteCommands, scrub, uncommittedFiles } = require('../../lib/deploy'),
+const { CHECKS, DELETE_OPTION, LFTP_DEFAULTS, acfGroupsAtRisk, ignoreParams, lftp, pullRemoteAcfJson, remoteCommands, scrub, skipOption, uncommittedFiles } = require('../../lib/deploy'),
 	{ BROKEN_PULL, LFTP_STUB_BODY, MISSING_FOLDER } = require('../helpers/lftp-stub'),
 	{ makeProject } = require('../helpers/project'),
 	{ requireLib, runNode } = require('../helpers/run'),
@@ -103,6 +103,18 @@ test('a folder that is not a repository answers null, not an empty list', () => 
 		resources: { mytheme: { files: { 'acf-json/g.json': group('g', 1) }, git: false } },
 	});
 	assert.equal(uncommittedFiles(path.join(dir, 'mytheme'), ['acf-json/g.json']), null);
+});
+
+// a theme kept inside a project repository that ignores it, with no .git of its own: git reports
+// nothing changed there, and could restore none of what a pull overwrote
+test('a folder its repository ignores answers null, not an empty list', () => {
+	const repo = makeTmpDir('fdk-ignored-'),
+		theme = path.join(repo, 'themes', 'mytheme');
+	fs.mkdirSync(path.join(theme, 'acf-json'), { recursive: true });
+	fs.writeFileSync(path.join(theme, 'acf-json', 'g.json'), group('g', 1));
+	fs.writeFileSync(path.join(repo, '.gitignore'), 'themes/mytheme/\n');
+	require('child_process').spawnSync('git', ['init', '-q', repo]);
+	assert.equal(uncommittedFiles(theme, ['acf-json/g.json']), null);
 });
 
 // ——— pullRemoteAcfJson: the tri-state the guard turns on ————
@@ -232,10 +244,43 @@ test('a backup through this machine logs in the same way, and masks what lftp sa
 	assert.doesNotMatch(stub.calls()[0], /p w|p%20w/);
 });
 
+// a `--delete` dry run of a first deploy with vendor/ lists thousands of files
+test('lftp output past 1MB is read whole, not cut off as a failure', () => {
+	const stub = stubBin({ lftp: `head -c 2000000 /dev/zero | tr '\\0' a` }),
+		res = runNode(`const { lftp } = ${requireLib('deploy')}, { status, stdout } = lftp(['x'], undefined, 'pipe');
+			console.log(status, stdout.length)`, { env: { PATH: stub.path } });
+	assert.equal(res.stdout.trim(), '0 2000000', res.stderr);
+});
+
 test('a password is masked whether it is repeated raw or URL-encoded', () => {
 	assert.equal(scrub('open: sftp://u:p%40ss%20w@h:22 failed; tried p@ss w twice', 'p@ss w'), 'open: sftp://u:***@h:22 failed; tried *** twice');
 });
 
 test('with no password there is nothing to mask', () => {
 	assert.equal(scrub('Login failed', undefined), 'Login failed');
+});
+
+// lftp reads short options as getopt does, so `-e` can come combined with others
+test('--delete is seen however it is written, and nothing else is taken for it', () => {
+	for (const params of ['-e', '--delete', '--delete-first', '-ev', '-Re', '-R -e', '-v --delete=x']) {
+		assert.ok(DELETE_OPTION.test(params), params);
+	}
+	for (const params of ['', '-R', '-v', '--exclude-glob *.e', '-x \\.e$', '--verbose']) {
+		assert.ok(!DELETE_OPTION.test(params), params);
+	}
+});
+
+// ——— skipOption: `--skip`'s parser ————
+
+test('--skip names add up across repeats, spaces and empty items aside', () => {
+	assert.deepEqual(skipOption(' vendor, ,build', []), ['vendor', 'build']);
+	assert.deepEqual(skipOption('delete', ['vendor']), ['vendor', 'delete']);
+	assert.deepEqual(skipOption(CHECKS.join(',')), CHECKS);
+});
+
+test('a --skip name that is no check throws, naming every one that is', () => {
+	assert.throws(() => skipOption('acf,ACF,vendors'), {
+		code: 'commander.invalidArgument',
+		message: `No check named 'ACF', 'vendors': the checks are ${CHECKS.join(', ')}.`,
+	});
 });
