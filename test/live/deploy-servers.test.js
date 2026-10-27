@@ -9,14 +9,13 @@ const assert = require('node:assert/strict'),
 const { LFTP_DEFAULTS, backupRemoteFolder, deletedFolders, ignoreParams, payloadProblems, pullRemoteAcfJson, remoteCommands, remoteFolderExists, uncommittedUploads } = require('../../lib/deploy'),
 	{ makeProject } = require('../helpers/project'),
 	{ runFdk } = require('../helpers/run'),
-	{ FIXTURE_GROUP, SERVERS, commandsFor, missingRequirements, seedFixtures, startServers, stopServers }
+	{ FIXTURE_GROUP, SERVERS, commandsFor, docker, missingRequirements, seedFixtures, startServers, stopServers }
 		= require('../helpers/ftp-servers'),
 	{ cleanTmpDirs, makeTmpDir } = require('../helpers/tmpdir');
 
 // This tier is opt-in (`npm run test:live`) because it needs Docker and lftp. It exists for the one
-// thing a stub can't reproduce: what a real server says when a folder isn't there. Three servers,
-// three different sentences after the same 550 — which is why the guard matches lftp's own
-// `Access failed:` wrapper rather than the wording underneath.
+// thing a stub can't reproduce: what a real server says when a folder isn't there, or is refused.
+// Three servers, three different sentences after the same 550, and vsftpd's is the same for both.
 const missing = missingRequirements();
 
 describe('the ACF preflight against real servers',
@@ -142,6 +141,65 @@ describe('the ACF preflight against real servers',
 			'acf-json'), null);
 		});
 
+		// 550 is also how FTP refuses a folder, and vsftpd words that just as it words one that isn't
+		// there: a refused folder must never read as missing (fabrica-dev-kit-3of). What is under
+		// `unlisted` is settled only where the server says outright that it isn't there
+		const REFUSED = {
+			'pure-ftpd': { pullUnlisted: false, existsUnlisted: false },
+			vsftpd: { pullUnlisted: null, existsUnlisted: null },
+			// lftp's sftp `cls -d` answers a folder it can't list with a bare `Permission denied`
+			sftp: { pullUnlisted: false, existsUnlisted: null },
+		};
+		for (const name of Object.keys(SERVERS)) {
+			test(`${name}: a refused folder, or one under it, reads as null, never as missing`, () => {
+				const commands = commandsFor(name);
+				assert.equal(pull(name, 'denied').result, null);
+				assert.equal(pull(name, 'denied/acf-json').result, null);
+				assert.equal(pull(name, 'unlisted/never-created').result, REFUSED[name].pullUnlisted);
+				// `cls -d` finds it in the listing of the folder above
+				assert.equal(remoteFolderExists(commands, 'denied'), true);
+				assert.equal(remoteFolderExists(commands, 'denied/acf-json'), null);
+				assert.equal(remoteFolderExists(commands, 'unlisted/never-created'), REFUSED[name].existsUnlisted);
+				assert.equal(remoteFolderExists(commands, 'never-created'), false);
+			});
+		}
+
+		// the whole deploy, on a server where the theme's folder takes uploads and its `acf-json`
+		// can't be read: it stops before the upload, where it used to read as a first deploy and go
+		// up over field groups it never saw. A theme that isn't there yet still goes up, and goes up
+		// again once its `acf-json` is there to compare
+		for (const name of Object.keys(SERVERS)) {
+			test(`${name}: fdk deploy stops on a refused acf-json, and deploys a theme that is new or readable`, async () => {
+				const { container, port } = SERVERS[name],
+					root = 'site/e2e',
+					themes = `${root}/wp-content/themes`,
+					locked = `/home/fdk/${themes}/locked/acf-json`,
+					// WordPress's own `index.php` in themes, which a first deploy is settled against
+					made = docker(['exec', container, 'sh', '-c', `mkdir -p ${locked} && touch /home/fdk/${themes}/index.php && chown fdk /home/fdk/site`
+						+ ` && chown -R fdk /home/fdk/${root} && chown root ${locked} && chmod 700 ${locked}`]);
+				assert.equal(made.status, 0, made.stderr);
+				const tuning = commandsFor(name).filter(command => !command.startsWith('open ')),
+					config = theme => ['default:', '  ftp:', ...(name === 'sftp' ? ['    scheme: sftp'] : []),
+						'    host: 127.0.0.1', `    port: ${port}`, '    user: fdk', '    password: secret', `    path: ${root}`,
+						'    commands:', ...tuning.map(command => `      - '${command}'`), '  themes:', `    - ./${theme}`].join('\n') + '\n',
+					deploy = theme => runFdk(['deploy'], { cwd: makeProject({ config: config(theme),
+						resources: { [theme]: { files: { 'style.css': '/* theme */', 'acf-json/g.json': FIXTURE_GROUP } } } }) }),
+					listed = theme => spawnSync('lftp', ['-c', [...commandsFor(name), `cls -1 ${themes}/${theme}/`].join('; ')], { encoding: 'utf8' }).stdout;
+
+				let res = await deploy('locked');
+				assert.equal(res.status, 1, res.stdout + res.stderr);
+				assert.match(res.stderr, /Couldn't read the 'acf-json' folder of 'locked'/);
+				assert.doesNotMatch(res.stdout + res.stderr, /failed while uploading/);
+				assert.doesNotMatch(listed('locked'), /style\.css/, 'nothing should have been uploaded');
+
+				for (let n = 0; n < 2; n++) {
+					res = await deploy('fresh');
+					assert.equal(res.status, 0, res.stdout + res.stderr);
+				}
+				assert.match(listed('fresh'), /style\.css/);
+			});
+		}
+
 		// by the home-relative path a section's `ftp.path` usually is, and under the dated name a
 		// deploy gives it: the old remote-to-remote mirror resolved that path from the server's root
 		// instead (fabrica-dev-kit-dy8)
@@ -219,6 +277,14 @@ describe('the ACF preflight against real servers',
 			assert.equal(res.status, 1);
 			assert.match(res.stdout, /myplugin: identical/);
 			assert.match(res.stdout, /myplugin: not on the server/);
+
+			// vsftpd answers missing and refused alike: the folder above settles which
+			for (const [where, said] of [['acf-json', /myplugin: not on the server/], ['denied', /Couldn't read 'myplugin' from the server/]]) {
+				dir = makeProject({ config: ['production:', '  ftp:', ...ftp(SERVERS.vsftpd.port), `    path: ${where}`, '  plugins: [./myplugin]'].join('\n') + '\n', resources });
+				res = await runFdk(['drift', 'production'], { cwd: dir });
+				assert.equal(res.status, 1);
+				assert.match(res.stdout + res.stderr, said);
+			}
 		});
 
 		// the deploy asks lftp, with the upload's own mirror under `--dry-run`, which folders

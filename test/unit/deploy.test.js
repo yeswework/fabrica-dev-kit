@@ -5,8 +5,8 @@ const assert = require('node:assert/strict'),
 	fs = require('fs'),
 	path = require('path');
 
-const { CHECKS, DELETE_OPTION, LFTP_DEFAULTS, acfGroupsAtRisk, ignoreParams, lftp, pullRemoteAcfJson, remoteCommands, scrub, skipOption, uncommittedFiles } = require('../../lib/deploy'),
-	{ BROKEN_PULL, LFTP_STUB_BODY, MISSING_FOLDER } = require('../helpers/lftp-stub'),
+const { CHECKS, DELETE_OPTION, LFTP_DEFAULTS, acfGroupsAtRisk, ignoreParams, lftp, pullRemoteAcfJson, remoteCommands, remoteFolderExists, scrub, skipOption, uncommittedFiles } = require('../../lib/deploy'),
+	{ BARE_550, BROKEN_PULL, DENIED_FOLDER, LFTP_STUB_BODY, MISSING_FOLDER } = require('../helpers/lftp-stub'),
 	{ makeProject } = require('../helpers/project'),
 	{ requireLib, runNode } = require('../helpers/run'),
 	{ stubBin } = require('../helpers/stub-bin'),
@@ -121,25 +121,35 @@ test('a folder its repository ignores answers null, not an empty list', () => {
 
 // `pullRemoteAcfJson` shells out to whatever `lftp` is on PATH, so each case swaps in a stub that
 // reproduces one outcome. The stub is driven by environment variables rather than by parsing its
-// own command script back out, which keeps the fixture and the destination explicit
-const pull = ({ status = 0, stderr = '', fixture = '', signal = false, lftp = true } = {}) => {
-	const dest = path.join(makeTmpDir('fdk-pull-'), 'copy'),
-		stub = lftp ? stubBin({ lftp: LFTP_STUB_BODY }) : { path: makeTmpDir('fdk-no-lftp-') },
-		saved = { ...process.env };
-	Object.assign(process.env, {
-		PATH: stub.path,
+// own command script back out, which keeps the fixture and the destination explicit. `listPath`
+// and `list` are the one folder above that lists after a bare 550, and what it holds
+const withStub = ({ lftp = true, listPath = '', list = '', ...env }, run) => {
+	const stub = lftp ? stubBin({ lftp: LFTP_STUB_BODY }) : { path: makeTmpDir('fdk-no-lftp-') },
+		saved = { ...process.env },
+		// the explanation of a 550 that couldn't be settled goes to stderr
+		write = process.stderr.write;
+	Object.assign(process.env, { PATH: stub.path, LFTP_STUB_LIST_PATH: listPath, LFTP_STUB_LIST: list, ...env });
+	let printed = '';
+	process.stderr.write = text => { printed += text; return true; };
+	try {
+		return { ...run(), printed, calls: lftp ? stub.calls() : [] };
+	} finally {
+		process.stderr.write = write;
+		for (const key of Object.keys(process.env)) { delete process.env[key]; }
+		Object.assign(process.env, saved);
+	}
+};
+
+const pull = ({ status = 0, stderr = '', fixture = '', signal = false, ...rest } = {}) => {
+	const dest = path.join(makeTmpDir('fdk-pull-'), 'copy');
+	return withStub({
+		...rest,
 		LFTP_STUB_DEST: dest,
 		LFTP_STUB_FIXTURE: fixture,
 		LFTP_STUB_SIGNAL: signal ? '1' : '',
 		LFTP_STUB_STATUS: String(status),
 		LFTP_STUB_STDERR: stderr,
-	});
-	try {
-		return { dest, result: pullRemoteAcfJson(['open ftp://x@h'], 'remote/acf-json', dest) };
-	} finally {
-		for (const key of Object.keys(process.env)) { delete process.env[key]; }
-		Object.assign(process.env, saved);
-	}
+	}, () => ({ dest, result: pullRemoteAcfJson(['open ftp://x@h'], 'site/theme/acf-json', dest) }));
 };
 
 test('a copy that arrives reads as true', () => {
@@ -153,13 +163,55 @@ test('a clean run that leaves no folder reads as false', () => {
 	assert.equal(pull({}).result, false);
 });
 
-// The wording after a 550 belongs to the FTP server, not to lftp, so the guard matches lftp's own
-// `Access failed:` wrapper. All four of these mean the same thing: nothing on the server to lose
+// The wording after a 550 belongs to the FTP server, not to lftp. Where it says the folder isn't
+// there, nothing on the server is at risk; where it says the folder is refused, there is no telling
 for (const [server, stderr] of Object.entries(MISSING_FOLDER)) {
 	test(`a missing remote folder reads as false (${server} wording)`, () => {
-		assert.equal(pull({ status: 1, stderr }).result, false);
+		const { result, calls } = pull({ status: 1, stderr });
+		assert.equal(result, false);
+		assert.equal(calls.length, 1, 'wording that settles it needs no listing');
 	});
 }
+
+for (const [server, stderr] of Object.entries(DENIED_FOLDER)) {
+	test(`a refused remote folder reads as null, never as missing (${server} wording)`, () => {
+		assert.equal(pull({ status: 1, stderr, listPath: 'site/theme', list: 'site/theme/style.css\nsite/theme/acf-json/\n' }).result, null);
+		assert.equal(pull({ status: 1, stderr: DENIED_FOLDER.sftp, listPath: 'site/theme', list: 'site/theme/style.css\n' }).result, null,
+			'a refusal without a 550 is never sent to the listing');
+	});
+}
+
+// vsftpd says `550 Failed to change directory.` whether the folder is missing or refused, so the
+// folder above settles it: missing only where that lists other entries and not this one
+test('a bare 550 reads as false where the folder above lists others and not it', () => {
+	const { result, calls } = pull({ status: 1, stderr: BARE_550, listPath: 'site/theme', list: 'site/theme/style.css\n' });
+	assert.equal(result, false);
+	assert.match(calls[1], /cls -1 site\/theme\/; $/);
+});
+
+test('a bare 550 reads as null where the folder above lists it', () => {
+	const { result, printed } = pull({ status: 1, stderr: BARE_550, listPath: 'site/theme', list: 'site/theme/acf-json/\nsite/theme/style.css\n' });
+	assert.equal(result, null);
+	assert.match(printed, /Failed to change directory/);
+	assert.match(printed, /isn't there or that it can't be read/);
+});
+
+// vsftpd sends a folder it can't read as an empty listing
+test('a bare 550 reads as null where the folder above lists nothing', () => {
+	assert.equal(pull({ status: 1, stderr: BARE_550, listPath: 'site/theme', list: '' }).result, null);
+});
+
+// a first deploy: the theme isn't there either, which the folder above it settles
+test('a bare 550 whose folder above fails the same way is settled one level up', () => {
+	assert.equal(pull({ status: 1, stderr: BARE_550, listPath: 'site', list: 'site/other/\n' }).result, false);
+	assert.equal(pull({ status: 1, stderr: BARE_550, listPath: 'site', list: 'site/theme/\n' }).result, null);
+	// nothing lists, all the way to the top
+	assert.equal(pull({ status: 1, stderr: BARE_550 }).result, null);
+});
+
+test('a bare 550 whose listing broke reads as null', () => {
+	assert.equal(pull({ status: 1, stderr: BARE_550, LFTP_STUB_LIST_STDERR: BROKEN_PULL }).result, null);
+});
 
 test('a pull that broke reads as null, not as an empty server', () => {
 	assert.equal(pull({ status: 1, stderr: BROKEN_PULL }).result, null);
@@ -178,6 +230,22 @@ test('a missing lftp binary reads as null', () => {
 test('a partial transfer reads as null even though a folder exists', () => {
 	const fixture = dirWith({ 'g.json': group('g', 100) });
 	assert.equal(pull({ fixture, status: 1, stderr: BROKEN_PULL }).result, null);
+});
+
+// ——— remoteFolderExists: the probe --backup and --delete turn on ————
+
+const exists = ({ status = 0, stderr = '', ...rest } = {}) => withStub({
+	...rest, LFTP_STUB_EXISTS_STATUS: String(status), LFTP_STUB_EXISTS_STDERR: stderr,
+}, () => ({ result: remoteFolderExists(['open ftp://x@h'], 'wp-content/themes/mytheme') })).result;
+
+test('remoteFolderExists: readable is true, missing false, refused or unsettled null', () => {
+	assert.equal(exists(), true);
+	assert.equal(exists({ status: 1, stderr: MISSING_FOLDER.pureFtpd }), false);
+	assert.equal(exists({ status: 1, stderr: BARE_550, listPath: 'wp-content/themes', list: 'wp-content/themes/other/\n' }), false);
+	assert.equal(exists({ status: 1, stderr: DENIED_FOLDER.pureFtpd, listPath: 'wp-content/themes', list: 'wp-content/themes/mytheme/\n' }), null);
+	assert.equal(exists({ status: 1, stderr: DENIED_FOLDER.sftp }), null);
+	assert.equal(exists({ status: 1, stderr: BARE_550, listPath: 'wp-content/themes', list: '' }), null);
+	assert.equal(exists({ status: 1, stderr: BROKEN_PULL }), null);
 });
 
 // ——— ignoreParams ————

@@ -111,7 +111,8 @@ const stopServers = () => {
 };
 
 // Every server gets the same three remote paths: one folder holding a field group, one folder
-// holding nothing, and one that was never created — plus an empty `themes` for backups to work in
+// holding nothing, and one that was never created — plus an empty `themes` for backups to work in,
+// and two the login is refused
 const FIXTURE_GROUP = JSON.stringify({ key: 'g_live', modified: 500 });
 
 const seedFixtures = () => {
@@ -128,6 +129,17 @@ const seedFixtures = () => {
 		}
 	}
 
+	// two folders the login is refused, made as root: `denied` neither opens nor lists, and
+	// `unlisted` opens but won't list, so nothing under it can be told apart from absent by listing.
+	// The sftp chroot is the same home, so all three answer at the same paths
+	for (const { container } of Object.values(SERVERS)) {
+		const made = docker(['exec', container, 'sh', '-c',
+			'cd /home/fdk && mkdir -p denied/acf-json unlisted && chmod 700 denied && chmod 711 unlisted']);
+		if (made.status !== 0) {
+			throw new Error(`could not make the refused folders in ${container}: ${made.stderr}`);
+		}
+	}
+
 	// `file://` needs no server at all, but exercises a fourth wording out of lftp
 	const fileRoot = makeTmpDir('fdk-live-file-');
 	fs.mkdirSync(path.join(fileRoot, 'acf-json'));
@@ -137,5 +149,5 @@ const seedFixtures = () => {
 };
 
 module.exports = {
-	FIXTURE_GROUP, SERVERS, commandsFor, missingRequirements, seedFixtures, startServers, stopServers,
+	FIXTURE_GROUP, SERVERS, commandsFor, docker, missingRequirements, seedFixtures, startServers, stopServers,
 };

@@ -99,6 +99,16 @@ legitimately exits non-zero, it will now stop the deploy for that resource.
 `fdk deploy -k` checks whether the resource is on the server before taking its backup, so a
 first deploy says there is nothing to back up and carries on rather than stopping.
 
+An FTP server answers 550 both for a folder that isn't there and for one it refuses, and some
+(vsftpd) word the two alike. So the backup check, the ACF preflight and the `delete` check take a
+folder for missing only where the server says `No such file`, or where the folder above it lists
+other entries and not it (WordPress's own `index.php` in `wp-content/themes` and `plugins` makes
+sure it does on a first deploy). Anything else — a refused folder, or one under a folder that won't list —
+stops the resource before anything is uploaded, prints lftp's error and exits non-zero: the ACF
+preflight and the `delete` check name the `--skip` that gets past them, and the backup can be
+dropped by deploying without `-k`. `fdk drift` reads it the same way, reporting such a resource as
+unreadable rather than as not on the server.
+
 The backup is a copy beside the live folder, named `<resource>_<timestamp>`, taken as its own step
 once the checks below have passed, so a resource they stop is never copied: if it fails, nothing is uploaded and the live folder is untouched. Where the environment logs in
 over SFTP with a key — an `ssh … -i <key>` `sftp:connect-program` in `ftp.commands` — the copy is

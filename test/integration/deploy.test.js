@@ -6,7 +6,7 @@ const assert = require('node:assert/strict'),
 	path = require('path');
 
 const { LFTP_DEFAULTS } = require('../../lib/deploy'),
-	{ BROKEN_PULL, LFTP_STUB_BODY, MISSING_FOLDER, acfPullDest } = require('../helpers/lftp-stub'),
+	{ BARE_550, BROKEN_PULL, DENIED_FOLDER, LFTP_STUB_BODY, MISSING_FOLDER, acfPullDest } = require('../helpers/lftp-stub'),
 	{ makeProject } = require('../helpers/project'),
 	{ runFdk } = require('../helpers/run'),
 	{ stubBin } = require('../helpers/stub-bin'),
@@ -56,6 +56,9 @@ const deploy = async ({
 	existsStatus = 0,
 	existsStderr = '',
 	backupStatus = 0, // what the backup's own lftp run exits with
+	// after a bare 550, the one folder above that lists and what it holds; every other answers 550
+	listPath = '',
+	list = '',
 	sshKey = false,   // an sftp section that logs in with a key, so the backup goes over SSH
 	sshStatus = 0,    // non-zero answers as an SFTP-only host does
 	sshAbsent = false,
@@ -113,6 +116,8 @@ ${sshStatus ? `echo 'This service allows sftp connections only.' >&2; exit ${ssh
 			LFTP_STUB_DRY_RUN: dryRun,
 			LFTP_STUB_DRY_RUN_STATUS: String(dryRunStatus),
 			LFTP_STUB_BACKUP_STATUS: String(backupStatus),
+			LFTP_STUB_LIST_PATH: listPath,
+			LFTP_STUB_LIST: list,
 		},
 	});
 
@@ -144,9 +149,37 @@ test('a preflight that succeeds and finds nothing newer uploads', async () => {
 });
 
 test('a remote folder that genuinely is not there is a first deploy and uploads', async () => {
-	const run = await deploy({ local: { 'g.json': group('g', 100) }, status: 1, stderr: MISSING_FOLDER.vsftpd });
+	let run = await deploy({ local: { 'g.json': group('g', 100) }, status: 1, stderr: MISSING_FOLDER.pureFtpd });
 	assert.equal(run.uploaded, true);
 	assert.equal(run.status, 0);
+
+	// vsftpd's bare 550, with the themes folder showing the theme isn't there yet
+	run = await deploy({ local: { 'g.json': group('g', 100) }, status: 1, stderr: BARE_550,
+		listPath: '/wp-content/themes', list: '/wp-content/themes/other/\n' });
+	assert.equal(run.uploaded, true);
+	assert.equal(run.status, 0);
+});
+
+// a 550 is also how FTP says a folder is refused, and a folder FDK can't read may still take an
+// upload: its field groups would be overwritten unseen (fabrica-dev-kit-3of)
+test('a remote acf-json that is refused, or a 550 nothing settles, stops before the upload', async () => {
+	const cases = [
+		{ stderr: DENIED_FOLDER.pureFtpd, listPath: '/wp-content/themes/mytheme', list: '/wp-content/themes/mytheme/acf-json/\n' },
+		{ stderr: DENIED_FOLDER.sftp },
+		// there, but vsftpd won't enter it
+		{ stderr: BARE_550, listPath: '/wp-content/themes/mytheme', list: '/wp-content/themes/mytheme/acf-json/\n/wp-content/themes/mytheme/style.css\n' },
+		// vsftpd sends a folder it can't read as an empty one
+		{ stderr: BARE_550, listPath: '/wp-content/themes/mytheme', list: '' },
+	];
+	for (const { stderr, ...listing } of cases) {
+		const run = await deploy({ local: { 'g.json': group('g', 100) }, status: 1, stderr, ...listing });
+		assert.equal(run.uploaded, false, stderr);
+		assert.equal(run.status, 1);
+		// the cause, as lftp printed it (the stub's password 'p' is masked out of it)
+		assert.match(run.output, /Access failed: .*(Permission denied|Failed to change directory)/);
+		assert.match(run.output, /Couldn't read the 'acf-json' folder of 'mytheme'/);
+		assert.match(run.output, /--skip acf/);
+	}
 });
 
 test('a preflight that broke stops before the upload', async () => {
@@ -362,12 +395,28 @@ for (const [route, options] of [['lftp', { backupStatus: 1 }], ['SSH and then lf
 // fail-fast would otherwise abort a legitimate first deploy on the backup of a folder that was
 // never there
 test('nothing is backed up on a first deploy, and the upload still happens', async () => {
-	const run = await deploy({ noAcfDir: true, backup: true,
-		existsStatus: 1, existsStderr: MISSING_FOLDER.vsftpd });
-	assert.equal(run.status, 0);
-	assert.equal(run.uploaded, true);
-	assert.equal(run.backup, '', 'no backup should have run');
-	assert.match(run.output, /Nothing to back up/);
+	for (const existsStderr of [MISSING_FOLDER.sftp, BARE_550]) {
+		const run = await deploy({ noAcfDir: true, backup: true, existsStatus: 1, existsStderr,
+			listPath: '/wp-content/themes', list: '/wp-content/themes/other/\n' });
+		assert.equal(run.status, 0);
+		assert.equal(run.uploaded, true);
+		assert.equal(run.backup, '', 'no backup should have run');
+		assert.match(run.output, /Nothing to back up/);
+	}
+});
+
+// skipping the backup of a folder that is there but refused would leave the upload uncopied
+test('a backup probe refused, or a 550 nothing settles, stops the deploy rather than skipping the backup', async () => {
+	for (const [existsStderr, list] of [[DENIED_FOLDER.pureFtpd, '/wp-content/themes/mytheme/\n'], [BARE_550, '/wp-content/themes/mytheme/\n'], [BARE_550, '']]) {
+		const run = await deploy({ noAcfDir: true, backup: true, existsStatus: 1, existsStderr,
+			listPath: '/wp-content/themes', list });
+		assert.equal(run.status, 1);
+		assert.equal(run.uploaded, false);
+		assert.equal(run.backup, '');
+		assert.doesNotMatch(run.output, /Nothing to back up/);
+		assert.match(run.output, /Couldn't tell whether 'mytheme' is already on the server/);
+		assert.match(run.output, /deploy without '--backup'/);
+	}
 });
 
 test('a backup probe that cannot answer stops the deploy', async () => {
@@ -474,16 +523,25 @@ test('a dry run that fails stops the upload, however it words the failure', asyn
 	assert.match(run.output, /the server couldn't say which folders '--delete' would remove/);
 
 	// a 550 from inside the dry run is no proof the resource isn't on the server
-	run = await deploy({ noAcfDir: true, params: ['--delete'], dryRunStatus: 1, stderr: MISSING_FOLDER.vsftpd });
+	run = await deploy({ noAcfDir: true, params: ['--delete'], dryRunStatus: 1, stderr: BARE_550 });
 	assert.equal(run.uploaded, false);
 	assert.match(run.output, /the server couldn't say which folders '--delete' would remove/);
 });
 
 test('a resource not on the server yet has nothing for --delete to remove, and no dry run is made', async () => {
-	let run = await deploy({ noAcfDir: true, params: ['--delete'], existsStatus: 1, existsStderr: MISSING_FOLDER.vsftpd });
+	let run = await deploy({ noAcfDir: true, params: ['--delete'], existsStatus: 1, existsStderr: BARE_550,
+		listPath: '/wp-content/themes', list: '/wp-content/themes/other/\n' });
 	assert.equal(run.uploaded, true);
 	assert.equal(run.status, 0);
 	assert.equal(run.dryRuns, 0);
+
+	// refused is not missing: there is no telling what '--delete' would remove
+	run = await deploy({ noAcfDir: true, params: ['--delete'], existsStatus: 1, existsStderr: DENIED_FOLDER.pureFtpd,
+		listPath: '/wp-content/themes', list: '/wp-content/themes/mytheme/\n' });
+	assert.equal(run.uploaded, false);
+	assert.equal(run.status, 1);
+	assert.match(run.output, /the server couldn't say which folders '--delete' would remove/);
+	assert.match(run.output, /--skip delete/);
 
 	run = await deploy({ noAcfDir: true, params: ['--delete'], existsStatus: 1, existsStderr: BROKEN_PULL });
 	assert.equal(run.uploaded, false);
