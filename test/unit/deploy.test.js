@@ -271,7 +271,7 @@ test('--delete is seen however it is written, and nothing else is taken for it',
 });
 
 // a filter's value can come attached, as filterParams reads it, and an `e` in it is no `-e`
-test('a filter with its value attached is not taken for --delete', { todo: 'fabrica-dev-kit-d6e' }, () => {
+test('a filter with its value attached is not taken for --delete', () => {
 	for (const params of ['-Xvendor', '-xtests', '-v -Ivendor/autoload.php']) {
 		assert.ok(!DELETE_OPTION.test(params), params);
 	}

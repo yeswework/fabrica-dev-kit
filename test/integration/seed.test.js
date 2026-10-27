@@ -256,7 +256,7 @@ test("a live URL the shell would act on reaches search-replace as written", asyn
 });
 
 // WordPress in a subdirectory: replacing home first would leave `/wp` on every siteurl link
-test('a siteurl under home is replaced before home', { todo: 'fabrica-dev-kit-25v' }, async () => {
+test('a siteurl under home is replaced before home', async () => {
 	const { local, res } = await sshSeed(undefined, undefined, 'https://example.com/wp'),
 		replaced = local.calls().filter(call => call.includes('search-replace'));
 	assert.equal(res.status, 0, res.stderr);
