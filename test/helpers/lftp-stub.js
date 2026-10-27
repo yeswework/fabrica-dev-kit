@@ -17,9 +17,14 @@
 // mirrors locally over `file:///`, which the stub answers with a plain copy: the filters it passes
 // are lftp's to apply, and the live tier runs them for real.
 //
+// A bare 550 sends FDK to list the folder above, with `cls -1 <folder>/`, as vsftpd would answer
+// it: `LFTP_STUB_LIST_PATH` is the one folder that lists, printing `LFTP_STUB_LIST`, and any other
+// answers `BARE_550` — or `LFTP_STUB_LIST_STDERR` when set.
+//
 // Preflight outcomes, matching the ones the guard has to distinguish:
 //   status  0 + fixture   a copy arrived
-//   status  1 + `Access failed: 550 …`, no directory   the server holds none yet
+//   status  1 + `Access failed: … No such file …`, no directory   the server holds none yet
+//   status  1 + `BARE_550`, no directory   none yet only if the listing above confirms it
 //   status  1 + `Fatal error: …`   the pull broke, state indeterminate
 //   signal                          killed mid-run, likewise indeterminate
 //   (no stub at all)                the binary isn't installed
@@ -29,6 +34,14 @@ case "$*" in
 		if [ -n "\${LFTP_STUB_STDERR:-}" ]; then printf '%s\\n' "$LFTP_STUB_STDERR" >&2; fi
 		printf '%s' "\${LFTP_STUB_DRY_RUN:-}"
 		exit \${LFTP_STUB_DRY_RUN_STATUS:-0} ;;
+	*"cls -1 "*)
+		set -- $(printf '%s' "$2" | sed 's/; *$//; s/.*; //')
+		if [ -n "\${LFTP_STUB_LIST_PATH:-}" ] && [ "$3" = "$LFTP_STUB_LIST_PATH/" ]; then
+			printf '%s' "\${LFTP_STUB_LIST:-}"
+			exit 0
+		fi
+		printf '%s\\n' "\${LFTP_STUB_LIST_STDERR:-cls: Access failed: 550 Failed to change directory. ($3)}" >&2
+		exit 1 ;;
 	*fdk-backup-*) exit \${LFTP_STUB_BACKUP_STATUS:-0} ;;
 	*--reverse*) exit \${LFTP_STUB_UPLOAD_STATUS:-0} ;;
 	*"open file:///"*)
@@ -51,15 +64,23 @@ exit \${LFTP_STUB_STATUS:-0}
 // Where `deploy` puts the copy it pulls, for a resource of this name
 const acfPullDest = name => require('path').join(require('os').tmpdir(), `fdk-acf-${name}`);
 
-// lftp's own wrapper around whatever the far end said. The wording after a 550 is the server's,
-// not lftp's, so the guard matches the wrapper — these are the four shapes seen in the wild
+// lftp's own wrapper around whatever the far end said, in the shapes seen in the wild. The wording
+// after a 550 is the server's, not lftp's: these say outright that the folder isn't there
 const MISSING_FOLDER = {
 	pureFtpd: `mirror: Access failed: 550 Can't change directory to /nope: No such file or directory`,
 	pyftpdlib: 'mirror: Access failed: 550 No such file or directory. (/nope)',
 	sftp: 'mirror: Access failed: No such file (/nope)',
-	vsftpd: 'mirror: Access failed: 550 Failed to change directory. (/nope)',
 };
+
+// these say it is there and refused
+const DENIED_FOLDER = {
+	pureFtpd: "mirror: Access failed: 550 Can't change directory to /nope: Permission denied",
+	sftp: 'mirror: Access failed: Permission denied (/nope)',
+};
+
+// vsftpd's answer both for a folder that isn't there and for one it refuses
+const BARE_550 = 'mirror: Access failed: 550 Failed to change directory. (/nope)';
 
 const BROKEN_PULL = 'mirror: Fatal error: max-retries exceeded (Connection refused)';
 
-module.exports = { BROKEN_PULL, LFTP_STUB_BODY, MISSING_FOLDER, acfPullDest };
+module.exports = { BARE_550, BROKEN_PULL, DENIED_FOLDER, LFTP_STUB_BODY, MISSING_FOLDER, acfPullDest };

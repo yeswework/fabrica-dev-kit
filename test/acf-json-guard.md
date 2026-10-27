@@ -83,9 +83,11 @@ fdk deploy; echo "EXIT=$?"
 `Access failed: ...` — that message is the server saying the folder isn't there, which is expected
 here and is swallowed deliberately. Its wording is the server's own, so it varies with the target:
 sftp says `No such file (<path>)`, pure-ftpd `550 Can't change directory to ...: No such file or
-directory`, vsftpd merely `550 Failed to change directory.`. The check keys off `lftp`'s own
-`Access failed:` prefix for that reason, so this case is worth re-running against a second kind of
-server if you have one.
+directory`, vsftpd merely `550 Failed to change directory.` — which it also says for a folder it
+refuses. Where the wording doesn't say `No such file`, the check lists the folder above and takes
+the folder for missing only if that lists other entries and not it, so this case is worth
+re-running against a second kind of server if you have one. A folder the login is refused stops the
+resource instead, with lftp's error and `--skip acf` to get past it.
 
 ### 2. In sync
 

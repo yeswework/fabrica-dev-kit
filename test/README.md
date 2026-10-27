@@ -85,11 +85,14 @@ reminder is worth.
 It also covers `file://`, which needs no server.
 
 It exists for one thing a stub can't reproduce: the sentence a server puts after its 550. All
-three word a missing directory differently — and lftp's sftp transport words it differently again
-— which is why the deploy guard matches lftp's own `Access failed:` wrapper rather than the
-wording underneath. Those four sentences are also kept as fixtures in `helpers/lftp-stub.js`, so
-the fast tier can check the matching without a server; the live tier is what proves the fixtures
-still match reality.
+three word a missing directory differently — and lftp's sftp transport words it differently again.
+A 550 also means the folder was refused, and vsftpd says `550 Failed to change directory.` for
+both, so the deploy guard takes a folder for missing only where the wording says `No such file`, or
+where the folder above it lists other entries and not it. Each server is seeded with two folders
+the login is refused (`denied`, which neither opens nor lists, and `unlisted`, which opens but won't
+list) to prove a refusal never reads as missing. The sentences are also kept as fixtures in
+`helpers/lftp-stub.js`, so the fast tier can check the matching without a server; the live tier is
+what proves the fixtures still match reality.
 
 The two FTP servers are built locally from `helpers/servers/<name>/Dockerfile`, on Debian's own
 `pure-ftpd` and `vsftpd` packages, rather than pulled. The published images were amd64-only, and
