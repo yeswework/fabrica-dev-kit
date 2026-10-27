@@ -25,12 +25,12 @@ const MARKUP = [
 
 const docker = () => stubBin({ docker: 'exit 0' }).path;
 
-// A project whose `production` section points at `wp`, with `wp` overrides for the credential
+// A project whose `production` section points at `wp`, with `rest:` overrides for the credential
 const setup = (wp, { section = 'production', settings = {} } = {}) => {
-	const values = { url: wp.url, user: 'editor', appPassword: wp.password, ...settings },
+	const values = { url: wp.url, user: 'editor', application_password: wp.password, ...settings },
 		lines = Object.entries(values).filter(([, value]) => value !== undefined)
 			.map(([key, value]) => `    ${key}: "${value}"`);
-	return makeProject({ config: ['default:', '  themes: []', `${section}:`, '  extend: default', '  wp:', ...lines, ''].join('\n') });
+	return makeProject({ config: ['default:', '  themes: []', `${section}:`, '  extend: default', '  rest:', ...lines, ''].join('\n') });
 };
 
 const fdk = (dir, ...args) => runFdk(args, { cwd: dir, env: { PATH: docker() } });
@@ -195,7 +195,7 @@ test('a bare ID is resolved through search; a draft needs its type named', () =>
 		assert.equal(fs.readFileSync(path.join(tmp, 'draft.html'), 'utf8'), 'd');
 	}));
 
-test('a section with no wp: settings, or a placeholder in them, is refused before any request', async () => {
+test('a section with no rest: settings, or a placeholder in them, is refused before any request', async () => {
 	const wp = await startWpStub();
 	try {
 		const bare = makeProject({ config: 'default:\n  themes: []\nproduction:\n  extend: default\n' });
@@ -203,7 +203,7 @@ test('a section with no wp: settings, or a placeholder in them, is refused befor
 		assert.equal(res.status, 1);
 		assert.match(res.stderr, /No way into 'production'/);
 
-		for (const settings of [{ user: '<wp username>' }, { appPassword: 'xxxx xxxx xxxx xxxx xxxx xxxx' }, { appPassword: undefined }]) {
+		for (const settings of [{ user: '<wp username>' }, { application_password: 'xxxx xxxx xxxx xxxx xxxx xxxx' }, { application_password: undefined }]) {
 			res = await run(setup(wp, { settings }), 'pull', 'production', '12');
 			assert.equal(res.status, 1);
 			assert.match(res.stderr, /missing or still a placeholder/);
@@ -262,7 +262,7 @@ test('a request that arrives without credentials is reported as a stripped heade
 // the application password is sent as Basic auth, which the stub checks byte for byte
 test("a bw:// application password logs in without the line break bw ends with", () =>
 	withSite({ posts: { 12: { type: 'page', raw: 'a' } } }, async (wp, dir, tmp) => {
-		const project = setup({ url: wp.url, password: 'unused' }, { settings: { appPassword: 'bw://site-wp' } }),
+		const project = setup({ url: wp.url, password: 'unused' }, { settings: { application_password: 'bw://site-wp' } }),
 			bin = stubBin({ docker: 'exit 0', bw: `printf '%s\\n' '${wp.password}'` }),
 			res = await runFdk(['pull', 'production', '12', path.join(tmp, 'page.html')], { cwd: project, env: { PATH: bin.path, BW_SESSION: 'exported' } });
 		assert.equal(res.status, 0, res.stderr);
@@ -334,6 +334,47 @@ test('a to-live that leaves a local ID behind keeps push refused, until a later 
 		assert.equal(res.status, 0, res.stderr);
 	});
 });
+
+// a local pattern deleted or unpublished since to-local leaves no title to map its ID by, and that
+// ID can name an unrelated published pattern on the site (fabrica-dev-kit-aoz 12)
+// …whether the record lists the local IDs, or only says there are some, as before they were listed
+for (const record of ['listed', 'unlisted']) test(`a to-live that meets a local pattern gone since to-local keeps push refused (${record})`, () => {
+	const patterns = { 37827: { status: 'publish', title: 'Monetization Kit subnav' }, 455: { status: 'publish', title: 'Unrelated' } };
+	return withSite({ posts: { 12: { type: 'page', raw: '<!-- wp:block {"ref":37827} /-->' } }, patterns }, async (wp, dir, tmp) => {
+		const file = path.join(tmp, 'page.html');
+		await run(dir, 'pull', 'production', '12', file);
+		await refsRun(dir, [[455, 'Monetization Kit subnav']], 'refs', 'production', file, 'to-local');
+		if (record === 'unlisted') {
+			const state = JSON.parse(fs.readFileSync(`${file}.fdk.json`, 'utf8'));
+			fs.writeFileSync(`${file}.fdk.json`, JSON.stringify({ ...state, localRefs: true }));
+		}
+
+		let res = await refsRun(dir, [], 'refs', 'production', file, 'to-live');
+		assert.equal(res.status, 0, res.stderr);
+		assert.match(res.stderr, /Ref\(s\) 455 are still the local site's IDs/);
+		// recreating 455's pattern would get it a new ID, so the way out is a fresh pull
+		assert.match(res.stderr, /or pull the page again if it was deleted/);
+		assert.equal(fs.readFileSync(file, 'utf8'), '<!-- wp:block {"ref":455} /-->');
+		res = await run(dir, 'push', 'production', '12', file);
+		assert.equal(res.status, 1);
+		assert.match(res.stderr, /holds the local site's pattern IDs/);
+		assert.equal(wp.writes().length, 0);
+	});
+});
+
+// a pattern with the same ID on both sides needs no swap, and leaves no local ID behind
+test('a to-local that swaps nothing leaves push allowed', () =>
+	withSite({ posts: { 12: { type: 'page', raw: '<!-- wp:block {"ref":37827} /-->' } },
+		patterns: { 37827: { status: 'publish', title: 'Monetization Kit subnav' } } },
+	async (wp, dir, tmp) => {
+		const file = path.join(tmp, 'page.html');
+		await run(dir, 'pull', 'production', '12', file);
+		let res = await refsRun(dir, [[37827, 'Monetization Kit subnav']], 'refs', 'production', file, 'to-local');
+		assert.equal(res.status, 0, res.stderr);
+		assert.equal(JSON.parse(fs.readFileSync(`${file}.fdk.json`, 'utf8')).localRefs, undefined);
+		res = await run(dir, 'push', 'production', '12', file);
+		assert.equal(res.status, 0, res.stderr);
+	}));
 
 test("refs reads every page of the site's patterns", () => {
 	const patterns = Object.fromEntries(Array.from({ length: 150 }, (_, i) => [1000 + i, { status: 'publish', title: `Pattern ${i}` }]));

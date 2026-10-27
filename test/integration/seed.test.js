@@ -91,8 +91,8 @@ const REPORT = { clashes: [], commentClashes: [], remapped: [], home: 'https://l
 const withSite = async (body, seed = '') => {
 	const site = await startSite();
 	try {
-		const dir = makeProject({ config: ['default:', '  themes: []', 'production:', '  extend: default', '  wp:', `    url: "${site.url}"`,
-			'    user: editor', `    appPassword: "${PASSWORD}"`, seed, ''].join('\n') });
+		const dir = makeProject({ config: ['default:', '  themes: []', 'production:', '  extend: default', '  rest:', `    url: "${site.url}"`,
+			'    user: editor', `    application_password: "${PASSWORD}"`, seed, ''].join('\n') });
 		await body(site, dir);
 	} finally {
 		await site.close();

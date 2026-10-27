@@ -91,6 +91,12 @@ wording underneath. Those four sentences are also kept as fixtures in `helpers/l
 the fast tier can check the matching without a server; the live tier is what proves the fixtures
 still match reality.
 
+The two FTP servers are built locally from `helpers/servers/<name>/Dockerfile`, on Debian's own
+`pure-ftpd` and `vsftpd` packages, rather than pulled. The published images were amd64-only, and
+under Docker Desktop's Rosetta emulation pure-ftpd died at start-up, so the tier could not run on
+an Apple Silicon Mac. The first run builds them, which takes a minute; later runs reuse Docker's
+cache. `atmoz/sftp` is still pulled, and runs under emulation without trouble.
+
 Host-key checking is left on for the sftp container. The run scrapes the key with `ssh-keyscan`
 into a `known_hosts` file scoped to that run — a throwaway container is not a reason to disable
 verification, and the user's own `~/.ssh` is never touched.

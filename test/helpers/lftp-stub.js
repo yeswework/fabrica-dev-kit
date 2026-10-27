@@ -10,7 +10,8 @@
 //
 // The upload is the `--reverse` branch: `LFTP_STUB_UPLOAD_STATUS` is what it exits with. `--backup`
 // probes for the resource on the server first, with `cls -d`: `LFTP_STUB_EXISTS_STATUS` and
-// `LFTP_STUB_EXISTS_STDERR` answer that.
+// `LFTP_STUB_EXISTS_STDERR` answer that. The backup itself passes through a local `fdk-backup-`
+// folder, which is how it is told apart from the upload: `LFTP_STUB_BACKUP_STATUS` answers it.
 //
 // Preflight outcomes, matching the ones the guard has to distinguish:
 //   status  0 + fixture   a copy arrived
@@ -20,6 +21,7 @@
 //   (no stub at all)                the binary isn't installed
 const LFTP_STUB_BODY = `
 case "$*" in
+	*fdk-backup-*) exit \${LFTP_STUB_BACKUP_STATUS:-0} ;;
 	*--reverse*) exit \${LFTP_STUB_UPLOAD_STATUS:-0} ;;
 	*"cls -d"*)
 		if [ -n "\${LFTP_STUB_EXISTS_STDERR:-}" ]; then printf '%s\\n' "$LFTP_STUB_EXISTS_STDERR" >&2; fi
@@ -39,7 +41,7 @@ const acfPullDest = name => require('path').join(require('os').tmpdir(), `fdk-ac
 // lftp's own wrapper around whatever the far end said. The wording after a 550 is the server's,
 // not lftp's, so the guard matches the wrapper — these are the four shapes seen in the wild
 const MISSING_FOLDER = {
-	pureFtpd: `mirror: Access failed: 550 Can't change directory to /nope: No such file or directory (/nope)`,
+	pureFtpd: `mirror: Access failed: 550 Can't change directory to /nope: No such file or directory`,
 	pyftpdlib: 'mirror: Access failed: 550 No such file or directory. (/nope)',
 	sftp: 'mirror: Access failed: No such file (/nope)',
 	vsftpd: 'mirror: Access failed: 550 Failed to change directory. (/nope)',

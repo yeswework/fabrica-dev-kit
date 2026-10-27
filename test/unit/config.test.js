@@ -3,7 +3,7 @@
 const assert = require('node:assert/strict'),
 	{ after, test } = require('node:test');
 
-const { getProjectConfig } = require('../../lib/config'),
+const { getProjectConfig, projectResources } = require('../../lib/config'),
 	{ makeProject } = require('../helpers/project'),
 	{ requireLib, runNode } = require('../helpers/run'),
 	{ stubBin } = require('../helpers/stub-bin'),
@@ -73,6 +73,26 @@ test('a section that is not a set of settings halts', () => {
 		res = runNode(`${requireLib('config')}.getProjectConfig('default')`, { cwd: dir });
 	assert.equal(res.status, 1);
 	assert.match(res.stderr, /is not a set of settings/);
+});
+
+test('settings under their old names halt naming the new ones, inherited through extend too', () => {
+	for (const [config, message] of [
+		['default:\n  themes: []\nproduction:\n  extend: default\n  wp:\n    url: https://example.com\n', /'production' in 'config.yml' has 'wp:' settings, which FDK now reads as 'rest:'/],
+		['default:\n  themes: []\n  wp:\n    url: https://example.com\nproduction:\n  extend: default\n', /'production' in 'config.yml' has 'wp:' settings/],
+		['production:\n  rest:\n    appPassword: abcd\n', /'rest\.appPassword' under 'production' in 'config\.yml' is now 'rest\.application_password'/],
+	]) {
+		const res = runNode(`${requireLib('config')}.getProjectConfig('production')`, { cwd: makeProject({ config }) });
+		assert.equal(res.status, 1);
+		assert.match(res.stderr, message);
+	}
+});
+
+test('a resource entry that is not a path halts naming the list, rather than throwing later', () => {
+	for (const config of ['default:\n  themes:\n    - path: ./src/theme\n', 'default:\n  plugins:\n    - ./a\n    -\n', 'default:\n  themes: ./src/theme\n']) {
+		const res = runNode(`${requireLib('config')}.getProjectConfig('default')`, { cwd: makeProject({ config }) });
+		assert.equal(res.status, 1);
+		assert.match(res.stderr, /under 'default' in 'config\.yml' must be a list of paths/);
+	}
 });
 
 // Bitwarden references, read through a stub `bw` that answers with the session it was handed and
@@ -148,4 +168,17 @@ test('a reference with no bw installed halts naming the CLI', () => {
 		res = resolve(`resolveSecret('bw://site-ftp')`, { PATH: bin.path, BW_SESSION: 'exported' });
 	assert.equal(res.status, 1);
 	assert.match(res.stderr, /the Bitwarden CLI \('bw'\) could not be run/);
+});
+
+// ——— projectResources ————
+
+test('themes then plugins, each named by its folder whatever the trailing slash', () => {
+	assert.deepEqual(projectResources({ plugins: ['../p/a/'], themes: ['./src/theme'] }), [
+		{ resourceType: 'themes', resource: './src/theme', name: 'theme' },
+		{ resourceType: 'plugins', resource: '../p/a/', name: 'a' },
+	]);
+});
+
+test('a missing or emptied list contributes nothing', () => {
+	assert.deepEqual(projectResources({ themes: null }), []);
 });
