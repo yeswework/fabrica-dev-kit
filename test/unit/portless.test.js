@@ -3,7 +3,7 @@
 const assert = require('node:assert/strict'),
 	{ after, test } = require('node:test');
 
-const { checkPortless, removePortlessAlias, setupPortlessAlias } = require('../../lib/portless'),
+const { checkPortless, removePortlessAlias, setupPortlessAlias, withPortlessConfig } = require('../../lib/portless'),
 	{ stubBin } = require('../helpers/stub-bin'),
 	{ cleanTmpDirs, makeTmpDir } = require('../helpers/tmpdir');
 
@@ -84,4 +84,13 @@ test('without the portless CLI both helpers decline quietly', () => {
 test('removing an alias calls portless with the name', () => {
 	const calls = withPortless({}, stub => { removePortlessAlias('site'); return stub.calls(); });
 	assert.deepEqual(calls, ['portless alias --remove site']);
+});
+
+test('the Portless block goes in front of a project\'s own WORDPRESS_CONFIG_EXTRA, once', () => {
+	const custom = "define('WP_HOME', 'https://' . $$_SERVER['HTTP_HOST']);\n",
+		block = withPortlessConfig();
+	assert.match(block, /HTTP_X_PORTLESS_HOPS/);
+	assert.equal(withPortlessConfig(custom), block + custom);
+	assert.equal(withPortlessConfig(withPortlessConfig(custom)), block + custom);
+	assert.equal(withPortlessConfig(block), block);
 });
