@@ -34,6 +34,15 @@ foreach ($snapshot['posts'] as $post) {
 
 $titles = array_column($snapshot['posts'], 'post_title', 'ID');
 $types = array_column($snapshot['posts'], 'post_type', 'ID');
+// a themed post takes its local match's ID, which another live post can hold as its own: both would
+// be written into the one row, so neither --replace nor a clash report can settle it
+$report['collisions'] = [];
+foreach (array_count_values($targets) as $target => $count) {
+	if ($count < 2) { continue; }
+	$report['collisions'][] = ['ID' => (int) $target, 'posts' => array_map(function ($live) use ($types, $titles) {
+		return ['ID' => (int) $live, 'type' => $types[$live], 'title' => $titles[$live]];
+	}, array_keys($targets, $target, true))];
+}
 if ($targets) {
 	$taken = $wpdb->get_results("select ID, post_type, post_title from {$wpdb->posts} where ID in (" . implode(',', array_unique($targets)) . ')', ARRAY_A);
 	$liveOf = array_flip($targets);
@@ -48,7 +57,7 @@ $report['commentClashes'] = $commentIds
 	? array_map('intval', $wpdb->get_col("select comment_ID from {$wpdb->comments} where comment_ID in (" . implode(',', $commentIds) . ')'))
 	: [];
 
-if ($input['check'] || (($report['clashes'] || $report['commentClashes']) && !$input['replace'])) {
+if ($input['check'] || $report['collisions'] || (($report['clashes'] || $report['commentClashes']) && !$input['replace'])) {
 	echo "\nFDK-SEED " . wp_json_encode($report) . "\n";
 	return;
 }
@@ -181,6 +190,10 @@ foreach (array_keys($commentedPosts) as $id) { wp_update_comment_count_now($id);
 foreach ($snapshot['options'] as $option) {
 	update_option($option['name'], array_key_exists('raw', $option) ? maybe_unserialize($option['raw']) : $option['value']);
 }
+// nothing in core rebuilds the rewrite rules when permalink_structure or the category and tag bases
+// change, so links would 404 until Permalinks was saved again. Not rebuilt here: this request
+// registered the taxonomies under the old bases. Without stored rules, the next request builds them
+delete_option('rewrite_rules');
 if ($snapshot['menuLocations']) {
 	$locations = get_theme_mod('nav_menu_locations', []);
 	foreach ($snapshot['menuLocations'] as $location => $menu) {

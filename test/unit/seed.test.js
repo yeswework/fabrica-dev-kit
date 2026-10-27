@@ -31,6 +31,12 @@ test('flags apply to every type left, and --months 0 lifts a configured window',
 	assert.deepEqual(selection({}, { only: 'page', ids: '7,9' }), { page: { ids: [7, 9] } });
 });
 
+// a menu item's date is when it was added, and REST serves none: a window would empty live menus
+test('no months window applies to menu items, from the flags or the config', () => {
+	assert.deepEqual(selection({}, { only: 'nav_menu_item,post', months: '3' }), { nav_menu_item: {}, post: { months: 3 } });
+	assert.deepEqual(selection({ nav_menu_item: { months: 2, limit: 5 } }, { only: 'nav_menu_item' }), { nav_menu_item: { limit: 5 } });
+});
+
 test('selection refuses what it cannot read', () => {
 	assert.throws(() => selection({ page: { since: 3 } }), /unknown setting\(s\) since/);
 	assert.throws(() => selection({ page: { limit: 'many' } }), /seed\.page\.limit/);

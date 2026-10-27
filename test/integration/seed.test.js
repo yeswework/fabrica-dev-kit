@@ -111,6 +111,8 @@ test('a dry run reads only, and hands the writer posts, parents, templates, styl
 			ids = Object.fromEntries(['page', 'wp_template', 'wp_global_styles', 'attachment']
 				.map(type => [type, snapshot.posts.filter(post => post.post_type === type).map(post => post.ID).sort()]));
 		assert.deepEqual({ check, replace }, { check: true, replace: false });
+		// live's home, which every link in the content holds, is the URL the local one replaces
+		assert.equal(snapshot.source.home, site.url);
 		assert.deepEqual(ids, { page: [6, 8], wp_template: [20], wp_global_styles: [15], attachment: [9] });
 		assert.ok(snapshot.relationships.some(rel => rel.object_id === 20 && rel.taxonomy === 'wp_theme' && rel.slug === 'theme'));
 		assert.equal(JSON.parse(snapshot.posts.find(post => post.ID === 15).post_content).isGlobalStylesUserThemeJSON, true);
@@ -119,6 +121,23 @@ test('a dry run reads only, and hands the writer posts, parents, templates, styl
 		// posts are narrowed to the last 6 months on the server, as Fabrica Export narrows them
 		assert.ok(site.requests.some(request => request.route === '/wp/v2/posts' && /after=/.test(request.query)));
 		assert.ok(!local.calls().some(call => call.includes('search-replace')));
+	}));
+
+// a template matched to the local one by theme and slug takes its local ID, which a live page can hold
+test('two live posts bound for one local ID write nothing, even with --replace, and a dry run names them', () =>
+	withSite(async (site, dir) => {
+		const collision = { ...REPORT, collisions: [{ ID: 12, posts: [
+			{ ID: 50, type: 'wp_template', title: 'Index' }, { ID: 12, type: 'page', title: 'Home' }] }] };
+		let local = localSite(collision),
+			res = await runFdk(['seed', 'production', '--replace'], { cwd: dir, env: { PATH: local.path } });
+		assert.notEqual(res.status, 0);
+		assert.match(res.stderr, /would each hold two live posts, so nothing was written: 12 \(live wp_template 50 'Index', live page 12 'Home'\)/);
+		assert.ok(!local.calls().some(call => call.includes('search-replace')));
+
+		local = localSite(collision);
+		res = await runFdk(['seed', 'production', '--dry-run'], { cwd: dir, env: { PATH: local.path } });
+		assert.equal(res.status, 0, res.stderr);
+		assert.match(res.stderr, /Two live posts would be written into one local ID, which --replace can't settle: 12 /);
 	}));
 
 test('a clash writes nothing and names the post, unless --replace', () =>
