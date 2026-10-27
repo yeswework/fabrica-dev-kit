@@ -105,6 +105,18 @@ test('a folder that is not a repository answers null, not an empty list', () => 
 	assert.equal(uncommittedFiles(path.join(dir, 'mytheme'), ['acf-json/g.json']), null);
 });
 
+// a theme kept inside a project repository that ignores it, with no .git of its own: git reports
+// nothing changed there, and could restore none of what a pull overwrote
+test('a folder its repository ignores answers null, not an empty list', () => {
+	const repo = makeTmpDir('fdk-ignored-'),
+		theme = path.join(repo, 'themes', 'mytheme');
+	fs.mkdirSync(path.join(theme, 'acf-json'), { recursive: true });
+	fs.writeFileSync(path.join(theme, 'acf-json', 'g.json'), group('g', 1));
+	fs.writeFileSync(path.join(repo, '.gitignore'), 'themes/mytheme/\n');
+	require('child_process').spawnSync('git', ['init', '-q', repo]);
+	assert.equal(uncommittedFiles(theme, ['acf-json/g.json']), null);
+});
+
 // ——— pullRemoteAcfJson: the tri-state the guard turns on ————
 
 // `pullRemoteAcfJson` shells out to whatever `lftp` is on PATH, so each case swaps in a stub that

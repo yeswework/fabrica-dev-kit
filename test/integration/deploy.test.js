@@ -217,7 +217,7 @@ test('a resource that is not a repository is left for the operator to sort out',
 	});
 	assert.equal(run.uploaded, false);
 	assert.equal(run.status, 1);
-	assert.match(run.output, /isn't a git repository/);
+	assert.match(run.output, /isn't in a git repository, or its repository ignores it/);
 	assert.equal(run.read('g.json'), group('g', 100));
 });
 
@@ -504,6 +504,14 @@ test('--backup runs after the dry run, never in it, and never for a resource the
 	assert.equal(run.backup, '', 'a refused resource should not be backed up');
 });
 
+// --force skips the checks, and the stale-build hint is no check
+test('--force still warns about a build older than its source', async () => {
+	const run = await deploy({ noAcfDir: true, force: true, extra: { 'build/index.js': 'ok()', 'src/index.js': 'x' }, uncommitted: { 'src/index.js': 'y' } });
+	assert.equal(run.uploaded, true);
+	assert.match(run.output, /'mytheme' source was edited after its build output last changed/);
+	assert.doesNotMatch(run.output, /isn't ready to deploy/);
+});
+
 test('--force skips every check, --strict refuses, and the two together are an error', async () => {
 	const failing = { noAcfDir: true, params: ['--delete'], dryRun: 'rm -r ftp://u@ftp.test/wp-content/themes/mytheme/vendor\n',
 		extra: { 'composer.json': '{}' }, uncommitted: { 'new.php': '<?php' } };
@@ -563,7 +571,7 @@ test('newer server groups of a resource configured under ~ are pulled as in any 
 	const run = await deploy({ home: true, local: { 'g.json': group('g', 100) }, server: { 'g.json': group('g', 900) } });
 	assert.equal(run.uploaded, false);
 	assert.match(run.output, /pulled into the working tree/);
-	assert.doesNotMatch(run.output, /isn't a git repository/);
+	assert.doesNotMatch(run.output, /isn't in a git repository/);
 	assert.equal(run.read('g.json'), group('g', 900));
 });
 
