@@ -41,7 +41,8 @@ const startSite = async () => {
 		}
 		const routes = {
 			'/wp/v2/users/me': { name: 'editor' },
-			'/wp/v2/types': { page: { rest_base: 'pages', rest_namespace: 'wp/v2', taxonomies: [] }, post: { rest_base: 'posts', taxonomies: [] } },
+			'/wp/v2/types': { page: { rest_base: 'pages', rest_namespace: 'wp/v2', taxonomies: [] }, post: { rest_base: 'posts', taxonomies: [] },
+				attachment: { rest_base: 'media', rest_namespace: 'wp/v2', taxonomies: [] } },
 			'/wp/v2/taxonomies': {},
 			'/wp/v2/settings': { title: 'Site', url: site.url, show_on_front: 'page', page_on_front: 8, site_icon: 0, site_logo: null },
 			'/wp/v2/themes': [{ stylesheet: 'theme', _links: { 'wp:user-global-styles': [{ href: `${site.url}/wp-json/wp/v2/global-styles/15` }] } }],
@@ -170,10 +171,37 @@ test("the section's seed: block and --only narrow what is read", () =>
 		// --only overrides the config's `post: false`, and leaves out every type it doesn't name
 		assert.ok(site.requests.some(request => request.route === '/wp/v2/posts'));
 		assert.ok(!site.requests.some(request => request.route === '/wp/v2/templates'));
+		// the front page setting names a post a narrowed seed may not copy
+		assert.deepEqual(local.sent().snapshot.options, []);
+		assert.match(res.stderr, /Site settings weren't copied: --only and --ids/);
 	}, '  seed:\n    post: false'));
 
+// global styles are post 15 on the stub site, which --ids 8 doesn't name
+test('--ids leaves the global styles alone over REST, as it does over SSH', () =>
+	withSite(async (site, dir) => {
+		const local = localSite(REPORT),
+			res = await runFdk(['seed', 'production', '--dry-run', '--ids', '8'], { cwd: dir, env: { PATH: local.path } });
+		assert.equal(res.status, 0, res.stderr);
+		const types = local.sent().snapshot.posts.map(post => post.post_type);
+		assert.ok(types.includes('page'));
+		assert.ok(!types.includes('wp_global_styles'));
+	}));
+
+test('--only attachment asks the media route for its own statuses, and keeps where each file is', () =>
+	withSite(async (site, dir) => {
+		const local = localSite(REPORT),
+			res = await runFdk(['seed', 'production', '--dry-run', '--only', 'attachment'], { cwd: dir, env: { PATH: local.path } });
+		assert.equal(res.status, 0, res.stderr);
+		const media = site.requests.find(request => request.route === '/wp/v2/media');
+		assert.match(media.query, /status=inherit%2Cprivate|status=inherit,private/);
+		assert.doesNotMatch(media.query, /publish/);
+		const { snapshot } = local.sent();
+		assert.deepEqual(snapshot.posts.map(post => [post.ID, post.post_type]), [[9, 'attachment']]);
+		assert.ok(snapshot.meta.some(meta => meta.post_id === 9 && meta.key === '_wp_attached_file' && meta.value === '2026/01/a.jpg'));
+	}));
+
 // A seed of page 7 over SSH from a live site whose home is `home`
-const sshSeed = async (home = 'https://example.com') => {
+const sshSeed = async (home = 'https://example.com', flags = ['--only', 'page', '--ids', '7']) => {
 	const state = path.join(makeTmpDir(), 'site.json'),
 		// stored rows as the reader prints them: serialized meta and options stay raw strings
 		snapshot = {
@@ -188,7 +216,7 @@ const sshSeed = async (home = 'https://example.com') => {
 		'  ftp:', '    scheme: sftp', '    host: ssh.example.com', '    user: u123', '    password: sftp-secret', '    path: wordpress',
 		'    commands:', '      - set sftp:connect-program "ssh -a -x -i ~/.ssh/site_key"', ''].join('\n') });
 	const local = localSite(REPORT, { ssh: SSH_STUB_BODY, wp: WP_STUB_BODY }),
-		res = await runFdk(['seed', 'production', '--only', 'page', '--ids', '7'], { cwd: dir, env: { PATH: local.path, FDK_WP_STATE: state } });
+		res = await runFdk(['seed', 'production', ...flags], { cwd: dir, env: { PATH: local.path, FDK_WP_STATE: state } });
 	return { local, res, site: JSON.parse(fs.readFileSync(state, 'utf8')), snapshot };
 };
 
@@ -199,7 +227,8 @@ test('over SSH, the reader gets the selection, and its raw rows reach the writer
 	assert.deepEqual(site.evalInput.types, { page: { ids: [7] } });
 	assert.ok(site.evalInput.options.includes('page_on_front'));
 	assert.deepEqual(local.sent().snapshot.meta, snapshot.meta);
-	assert.deepEqual(local.sent().snapshot.options, snapshot.options);
+	// narrowed by --only and --ids, so the site's settings stay local
+	assert.deepEqual(local.sent().snapshot.options, []);
 
 	// logged in with the entry's key, non-interactively, never with its password
 	const ssh = local.calls().filter(call => call.startsWith('ssh '));
@@ -208,6 +237,12 @@ test('over SSH, the reader gets the selection, and its raw rows reach the writer
 	// no gaps over SSH, and the live URL is replaced locally afterwards
 	assert.doesNotMatch(res.stderr, /exposed over REST/);
 	assert.ok(local.calls().some(call => call.includes('search-replace') && call.includes('https://example.com https://local.localhost')));
+});
+
+test('a seed over SSH that names no posts copies the stored settings untouched', async () => {
+	const { local, res, snapshot } = await sshSeed(undefined, []);
+	assert.equal(res.status, 0, res.stderr);
+	assert.deepEqual(local.sent().snapshot.options, snapshot.options);
 });
 
 // the URL comes from the live site and reaches a local shell, which must take it as one argument

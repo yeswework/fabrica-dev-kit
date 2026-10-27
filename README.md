@@ -202,6 +202,9 @@ production:
 ```
 
 `--only page,wp_template`, `--limit`, `--months` (`0` for all) and `--ids` change it for one run.
+`months` leaves menu items and global styles whole, since their dates say when they were added, not
+whether they're in use. With `--only` or `--ids` the site's settings stay as they are locally: they
+name posts, such as the front page, that the run may not copy.
 Drafts are left out, as Fabrica Export leaves them, except a post named in `ids`.
 `--dry-run` lists what would be copied, and anything in the way, without writing.
 

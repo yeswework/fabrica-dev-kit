@@ -31,9 +31,10 @@ test('flags apply to every type left, and --months 0 lifts a configured window',
 	assert.deepEqual(selection({}, { only: 'page', ids: '7,9' }), { page: { ids: [7, 9] } });
 });
 
-// a menu item's date is when it was added, and REST serves none: a window would empty live menus
-test('no months window applies to menu items, from the flags or the config', () => {
-	assert.deepEqual(selection({}, { only: 'nav_menu_item,post', months: '3' }), { nav_menu_item: {}, post: { months: 3 } });
+// a menu item's date is when it was added, global styles' when first saved, and REST serves neither
+test('no months window applies to menu items or global styles, from the flags or the config', () => {
+	assert.deepEqual(selection({}, { only: 'nav_menu_item,wp_global_styles,post', months: '3' }),
+		{ nav_menu_item: {}, wp_global_styles: {}, post: { months: 3 } });
 	assert.deepEqual(selection({ nav_menu_item: { months: 2, limit: 5 } }, { only: 'nav_menu_item' }), { nav_menu_item: { limit: 5 } });
 });
 
