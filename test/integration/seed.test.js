@@ -201,11 +201,11 @@ test('--only attachment asks the media route for its own statuses, and keeps whe
 	}));
 
 // A seed of page 7 over SSH from a live site whose home is `home`
-const sshSeed = async (home = 'https://example.com', flags = ['--only', 'page', '--ids', '7']) => {
+const sshSeed = async (home = 'https://example.com', flags = ['--only', 'page', '--ids', '7'], siteurl = home) => {
 	const state = path.join(makeTmpDir(), 'site.json'),
 		// stored rows as the reader prints them: serialized meta and options stay raw strings
 		snapshot = {
-			source: { home, siteurl: home, stylesheet: 'theme' },
+			source: { home, siteurl, stylesheet: 'theme' },
 			posts: [{ ID: '7', post_type: 'page', post_status: 'draft', post_content: '<!-- wp:paragraph -->' }],
 			meta: [{ post_id: 7, key: '_custom', raw: 'a:1:{s:1:"a";s:1:"b";}' }],
 			terms: [], relationships: [], comments: [], users: [],
@@ -253,4 +253,12 @@ test("a live URL the shell would act on reaches search-replace as written", asyn
 	assert.equal(res.status, 0, res.stderr);
 	assert.ok(!fs.existsSync(marker), 'the URL ran as a command');
 	assert.ok(local.calls().some(call => call.includes(`search-replace ${home} https://local.localhost`)), local.calls().join('\n'));
+});
+
+// WordPress in a subdirectory: replacing home first would leave `/wp` on every siteurl link
+test('a siteurl under home is replaced before home', { todo: 'fabrica-dev-kit-25v' }, async () => {
+	const { local, res } = await sshSeed(undefined, undefined, 'https://example.com/wp'),
+		replaced = local.calls().filter(call => call.includes('search-replace'));
+	assert.equal(res.status, 0, res.stderr);
+	assert.ok(replaced[0]?.includes('search-replace https://example.com/wp https://local.localhost'), replaced.join('\n'));
 });
