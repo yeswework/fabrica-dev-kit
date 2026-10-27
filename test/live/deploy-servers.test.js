@@ -311,6 +311,29 @@ describe('uncommitted changes deploy would upload, through real lftp filters',
 			assert.deepEqual(fs.readdirSync(tmp), []);
 		});
 
+		// git names an untracked repository inside the resource by its folder with a trailing slash,
+		// which was laid out as a file and threw, stopping every resource after it
+		test('an untracked repository inside the resource counts as its folder, unless the filters leave it out', () => {
+			const dir = makeProject({ resources: { plugin: { files: { 'index.php': '<?php' } } } }),
+				plugin = path.join(dir, 'plugin'),
+				sub = path.join(plugin, 'lib', 'vendored');
+			fs.mkdirSync(sub, { recursive: true });
+			spawnSync('git', ['init', '-q', sub]);
+			fs.writeFileSync(path.join(sub, 'x.php'), '<?php');
+			assert.deepEqual(uncommittedUploads(plugin, ''), ['lib/vendored/']);
+			assert.deepEqual(uncommittedUploads(plugin, '--exclude-glob lib/'), []);
+		});
+
+		// a bundle deploy leaves out never reaches the server, so it can't break the site
+		test('a broken bundle the filters leave out is no problem', () => {
+			const dir = makeProject({ resources: { plugin: { files: {
+					'build/index.js': 'ok()', 'build/legacy/old.js': 'function webpackMissingModule() {}' } } } }),
+				plugin = path.join(dir, 'plugin');
+			assert.deepEqual(payloadProblems(plugin, ignoreParams(plugin)).map(([check]) => check), ['webpack']);
+			fs.writeFileSync(path.join(plugin, '.distignore'), '/build/legacy/\n');
+			assert.deepEqual(payloadProblems(plugin, ignoreParams(plugin)), []);
+		});
+
 		// a folder deploy leaves out anyway has nothing to lose on the server
 		test("a missing 'vendor/' or 'build/' that .distignore leaves out is no problem", () => {
 			const dir = makeProject({ resources: { plugin: { files: {

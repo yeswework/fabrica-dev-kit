@@ -5,7 +5,7 @@ const assert = require('node:assert/strict'),
 	fs = require('fs'),
 	path = require('path');
 
-const { CHECKS, LFTP_DEFAULTS, acfGroupsAtRisk, ignoreParams, lftp, pullRemoteAcfJson, remoteCommands, scrub, skipOption, uncommittedFiles } = require('../../lib/deploy'),
+const { CHECKS, DELETE_OPTION, LFTP_DEFAULTS, acfGroupsAtRisk, ignoreParams, lftp, pullRemoteAcfJson, remoteCommands, scrub, skipOption, uncommittedFiles } = require('../../lib/deploy'),
 	{ BROKEN_PULL, LFTP_STUB_BODY, MISSING_FOLDER } = require('../helpers/lftp-stub'),
 	{ makeProject } = require('../helpers/project'),
 	{ requireLib, runNode } = require('../helpers/run'),
@@ -232,12 +232,30 @@ test('a backup through this machine logs in the same way, and masks what lftp sa
 	assert.doesNotMatch(stub.calls()[0], /p w|p%20w/);
 });
 
+// a `--delete` dry run of a first deploy with vendor/ lists thousands of files
+test('lftp output past 1MB is read whole, not cut off as a failure', () => {
+	const stub = stubBin({ lftp: `head -c 2000000 /dev/zero | tr '\\0' a` }),
+		res = runNode(`const { lftp } = ${requireLib('deploy')}, { status, stdout } = lftp(['x'], undefined, 'pipe');
+			console.log(status, stdout.length)`, { env: { PATH: stub.path } });
+	assert.equal(res.stdout.trim(), '0 2000000', res.stderr);
+});
+
 test('a password is masked whether it is repeated raw or URL-encoded', () => {
 	assert.equal(scrub('open: sftp://u:p%40ss%20w@h:22 failed; tried p@ss w twice', 'p@ss w'), 'open: sftp://u:***@h:22 failed; tried *** twice');
 });
 
 test('with no password there is nothing to mask', () => {
 	assert.equal(scrub('Login failed', undefined), 'Login failed');
+});
+
+// lftp reads short options as getopt does, so `-e` can come combined with others
+test('--delete is seen however it is written, and nothing else is taken for it', () => {
+	for (const params of ['-e', '--delete', '--delete-first', '-ev', '-Re', '-R -e', '-v --delete=x']) {
+		assert.ok(DELETE_OPTION.test(params), params);
+	}
+	for (const params of ['', '-R', '-v', '--exclude-glob *.e', '-x \\.e$', '--verbose']) {
+		assert.ok(!DELETE_OPTION.test(params), params);
+	}
 });
 
 // ——— skipOption: `--skip`'s parser ————
