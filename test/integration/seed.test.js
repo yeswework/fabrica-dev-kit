@@ -172,11 +172,12 @@ test("the section's seed: block and --only narrow what is read", () =>
 		assert.ok(!site.requests.some(request => request.route === '/wp/v2/templates'));
 	}, '  seed:\n    post: false'));
 
-test('over SSH, the reader gets the selection, and its raw rows reach the writer untouched', async () => {
+// A seed of page 7 over SSH from a live site whose home is `home`
+const sshSeed = async (home = 'https://example.com') => {
 	const state = path.join(makeTmpDir(), 'site.json'),
 		// stored rows as the reader prints them: serialized meta and options stay raw strings
 		snapshot = {
-			source: { home: 'https://example.com', siteurl: 'https://example.com', stylesheet: 'theme' },
+			source: { home, siteurl: home, stylesheet: 'theme' },
 			posts: [{ ID: '7', post_type: 'page', post_status: 'draft', post_content: '<!-- wp:paragraph -->' }],
 			meta: [{ post_id: 7, key: '_custom', raw: 'a:1:{s:1:"a";s:1:"b";}' }],
 			terms: [], relationships: [], comments: [], users: [],
@@ -188,9 +189,13 @@ test('over SSH, the reader gets the selection, and its raw rows reach the writer
 		'    commands:', '      - set sftp:connect-program "ssh -a -x -i ~/.ssh/site_key"', ''].join('\n') });
 	const local = localSite(REPORT, { ssh: SSH_STUB_BODY, wp: WP_STUB_BODY }),
 		res = await runFdk(['seed', 'production', '--only', 'page', '--ids', '7'], { cwd: dir, env: { PATH: local.path, FDK_WP_STATE: state } });
+	return { local, res, site: JSON.parse(fs.readFileSync(state, 'utf8')), snapshot };
+};
+
+test('over SSH, the reader gets the selection, and its raw rows reach the writer untouched', async () => {
+	const { local, res, site, snapshot } = await sshSeed();
 	assert.equal(res.status, 0, res.stderr);
 
-	const site = JSON.parse(fs.readFileSync(state, 'utf8'));
 	assert.deepEqual(site.evalInput.types, { page: { ids: [7] } });
 	assert.ok(site.evalInput.options.includes('page_on_front'));
 	assert.deepEqual(local.sent().snapshot.meta, snapshot.meta);
@@ -203,4 +208,14 @@ test('over SSH, the reader gets the selection, and its raw rows reach the writer
 	// no gaps over SSH, and the live URL is replaced locally afterwards
 	assert.doesNotMatch(res.stderr, /exposed over REST/);
 	assert.ok(local.calls().some(call => call.includes('search-replace') && call.includes('https://example.com https://local.localhost')));
+});
+
+// the URL comes from the live site and reaches a local shell, which must take it as one argument
+test("a live URL the shell would act on reaches search-replace as written", async () => {
+	const marker = path.join(makeTmpDir(), 'ran'),
+		home = `https://example.com/it's'; touch ${marker}; echo '`,
+		{ local, res } = await sshSeed(home);
+	assert.equal(res.status, 0, res.stderr);
+	assert.ok(!fs.existsSync(marker), 'the URL ran as a command');
+	assert.ok(local.calls().some(call => call.includes(`search-replace ${home} https://local.localhost`)), local.calls().join('\n'));
 });
