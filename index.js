@@ -12,7 +12,7 @@ const path = require('path'),
 const { echo, execWP, halt, spawn, warn } = require('./lib/util'),
 	{ RESOURCE_TYPES, getProjectConfig, projectResources } = require('./lib/config'),
 	{ loadProjectSettings, project } = require('./lib/project'),
-	{ PORTLESS_CONFIG_EXTRA, checkPortless, removePortlessAlias, setupPortlessAlias } = require('./lib/portless'),
+	{ checkPortless, removePortlessAlias, setupPortlessAlias, withPortlessConfig } = require('./lib/portless'),
 	{ getDBPort, getServicesPorts, getSiteURL, getWebPort, waitForWebContainer } = require('./lib/docker'),
 	{ init, setup } = require('./lib/setup'),
 	{ CHECKS, deploy, skipOption } = require('./lib/deploy'),
@@ -133,10 +133,11 @@ const configServices = (projectConfig, dockerConfig) => {
 	// address (301 -> https://127.0.0.1/). Flagging needsRestart recreates wp so the env lands.
 	const usePortless = projectConfig?.use?.indexOf('portless') >= 0;
 	if (usePortless && dockerConfig.services?.wp) {
-		dockerConfig.services.wp.environment ||= {};
-		if (dockerConfig.services.wp.environment.WORDPRESS_CONFIG_EXTRA !== PORTLESS_CONFIG_EXTRA) {
+		const environment = dockerConfig.services.wp.environment ||= {},
+			extra = withPortlessConfig(environment.WORDPRESS_CONFIG_EXTRA);
+		if (environment.WORDPRESS_CONFIG_EXTRA !== extra) {
 			needsRestart = true;
-			dockerConfig.services.wp.environment.WORDPRESS_CONFIG_EXTRA = PORTLESS_CONFIG_EXTRA;
+			environment.WORDPRESS_CONFIG_EXTRA = extra;
 		}
 	}
 

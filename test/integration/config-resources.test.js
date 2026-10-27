@@ -26,12 +26,12 @@ const THEME_VOLUME = './mytheme:/var/www/html/wp-content/themes/mytheme',
 // `config:resources` diffs the config against `docker-compose.yml` and rewrites the file, so a
 // config it could not read must stop it before the diff — an unreadable config that reads as
 // 'no resources' is indistinguishable from one that says 'unmount everything'
-const configResources = async ({ config, webPort, portless = false }) => {
+const configResources = async ({ config, webPort, portless = false, compose = COMPOSE }) => {
 	const dir = makeProject({
 		config,
 		resources: { mytheme: { files: { 'style.css': '/* theme */' }, git: false } },
 	});
-	fs.writeFileSync(path.join(dir, 'docker-compose.yml'), COMPOSE);
+	fs.writeFileSync(path.join(dir, 'docker-compose.yml'), compose);
 
 	// `configResources` calls `removePortlessAlias` on every run, so a test that inherited the
 	// developer's PATH would reach the real Portless and touch real aliases. Either stub it and
@@ -115,4 +115,51 @@ test('a project still using portless keeps its alias', async () => {
 		assert.equal(run.status, 0);
 		assert.deepEqual(run.calls.filter(call => call.includes('alias --remove')), []);
 	} finally { server.close(); }
+});
+
+// ——— the Portless header trust, which used to replace a project's own WORDPRESS_CONFIG_EXTRA ————
+
+const PORTLESS_CONFIG = 'default:\n  use:\n    - portless\n  themes:\n    - ./mytheme\n',
+	CUSTOM_EXTRA = "define('WP_CACHE', false);\n",
+	composeWithExtra = extra => yaml.dump({
+		...yaml.load(COMPOSE),
+		services: {
+			...yaml.load(COMPOSE).services,
+			wp: { ...yaml.load(COMPOSE).services.wp, environment: { WORDPRESS_CONFIG_EXTRA: extra } },
+		},
+	}),
+	extraOf = compose => yaml.load(compose).services.wp.environment.WORDPRESS_CONFIG_EXTRA;
+
+const withWebServer = async fn => {
+	const server = http.createServer((req, res) => { res.writeHead(200); res.end('ok'); });
+	await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+	try { return await fn(server.address().port); } finally { server.close(); }
+};
+
+test('portless keeps a project\'s own WORDPRESS_CONFIG_EXTRA and adds its block once', () => withWebServer(async webPort => {
+	const first = await configResources({
+		compose: composeWithExtra(CUSTOM_EXTRA), config: PORTLESS_CONFIG, portless: true, webPort,
+	});
+	assert.equal(first.status, 0);
+	const extra = extraOf(first.compose);
+	assert.ok(extra.endsWith(CUSTOM_EXTRA), 'the custom content was lost');
+	assert.equal(extra.match(/HTTP_X_PORTLESS_HOPS/g).length, 1);
+	assert.ok(first.calls.some(call => call.includes('compose up')));
+
+	const again = await configResources({ compose: first.compose, config: PORTLESS_CONFIG, portless: true });
+	assert.equal(again.compose, first.compose, 'a second run rewrote docker-compose.yml');
+	assert.ok(!again.calls.some(call => call.includes('compose up')), 'a second run recreated containers');
+}));
+
+test('a project migrated to portless before keeps its value and starts nothing', async () => {
+	const block = await withWebServer(webPort => configResources({ config: PORTLESS_CONFIG, portless: true, webPort }));
+	const run = await configResources({ compose: block.compose, config: PORTLESS_CONFIG, portless: true });
+	assert.equal(run.compose, block.compose);
+	assert.ok(!run.calls.some(call => call.includes('compose up')));
+});
+
+test('a project not using portless keeps WORDPRESS_CONFIG_EXTRA as it is', async () => {
+	const compose = composeWithExtra(CUSTOM_EXTRA),
+		run = await configResources({ compose, config: 'default:\n  themes:\n    - ./mytheme\n' });
+	assert.equal(run.compose, compose);
 });
