@@ -164,19 +164,29 @@ describe('the ACF preflight against real servers',
 			});
 		}
 
-		// the whole deploy, on a server where the theme's folder takes uploads and its `acf-json`
-		// can't be read: it stops before the upload, where it used to read as a first deploy and go
-		// up over field groups it never saw. A theme that isn't there yet still goes up, and goes up
-		// again once its `acf-json` is there to compare
+		// vsftpd and pure-ftpd list it as empty and lftp exits 0; only their reply says it failed
+		// (fabrica-dev-kit-rkd). sftp refuses it outright
 		for (const name of Object.keys(SERVERS)) {
-			test(`${name}: fdk deploy stops on a refused acf-json, and deploys a theme that is new or readable`, async () => {
+			test(`${name}: a folder that takes uploads but won't list reads as null, never as empty`, () => {
+				assert.equal(pull(name, 'writeonly').result, null);
+			});
+		}
+
+		// the whole deploy, on a server where the theme's folder takes uploads and its `acf-json`
+		// can't be read, or can be written but not listed: it stops before the upload, where it used
+		// to read as a first deploy, or an empty folder, and go up over field groups it never saw. A
+		// theme that isn't there yet still goes up, and goes up again once its `acf-json` is there to
+		// compare
+		for (const name of Object.keys(SERVERS)) {
+			test(`${name}: fdk deploy stops on a refused or unlistable acf-json, and deploys a theme that is new or readable`, async () => {
 				const { container, port } = SERVERS[name],
 					root = 'site/e2e',
 					themes = `${root}/wp-content/themes`,
 					locked = `/home/fdk/${themes}/locked/acf-json`,
+					writeonly = `/home/fdk/${themes}/writeonly/acf-json`,
 					// WordPress's own `index.php` in themes, which a first deploy is settled against
-					made = docker(['exec', container, 'sh', '-c', `mkdir -p ${locked} && touch /home/fdk/${themes}/index.php && chown fdk /home/fdk/site`
-						+ ` && chown -R fdk /home/fdk/${root} && chown root ${locked} && chmod 700 ${locked}`]);
+					made = docker(['exec', container, 'sh', '-c', `mkdir -p ${locked} ${writeonly} && touch /home/fdk/${themes}/index.php && chown fdk /home/fdk/site`
+						+ ` && chown -R fdk /home/fdk/${root} && chown root ${locked} ${writeonly} && chmod 700 ${locked} && chmod 733 ${writeonly}`]);
 				assert.equal(made.status, 0, made.stderr);
 				const tuning = commandsFor(name).filter(command => !command.startsWith('open ')),
 					config = theme => ['default:', '  ftp:', ...(name === 'sftp' ? ['    scheme: sftp'] : []),
@@ -186,11 +196,14 @@ describe('the ACF preflight against real servers',
 						resources: { [theme]: { files: { 'style.css': '/* theme */', 'acf-json/g.json': FIXTURE_GROUP } } } }) }),
 					listed = theme => spawnSync('lftp', ['-c', [...commandsFor(name), `cls -1 ${themes}/${theme}/`].join('; ')], { encoding: 'utf8' }).stdout;
 
-				let res = await deploy('locked');
-				assert.equal(res.status, 1, res.stdout + res.stderr);
-				assert.match(res.stderr, /Couldn't read the 'acf-json' folder of 'locked'/);
-				assert.doesNotMatch(res.stdout + res.stderr, /failed while uploading/);
-				assert.doesNotMatch(listed('locked'), /style\.css/, 'nothing should have been uploaded');
+				let res;
+				for (const theme of ['locked', 'writeonly']) {
+					res = await deploy(theme);
+					assert.equal(res.status, 1, res.stdout + res.stderr);
+					assert.match(res.stderr, new RegExp(`Couldn't read the 'acf-json' folder of '${theme}'`));
+					assert.doesNotMatch(res.stdout + res.stderr, /failed while uploading|^(--->|<---) /m);
+					assert.doesNotMatch(listed(theme), /style\.css/, 'nothing should have been uploaded');
+				}
 
 				for (let n = 0; n < 2; n++) {
 					res = await deploy('fresh');
@@ -408,5 +421,16 @@ describe('uncommitted changes deploy would upload, through real lftp filters',
 			assert.deepEqual(payloadProblems(plugin, ignoreParams(plugin)).map(([check]) => check), ['vendor', 'build']);
 			fs.writeFileSync(path.join(plugin, '.distignore'), 'vendor/\n/build/\n');
 			assert.deepEqual(payloadProblems(plugin, ignoreParams(plugin)), []);
+		});
+
+		// lftp matches a folder only by its name with a slash appended, so `/build` used to let the
+		// folder through (fabrica-dev-kit-wnz)
+		test("'/build' in .distignore keeps build/ out as '/build/' does, and a nested build/ in", () => {
+			for (const line of ['/build', '/build/']) {
+				const dir = makeProject({ resources: { plugin: { files: { 'index.php': '<?php', '.distignore': `${line}\n` },
+						dirty: { 'build/index.js': 'x', 'src/build/a.js': 'x', 'builder.php': '<?php' } } } }),
+					plugin = path.join(dir, 'plugin');
+				assert.deepEqual(uncommittedUploads(plugin, ignoreParams(plugin)).sort(), ['builder.php', 'src/build/a.js'], line);
+			}
 		});
 	});

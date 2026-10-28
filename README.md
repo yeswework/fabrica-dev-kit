@@ -139,7 +139,9 @@ folder as it stands, and with `--delete` in `ftp.params` it also removes from th
 the folder lacks, so each of these stops the resource. Each is listed by the name `--skip` takes:
 
 * `acf`: the server's `acf-json` holds field groups newer than the local ones, or ones that can't
-  be compared with them, or can't be read at all (the ACF preflight)
+  be compared with them, or can't be read at all (the ACF preflight). A folder the login can write
+  to but not list, which vsftpd and pure-ftpd send as an empty listing, is read from the server's
+  own reply and stops the resource too
 * `vendor`: a `composer.json` and no `vendor/autoload.php`: run `composer install` first
 * `build`: a `build` script in `package.json` and no `build/`: run `fdk build` first. A
   `package.json` that isn't valid JSON fails this check too

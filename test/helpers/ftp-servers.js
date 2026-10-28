@@ -129,12 +129,13 @@ const seedFixtures = () => {
 		}
 	}
 
-	// two folders the login is refused, made as root: `denied` neither opens nor lists, and
+	// three folders the login is refused, made as root: `denied` neither opens nor lists, and
 	// `unlisted` opens but won't list, so nothing under it can be told apart from absent by listing.
+	// `writeonly` takes uploads but won't list, which vsftpd and pure-ftpd send as an empty listing.
 	// The sftp chroot is the same home, so all three answer at the same paths
 	for (const { container } of Object.values(SERVERS)) {
 		const made = docker(['exec', container, 'sh', '-c',
-			'cd /home/fdk && mkdir -p denied/acf-json unlisted && chmod 700 denied && chmod 711 unlisted']);
+			'cd /home/fdk && mkdir -p denied/acf-json unlisted writeonly && chmod 700 denied && chmod 711 unlisted && chmod 733 writeonly']);
 		if (made.status !== 0) {
 			throw new Error(`could not make the refused folders in ${container}: ${made.stderr}`);
 		}

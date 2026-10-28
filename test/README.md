@@ -88,9 +88,11 @@ It exists for one thing a stub can't reproduce: the sentence a server puts after
 three word a missing directory differently — and lftp's sftp transport words it differently again.
 A 550 also means the folder was refused, and vsftpd says `550 Failed to change directory.` for
 both, so the deploy guard takes a folder for missing only where the wording says `No such file`, or
-where the folder above it lists other entries and not it. Each server is seeded with two folders
-the login is refused (`denied`, which neither opens nor lists, and `unlisted`, which opens but won't
-list) to prove a refusal never reads as missing. The sentences are also kept as fixtures in
+where the folder above it lists other entries and not it. Each server is seeded with three folders
+the login is refused (`denied`, which neither opens nor lists, `unlisted`, which opens but won't
+list, and `writeonly`, which takes uploads but won't list) to prove a refusal never reads as missing
+or empty. vsftpd and pure-ftpd send `writeonly` as an empty listing and lftp exits 0, so the guard
+reads their reply out of lftp's `debug 5` transcript instead. The sentences are also kept as fixtures in
 `helpers/lftp-stub.js`, so the fast tier can check the matching without a server; the live tier is
 what proves the fixtures still match reality.
 
