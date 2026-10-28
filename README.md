@@ -206,7 +206,8 @@ production:
     application_password: bw://example-wp
 ```
 
-A section with both uses SSH, and falls back to `rest:` with a warning if WP-CLI doesn't answer.
+A section with both uses SSH, and falls back to `rest:` with a warning if WP-CLI doesn't answer. A
+file pulled one way pushes the other, as long as the site reported the same home both times.
 Wherever `rest.url` is set, over SSH too, FDK first checks that the site reports that URL as its
 home, so a credential for one site is never used on a copy of it.
 
