@@ -162,3 +162,69 @@ test('refs reads the live patterns over SSH', async () => {
 	assert.equal(res.status, 0, res.stderr);
 	assert.equal(fs.readFileSync(file, 'utf8'), '<!-- wp:block {"ref":455} /-->');
 });
+
+// One site reached both ways, as it stamps times: MySQL's over WP-CLI, ISO over REST
+const bothRoutes = async () => {
+	const wp = await startWpStub({ posts: { 12: { type: 'page', raw: 'a', modified_gmt: '2026-09-01T00:00:00' } } });
+	return { wp, site: remote({ home: wp.url, posts: page('a') }), rest: { url: wp.url, user: 'editor', application_password: wp.password } };
+};
+const NO_SSH = { ssh: 'echo "This service allows sftp connections only." >&2; exit 1' };
+
+test('a file pulled over SSH pushes over REST to the same site when SSH stops answering', async () => {
+	const { wp, site, rest } = await bothRoutes();
+	try {
+		const dir = project({ rest }),
+			file = path.join(makeTmpDir(), 'page.html');
+		let res = await run(dir, site, ['pull', 'production', '12', file]);
+		assert.equal(res.status, 0, res.stderr);
+		fs.writeFileSync(file, 'b');
+		res = await run(dir, site, ['push', 'production', '12', file], NO_SSH);
+		assert.equal(res.status, 0, res.stderr);
+		assert.equal(wp.posts[12].raw, 'b');
+		assert.equal(JSON.parse(fs.readFileSync(`${file}.fdk.json`, 'utf8')).post, '/wp/v2/pages/12');
+	} finally {
+		await wp.close();
+	}
+});
+
+test('a file pulled over REST pushes over SSH to the same site', async () => {
+	const { wp, site, rest } = await bothRoutes();
+	try {
+		const dir = project({ rest }),
+			file = path.join(makeTmpDir(), 'page.html');
+		let res = await run(dir, site, ['pull', 'production', '12', file], NO_SSH);
+		assert.equal(res.status, 0, res.stderr);
+		fs.writeFileSync(file, 'b');
+		res = await run(dir, site, ['push', 'production', '12', file]);
+		assert.equal(res.status, 0, res.stderr);
+		assert.equal(site.read().posts[12].raw, 'b');
+		assert.equal(wp.writes().length, 0);
+	} finally {
+		await wp.close();
+	}
+});
+
+test('across routes, a file pulled from a different site is still refused', async () => {
+	const { wp, rest } = await bothRoutes();
+	try {
+		for (const [site, pulledFrom] of [
+			// this host, pulled before `rest:` was set, while its home was another site's
+			[remote({ home: 'https://staging.example.com', posts: page('a') }), project()],
+			// a copy on another host that still reports this site's home
+			[remote({ home: wp.url, posts: page('a') }), makeProject({ config: [
+				'default:', '  themes: []', 'production:', '  extend: default',
+				'  ftp:', '    scheme: sftp', '    host: copy.example.com', '    user: u123', '    path: www',
+				'    commands:', `      - set sftp:connect-program "${KEYED}"`, ''].join('\n') })],
+		]) {
+			const file = path.join(makeTmpDir(), 'page.html');
+			let res = await run(pulledFrom, site, ['pull', 'production', '12', file]);
+			assert.equal(res.status, 0, res.stderr);
+			res = await run(project({ rest }), site, ['push', 'production', '12', file], NO_SSH);
+			assert.equal(res.status, 1);
+			assert.match(res.stderr, /was pulled from 'ssh:\/\/u123@[\w.]+\/[\w./]+', not 'http:\/\/127\.0\.0\.1/);
+		}
+		assert.equal(wp.writes().length, 0);
+	} finally {
+		await wp.close();
+	}
+});
