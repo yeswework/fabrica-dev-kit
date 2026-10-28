@@ -362,6 +362,64 @@ for (const record of ['listed', 'unlisted']) test(`a to-live that meets a local 
 	});
 });
 
+// a live ref to-local left alone can share its ID with an unrelated local pattern, which to-live
+// would read as that pattern and remap, or hold as local for good (fabrica-dev-kit-isj)
+for (const promo of [true, false]) test(`to-live leaves alone a live ref to-local left, whose ID names an unrelated local pattern (${promo ? 'Promo on live' : 'no Promo on live'})`, () => {
+	const page = '<!-- wp:block {"ref":7} /--><!-- wp:block {"ref":9} /-->',
+		patterns = { 7: { status: 'publish', title: 'Header' }, 9: { status: 'publish', title: 'Footer' },
+			...promo && { 11: { status: 'publish', title: 'Promo' } } },
+		local = [[3, 'Header'], [9, 'Promo']];
+	return withSite({ posts: { 12: { type: 'page', raw: page } }, patterns }, async (wp, dir, tmp) => {
+		const file = path.join(tmp, 'page.html');
+		await run(dir, 'pull', 'production', '12', file);
+		await refsRun(dir, local, 'refs', 'production', file, 'to-local');
+		assert.equal(fs.readFileSync(file, 'utf8'), '<!-- wp:block {"ref":3} /--><!-- wp:block {"ref":9} /-->');
+
+		const res = await refsRun(dir, local, 'refs', 'production', file, 'to-live');
+		assert.equal(res.status, 0, res.stderr);
+		assert.equal(fs.readFileSync(file, 'utf8'), page);
+		assert.equal(JSON.parse(fs.readFileSync(`${file}.fdk.json`, 'utf8')).liveRefs, undefined);
+		assert.equal((await run(dir, 'push', 'production', '12', file)).status, 0);
+	});
+});
+
+// the other way round: a second to-local would read a local ID it wrote as the live pattern that
+// shares it
+test('a second to-local leaves alone the local IDs the first one wrote', () => {
+	const page = '<!-- wp:block {"ref":7} /-->',
+		patterns = { 7: { status: 'publish', title: 'Header' }, 3: { status: 'publish', title: 'Banner' } },
+		local = [[3, 'Header'], [20, 'Banner']];
+	return withSite({ posts: { 12: { type: 'page', raw: page } }, patterns }, async (wp, dir, tmp) => {
+		const file = path.join(tmp, 'page.html');
+		await run(dir, 'pull', 'production', '12', file);
+		await refsRun(dir, local, 'refs', 'production', file, 'to-local');
+		const res = await refsRun(dir, local, 'refs', 'production', file, 'to-local');
+		assert.equal(res.status, 0, res.stderr);
+		assert.equal(fs.readFileSync(file, 'utf8'), '<!-- wp:block {"ref":3} /-->');
+		assert.deepEqual(JSON.parse(fs.readFileSync(`${file}.fdk.json`, 'utf8')).localRefs, [3]);
+
+		await refsRun(dir, local, 'refs', 'production', file, 'to-live');
+		assert.equal(fs.readFileSync(file, 'utf8'), page);
+	});
+});
+
+// a record from before to-local listed what it left has nothing to go by, so every ref is mapped
+test('to-live without a record of the live refs maps every ref, as before', () => {
+	const patterns = { 7: { status: 'publish', title: 'Header' }, 9: { status: 'publish', title: 'Footer' }, 11: { status: 'publish', title: 'Promo' } },
+		local = [[3, 'Header'], [9, 'Promo']];
+	return withSite({ posts: { 12: { type: 'page', raw: '<!-- wp:block {"ref":7} /--><!-- wp:block {"ref":9} /-->' } }, patterns }, async (wp, dir, tmp) => {
+		const file = path.join(tmp, 'page.html');
+		await run(dir, 'pull', 'production', '12', file);
+		await refsRun(dir, local, 'refs', 'production', file, 'to-local');
+		const { liveRefs, ...state } = JSON.parse(fs.readFileSync(`${file}.fdk.json`, 'utf8'));
+		assert.deepEqual(liveRefs, [9]);
+		fs.writeFileSync(`${file}.fdk.json`, JSON.stringify({ ...state, localRefs: true }));
+
+		await refsRun(dir, local, 'refs', 'production', file, 'to-live');
+		assert.equal(fs.readFileSync(file, 'utf8'), '<!-- wp:block {"ref":7} /--><!-- wp:block {"ref":11} /-->');
+	});
+});
+
 // a pattern with the same ID on both sides needs no swap, and leaves no local ID behind
 test('a to-local that swaps nothing leaves push allowed', () =>
 	withSite({ posts: { 12: { type: 'page', raw: '<!-- wp:block {"ref":37827} /-->' } },

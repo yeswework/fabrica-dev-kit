@@ -189,7 +189,9 @@ beside the file, in `page.html.fdk.json`.
 
 Synced pattern IDs differ between the live site and your local one. `fdk refs production page.html
 to-local` swaps each pattern in the file for the local pattern with the same title, so the markup
-renders locally, and `to-live` swaps them back. A file that still holds local IDs can't be pushed.
+renders locally, and `to-live` swaps them back. `to-local` records which refs it left as the site's, so
+`to-live` doesn't remap one whose ID a different local pattern happens to share. A file that still
+holds local IDs can't be pushed.
 
 Each section gets in one of two ways:
 
