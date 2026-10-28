@@ -23,6 +23,7 @@
 //
 // Preflight outcomes, matching the ones the guard has to distinguish:
 //   status  0 + fixture   a copy arrived
+//   status  0 + empty fixture + `UNREADABLE_LISTING`   an empty copy the server said it couldn't list
 //   status  1 + `Access failed: … No such file …`, no directory   the server holds none yet
 //   status  1 + `BARE_550`, no directory   none yet only if the listing above confirms it
 //   status  1 + `Fatal error: …`   the pull broke, state indeterminate
@@ -83,4 +84,18 @@ const BARE_550 = 'mirror: Access failed: 550 Failed to change directory. (/nope)
 
 const BROKEN_PULL = 'mirror: Fatal error: max-retries exceeded (Connection refused)';
 
-module.exports = { BARE_550, BROKEN_PULL, DENIED_FOLDER, LFTP_STUB_BODY, MISSING_FOLDER, acfPullDest };
+// lftp's `debug 5` transcript of a pull that came back empty and exited 0, as vsftpd 3.0.3 and
+// pure-ftpd answered it: for a folder the login can write to but not list, and for one that is
+// simply empty
+const UNREADABLE_LISTING = {
+	vsftpd: '---> LIST\n<--- 150 Here comes the directory listing.\n<--- 226 Transfer done (but failed to open directory).\n',
+	pureFtpd: "---> MLSD\n<--- 550 Can't check for file existence\n---> PRET LIST \n<--- 200 Ready to proceed\n---> PASV\n"
+		+ '<--- 227 Entering Passive Mode (127,0,0,1,117,151)\n---- Connecting data socket to (127.0.0.1) port 30103\n---> LIST\n'
+		+ '<--- 150 Accepted data connection\n<--- 226-Sorry, we were unable to read [.]\n<--- 226-Options: -l \n<--- 226 0 matches total\n',
+};
+const EMPTY_LISTING = {
+	vsftpd: '---> LIST\n<--- 150 Here comes the directory listing.\n<--- 226 Directory send OK.\n',
+	pureFtpd: '---> MLSD\n<--- 150 Accepted data connection\n<--- 226 2 matches total\n',
+};
+
+module.exports = { BARE_550, BROKEN_PULL, DENIED_FOLDER, EMPTY_LISTING, LFTP_STUB_BODY, MISSING_FOLDER, UNREADABLE_LISTING, acfPullDest };

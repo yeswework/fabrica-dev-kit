@@ -6,7 +6,7 @@ const assert = require('node:assert/strict'),
 	path = require('path');
 
 const { CHECKS, DELETE_OPTION, LFTP_DEFAULTS, acfGroupsAtRisk, ignoreParams, lftp, pullRemoteAcfJson, remoteCommands, remoteFolderExists, scrub, skipOption, uncommittedFiles } = require('../../lib/deploy'),
-	{ BARE_550, BROKEN_PULL, DENIED_FOLDER, LFTP_STUB_BODY, MISSING_FOLDER } = require('../helpers/lftp-stub'),
+	{ BARE_550, BROKEN_PULL, DENIED_FOLDER, EMPTY_LISTING, LFTP_STUB_BODY, MISSING_FOLDER, UNREADABLE_LISTING } = require('../helpers/lftp-stub'),
 	{ makeProject } = require('../helpers/project'),
 	{ requireLib, runNode } = require('../helpers/run'),
 	{ stubBin } = require('../helpers/stub-bin'),
@@ -163,6 +163,36 @@ test('a clean run that leaves no folder reads as false', () => {
 	assert.equal(pull({}).result, false);
 });
 
+// vsftpd and pure-ftpd send a folder the login can write to but not list as an empty listing, and
+// lftp exits 0: only the server's own reply tells it from an empty folder (fabrica-dev-kit-rkd)
+for (const [server, stderr] of Object.entries(UNREADABLE_LISTING)) {
+	test(`an empty copy of a folder the server said it couldn't list reads as null (${server})`, () => {
+		const { result, printed, calls } = pull({ fixture: dirWith({}), stderr });
+		assert.equal(result, null);
+		assert.match(calls[0], /debug 5; mirror /);
+		assert.match(printed, /sent 'site\/theme\/acf-json' as empty but said it couldn't list it/);
+		assert.match(printed, /(failed to open directory|Can't check for file existence)/);
+	});
+}
+
+for (const [server, stderr] of Object.entries(EMPTY_LISTING)) {
+	test(`an empty copy the server listed cleanly reads as true (${server})`, () => {
+		assert.equal(pull({ fixture: dirWith({}), stderr }).result, true);
+	});
+}
+
+// a copy that arrived was listed, whatever else the transcript holds
+test('a copy that arrived reads as true even beside a refused listing', () => {
+	assert.equal(pull({ fixture: dirWith({ 'g.json': group('g', 100) }), stderr: UNREADABLE_LISTING.pureFtpd }).result, true);
+});
+
+// the transcript carries the login, password and all
+test("lftp's transcript never reaches the screen", () => {
+	const { result, printed } = pull({ status: 1, stderr: `---> PASS hunter2\n<--- 230 Login successful.\n${BROKEN_PULL}` });
+	assert.equal(result, null);
+	assert.equal(printed, `${BROKEN_PULL}\n`);
+});
+
 // The wording after a 550 belongs to the FTP server, not to lftp. Where it says the folder isn't
 // there, nothing on the server is at risk; where it says the folder is refused, there is no telling
 for (const [server, stderr] of Object.entries(MISSING_FOLDER)) {
@@ -253,7 +283,17 @@ test('remoteFolderExists: readable is true, missing false, refused or unsettled 
 test('a .distignore becomes lftp filters, a root-anchored entry kept off subfolders', () => {
 	const dir = dirWith({ '.distignore': 'node_modules/\n# a comment\n./src/\n!keep.txt\n\n' });
 	assert.deepEqual(ignoreParams(dir).split(/\s+/).filter(Boolean),
-		['--exclude-glob', 'node_modules/', '--exclude-glob', 'src/', '--include-glob', '**/src/', '--include-glob', 'keep.txt']);
+		['--exclude-glob', 'node_modules/', '--exclude-glob', 'src/', '--include-glob', '**/src/',
+			'--include-glob', 'keep.txt', '--include-glob', 'keep.txt/']);
+});
+
+// lftp matches a folder only by its name with a slash appended, so `/build` alone never matched
+// the `build/` folder (fabrica-dev-kit-wnz)
+test('a .distignore line with no trailing slash matches a folder of that name as well as a file', () => {
+	const dir = dirWith({ '.distignore': '/build\nvendor\n' });
+	assert.deepEqual(ignoreParams(dir).split(/\s+/).filter(Boolean), [
+		'--exclude-glob', 'build', '--include-glob', '**/build', '--exclude-glob', 'build/', '--include-glob', '**/build/',
+		'--exclude-glob', 'vendor', '--exclude-glob', 'vendor/']);
 });
 
 test('a resource with no .distignore has no filters', () => {

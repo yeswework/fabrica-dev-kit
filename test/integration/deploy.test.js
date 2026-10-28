@@ -6,7 +6,7 @@ const assert = require('node:assert/strict'),
 	path = require('path');
 
 const { LFTP_DEFAULTS } = require('../../lib/deploy'),
-	{ BARE_550, BROKEN_PULL, DENIED_FOLDER, LFTP_STUB_BODY, MISSING_FOLDER, acfPullDest } = require('../helpers/lftp-stub'),
+	{ BARE_550, BROKEN_PULL, DENIED_FOLDER, EMPTY_LISTING, LFTP_STUB_BODY, MISSING_FOLDER, UNREADABLE_LISTING, acfPullDest } = require('../helpers/lftp-stub'),
 	{ makeProject } = require('../helpers/project'),
 	{ runFdk } = require('../helpers/run'),
 	{ stubBin } = require('../helpers/stub-bin'),
@@ -179,6 +179,24 @@ test('a remote acf-json that is refused, or a 550 nothing settles, stops before 
 		assert.match(run.output, /Access failed: .*(Permission denied|Failed to change directory)/);
 		assert.match(run.output, /Couldn't read the 'acf-json' folder of 'mytheme'/);
 		assert.match(run.output, /--skip acf/);
+	}
+});
+
+// a folder the login can write to but not list arrives as an empty copy, with lftp exiting 0: the
+// upload would go over field groups never seen (fabrica-dev-kit-rkd)
+test('an empty acf-json the server said it could not list stops before the upload; a plainly empty one uploads', async () => {
+	for (const stderr of Object.values(UNREADABLE_LISTING)) {
+		const run = await deploy({ local: { 'g.json': group('g', 100) }, server: {}, stderr });
+		assert.equal(run.uploaded, false, stderr);
+		assert.equal(run.status, 1);
+		assert.match(run.output, /as empty but said it couldn't list it/);
+		assert.match(run.output, /Couldn't read the 'acf-json' folder of 'mytheme'/);
+		assert.doesNotMatch(run.output, /^(--->|<---) /m, "lftp's transcript should stay off the screen");
+	}
+	for (const stderr of Object.values(EMPTY_LISTING)) {
+		const run = await deploy({ local: { 'g.json': group('g', 100) }, server: {}, stderr });
+		assert.equal(run.uploaded, true, stderr);
+		assert.equal(run.status, 0);
 	}
 });
 
@@ -560,6 +578,28 @@ test('--backup runs after the dry run, never in it, and never for a resource the
 		dryRun: 'rm -r ftp://u@ftp.test/wp-content/themes/mytheme/vendor\n' });
 	assert.equal(run.uploaded, false);
 	assert.equal(run.backup, '', 'a refused resource should not be backed up');
+});
+
+// each probe is an lftp session of its own, up to the timeout on a slow host (fabrica-dev-kit-z6y)
+test('with --delete and --backup, whether the resource is on the server is asked once', async () => {
+	const probes = run => run.calls.filter(call => /cls -d \S+; $/.test(call)).length;
+	let run = await deploy({ noAcfDir: true, backup: true, params: ['--delete'] });
+	assert.equal(run.uploaded, true);
+	assert.notEqual(run.backup, '');
+	assert.equal(probes(run), 1);
+
+	// a first deploy: nothing to remove, nothing to back up
+	run = await deploy({ noAcfDir: true, backup: true, params: ['--delete'], existsStatus: 1, existsStderr: MISSING_FOLDER.pureFtpd });
+	assert.equal(run.uploaded, true);
+	assert.equal(run.backup, '');
+	assert.equal(run.dryRuns, 0);
+	assert.equal(probes(run), 1);
+
+	// a probe that can't answer stops the resource, and isn't asked again
+	run = await deploy({ noAcfDir: true, backup: true, params: ['--delete'], existsStatus: 1, existsStderr: BROKEN_PULL });
+	assert.equal(run.uploaded, false);
+	assert.equal(run.status, 1);
+	assert.equal(probes(run), 1);
 });
 
 // --force skips the checks, and the stale-build hint is no check
