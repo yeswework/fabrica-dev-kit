@@ -74,7 +74,7 @@ test('extra services are listed only when docker-compose.yml declares them', () 
 		'services:\n  wp: {}\n  mailpit:\n    image: axllent/mailpit\n');
 	fs.writeFileSync(path.join(without, 'docker-compose.yml'), 'services:\n  wp: {}\n');
 
-	assert.deepEqual(read(withMailpit), [{ icon: '📨', name: 'Mailpit', port: '50002' }]);
+	assert.deepEqual(read(withMailpit), [{ icon: '📨', name: 'Mailpit', alias: 'mail', port: '50002' }]);
 	assert.deepEqual(read(without), []);
 });
 
