@@ -72,6 +72,22 @@ test('over SSH, a draft is pulled by its bare ID', async () => {
 	assert.equal(fs.readFileSync(file, 'utf8'), 'draft');
 });
 
+// inline SVG or base64 images take a post's JSON past spawnSync's 1MB default
+test('over SSH, a post over 1MB is pulled and pushed whole', async () => {
+	const big = `<!-- wp:html --><img src="data:image/png;base64,${'A'.repeat(2 * 1024 ** 2)}"><!-- /wp:html -->`,
+		site = remote({ posts: page(big) }),
+		dir = project(),
+		file = path.join(makeTmpDir(), 'page.html');
+	let res = await run(dir, site, ['pull', 'production', '12', file]);
+	assert.equal(res.status, 0, res.stderr);
+	assert.equal(fs.readFileSync(file, 'utf8'), big);
+
+	fs.writeFileSync(file, `${big}\n<!-- wp:paragraph --><p>more</p><!-- /wp:paragraph -->`);
+	res = await run(dir, site, ['push', 'production', '12', file]);
+	assert.equal(res.status, 0, res.stderr);
+	assert.equal(site.read().posts[12].raw, fs.readFileSync(file, 'utf8'));
+});
+
 test('over SSH, push refuses a post changed since the pull, and an unpublished pattern ref', async () => {
 	const site = remote({ posts: page('a'), patterns: { 1: 'Subnav' } }),
 		dir = project(),
