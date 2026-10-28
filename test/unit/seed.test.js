@@ -3,7 +3,7 @@
 const assert = require('node:assert/strict'),
 	{ test } = require('node:test');
 
-const { DEFAULT_TYPES, imageIds, narrow, restMedia, restMenuItem, restPost, restTemplate, selection } = require('../../lib/seed');
+const { DEFAULT_TYPES, imageIds, multiValued, narrow, replacements, restMedia, restMenuItem, restPost, restTemplate, selection } = require('../../lib/seed');
 
 test('selection defaults to Fabrica Export: posts from the last 6 months, everything else in full', () => {
 	const types = selection();
@@ -111,4 +111,36 @@ test('restMenuItem keeps what WordPress stores in meta as meta', () => {
 		_menu_item_type: 'post_type', _menu_item_menu_item_parent: '0', _menu_item_object_id: '7', _menu_item_object: 'page',
 		_menu_item_target: '', _menu_item_classes: ['a'], _menu_item_xfn: 'me friend', _menu_item_url: 'https://x/',
 	});
+});
+
+test('restPost writes a key named in multiple as one row per value', () => {
+	const { meta } = restPost({ id: 7, meta: { tags: ['a', 'b'], pair: ['x', 'y'] } }, 'page', new Set(['tags']));
+	assert.deepEqual(meta, [
+		{ post_id: 7, key: 'tags', value: 'a' },
+		{ post_id: 7, key: 'tags', value: 'b' },
+		{ post_id: 7, key: 'pair', value: ['x', 'y'] },
+	]);
+});
+
+// the shapes WP_REST_Meta_Fields::get_registered_fields gives each kind of key
+test('multiValued finds the keys registered single: false in a route schema, not single keys typed array', () => {
+	const schema = { properties: { meta: { properties: {
+		tags: { type: 'array', items: { type: 'string', title: '', description: '', default: '' } },
+		pair: { type: 'array', title: '', description: '', default: [], items: { type: 'string' } },
+		subtitle: { type: 'string', title: '', description: '', default: '' },
+	} } } };
+	assert.deepEqual([...multiValued(schema)], ['tags']);
+	assert.deepEqual([...multiValued(undefined)], []);
+});
+
+test('replacements match home and what follows it, and leave a longer host alone, plain and \\/-escaped', () => {
+	const [[plain, to], [escaped, escapedTo]] = replacements('https://ex.com', 'https://l.localhost'),
+		matches = (pattern, text) => new RegExp(pattern).test(text);
+	for (const text of ['https://ex.com', 'https://ex.com/path', '"https://ex.com"', 'https://ex.com?p=1']) { assert.ok(matches(plain, text), text); }
+	for (const text of ['https://ex.com.au', 'https://ex.community', 'https://ex.com-staging.net']) { assert.ok(!matches(plain, text), text); }
+	assert.ok(matches(escaped, 'https:\\/\\/ex.com\\/path'));
+	assert.ok(!matches(escaped, 'https:\\/\\/ex.com.au\\/path'));
+	// preg_replace reads `\\` and `$` in a replacement, so the escaped form's backslashes are doubled
+	assert.equal(to, 'https://l.localhost');
+	assert.equal(escapedTo, 'https:\\\\/\\\\/l.localhost');
 });

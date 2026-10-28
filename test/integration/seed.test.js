@@ -10,7 +10,8 @@ const { makeProject } = require('../helpers/project'),
 	{ runFdk } = require('../helpers/run'),
 	{ stubBin } = require('../helpers/stub-bin'),
 	{ cleanTmpDirs, makeTmpDir } = require('../helpers/tmpdir'),
-	{ SSH_STUB_BODY, WP_STUB_BODY } = require('../helpers/wp-cli-stub');
+	{ SSH_STUB_BODY, WP_STUB_BODY } = require('../helpers/wp-cli-stub'),
+	{ replacements } = require('../../lib/seed');
 
 after(cleanTmpDirs);
 
@@ -18,8 +19,9 @@ const PASSWORD = 'abcd efgh ijkl mnop qrst uvwx',
 	AUTH = `Basic ${Buffer.from(`editor:${PASSWORD}`).toString('base64')}`;
 
 // A live block-theme site over REST: page 8 under page 6, which the page query alone doesn't return,
-// a database template and a theme-file one, global styles, and an image the front page renders
-const startSite = async () => {
+// a database template and a theme-file one, global styles, and an image the front page renders.
+// `overrides` replaces any of them. Collections come in pages of at most 10, WordPress's default size
+const startSite = async (overrides = {}) => {
 	const requests = [],
 		pages = {
 			6: { id: 6, status: 'publish', slug: 'parent', title: { raw: 'Parent' }, content: { raw: '' }, parent: 0, author: 1 },
@@ -30,8 +32,11 @@ const startSite = async () => {
 			route = url.pathname.replace(/^\/wp-json/, ''),
 			include = url.searchParams.get('include')?.split(',').map(Number),
 			send = data => {
-				res.writeHead(200, { 'Content-Type': 'application/json', 'X-WP-TotalPages': '1' });
-				res.end(JSON.stringify(data));
+				const size = Math.min(Number(url.searchParams.get('per_page')) || 10, 10),
+					page = Number(url.searchParams.get('page')) || 1,
+					paged = Array.isArray(data);
+				res.writeHead(200, { 'Content-Type': 'application/json', 'X-WP-TotalPages': String(paged ? Math.max(1, Math.ceil(data.length / size)) : 1) });
+				res.end(JSON.stringify(paged ? data.slice((page - 1) * size, page * size) : data));
 			};
 		requests.push({ method: req.method, route, query: url.search });
 		if (route === '/') { return send({ home: site.url, namespaces: ['wp/v2'] }); }
@@ -59,12 +64,14 @@ const startSite = async () => {
 			'/wp/v2/media': [{ id: 9, mime_type: 'image/jpeg', source_url: `${site.url}/wp-content/uploads/2026/01/a.jpg`, media_details: { file: '2026/01/a.jpg' } }],
 			'/wp/v2/comments': [],
 			'/wp/v2/users': [{ id: 1, username: 'admin', slug: 'admin', name: 'Admin', email: 'a@example.com', roles: ['administrator'] }],
+			...overrides,
 		};
 		if (!(route in routes)) {
 			res.writeHead(404);
 			return res.end('{"code":"rest_no_route"}');
 		}
-		send(routes[route]);
+		const data = routes[route];
+		send(typeof data === 'function' ? data(url) : data);
 	});
 	await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 	const site = { url: `http://127.0.0.1:${server.address().port}`, requests, close: () => new Promise(resolve => server.close(resolve)) };
@@ -89,8 +96,8 @@ const localSite = (report, stubs = {}) => {
 
 const REPORT = { clashes: [], commentClashes: [], remapped: [], home: 'https://local.localhost', written: 1 };
 
-const withSite = async (body, seed = '') => {
-	const site = await startSite();
+const withSite = async (body, seed = '', routes) => {
+	const site = await startSite(routes);
 	try {
 		const dir = makeProject({ config: ['default:', '  themes: []', 'production:', '  extend: default', '  rest:', `    url: "${site.url}"`,
 			'    user: editor', `    application_password: "${PASSWORD}"`, seed, ''].join('\n') });
@@ -154,10 +161,11 @@ test('a clash writes nothing and names the post, unless --replace', () =>
 		res = await runFdk(['seed', 'production', '--replace'], { cwd: dir, env: { PATH: local.path } });
 		assert.equal(res.status, 0, res.stderr);
 		assert.equal(local.sent().replace, true);
-		const replaced = local.calls().filter(call => call.includes('search-replace'));
+		const replaced = local.calls().filter(call => call.includes('search-replace')),
+			[plain, escaped] = replacements(site.url, 'https://local.localhost');
 		assert.equal(replaced.length, 2);
-		assert.ok(replaced[0].includes(`${site.url} https://local.localhost`));
-		assert.ok(replaced[1].includes(site.url.replace(/\//g, '\\/')));
+		assert.ok(replaced[0].includes(`search-replace ${plain.join(' ')} --regex`), replaced[0]);
+		assert.ok(replaced[1].includes(`search-replace ${escaped.join(' ')} --regex`), replaced[1]);
 	}));
 
 test("the section's seed: block and --only narrow what is read", () =>
@@ -200,6 +208,46 @@ test('--only attachment asks the media route for its own statuses, and keeps whe
 		assert.ok(snapshot.meta.some(meta => meta.post_id === 9 && meta.key === '_wp_attached_file' && meta.value === '2026/01/a.jpg'));
 	}));
 
+// a block theme past one page of each: core's own routes don't page these, but the read mustn't
+// depend on that
+test('every page of templates and template parts is read, each record once', () => {
+	const records = (first, slug, extra = {}) => Array.from({ length: 12 }, (_, i) => ({ wp_id: first + i, slug: `${slug}-${i}`, theme: 'theme',
+		status: 'publish', title: { raw: `${slug} ${i}` }, content: { raw: '' }, ...extra }));
+	return withSite(async (site, dir) => {
+		const local = localSite(REPORT),
+			res = await runFdk(['seed', 'production', '--dry-run', '--only', 'wp_template,wp_template_part'], { cwd: dir, env: { PATH: local.path } });
+		assert.equal(res.status, 0, res.stderr);
+		const ids = type => local.sent().snapshot.posts.filter(post => post.post_type === type).map(post => post.ID).sort((a, b) => a - b);
+		assert.deepEqual(ids('wp_template'), records(100, 'template').map(item => item.wp_id));
+		assert.deepEqual(ids('wp_template_part'), records(200, 'part').map(item => item.wp_id));
+		assert.ok(site.requests.some(request => request.route === '/wp/v2/template-parts' && /page=2/.test(request.query)));
+	}, '', { '/wp/v2/templates': records(100, 'template'), '/wp/v2/template-parts': records(200, 'part', { area: 'header' }) });
+});
+
+// core serves a `single: false` key as the array of its rows, and tells it from a single key holding
+// an array only in the route's schema
+test('over REST, a meta key registered single: false is one row per value, and an array-valued single key one row', () =>
+	withSite(async (site, dir) => {
+		const local = localSite(REPORT),
+			res = await runFdk(['seed', 'production', '--dry-run', '--only', 'page', '--ids', '8'], { cwd: dir, env: { PATH: local.path } });
+		assert.equal(res.status, 0, res.stderr);
+		const meta = local.sent().snapshot.meta.filter(meta => meta.post_id === 8 && ['tags', 'pair'].includes(meta.key));
+		assert.deepEqual(meta, [
+			{ post_id: 8, key: 'tags', value: 'a' },
+			{ post_id: 8, key: 'tags', value: 'b' },
+			{ post_id: 8, key: 'pair', value: ['x', 'y'] },
+		]);
+		assert.deepEqual(site.requests.filter(request => request.method !== 'GET'), []);
+	}, '', {
+		'/wp/v2/pages': url => url.searchParams.get('_method') === 'OPTIONS'
+			? { schema: { properties: { meta: { type: 'object', properties: {
+				tags: { type: 'array', items: { type: 'string', title: '', description: '', default: '' } },
+				pair: { type: 'array', title: '', description: '', default: [], items: { type: 'string' } },
+			} } } } }
+			: [{ id: 8, status: 'publish', slug: 'home', title: { raw: 'Home' }, content: { raw: '' }, parent: 0, author: 1,
+				meta: { tags: ['a', 'b'], pair: ['x', 'y'] } }],
+	}));
+
 // A seed of page 7 over SSH from a live site whose home is `home`
 const sshSeed = async (home = 'https://example.com', flags = ['--only', 'page', '--ids', '7'], siteurl = home) => {
 	const state = path.join(makeTmpDir(), 'site.json'),
@@ -236,7 +284,7 @@ test('over SSH, the reader gets the selection, and its raw rows reach the writer
 	assert.ok(ssh.some(call => call.includes("u123@ssh.example.com wp --path='wordpress' 'eval-file' '-'")), ssh.join('\n'));
 	// no gaps over SSH, and the live URL is replaced locally afterwards
 	assert.doesNotMatch(res.stderr, /exposed over REST/);
-	assert.ok(local.calls().some(call => call.includes('search-replace') && call.includes('https://example.com https://local.localhost')));
+	assert.ok(local.calls().some(call => call.includes(`search-replace ${replacements('https://example.com', 'https://local.localhost')[0].join(' ')}`)));
 });
 
 test('a seed over SSH that names no posts copies the stored settings untouched', async () => {
@@ -252,7 +300,7 @@ test("a live URL the shell would act on reaches search-replace as written", asyn
 		{ local, res } = await sshSeed(home);
 	assert.equal(res.status, 0, res.stderr);
 	assert.ok(!fs.existsSync(marker), 'the URL ran as a command');
-	assert.ok(local.calls().some(call => call.includes(`search-replace ${home} https://local.localhost`)), local.calls().join('\n'));
+	assert.ok(local.calls().some(call => call.includes(`search-replace ${replacements(home, 'https://local.localhost')[0].join(' ')}`)), local.calls().join('\n'));
 });
 
 // WordPress in a subdirectory: replacing home first would leave `/wp` on every siteurl link
@@ -260,5 +308,5 @@ test('a siteurl under home is replaced before home', async () => {
 	const { local, res } = await sshSeed(undefined, undefined, 'https://example.com/wp'),
 		replaced = local.calls().filter(call => call.includes('search-replace'));
 	assert.equal(res.status, 0, res.stderr);
-	assert.ok(replaced[0]?.includes('search-replace https://example.com/wp https://local.localhost'), replaced.join('\n'));
+	assert.ok(replaced[0]?.includes(`search-replace ${replacements('https://example.com/wp', 'https://local.localhost')[0].join(' ')}`), replaced.join('\n'));
 });
