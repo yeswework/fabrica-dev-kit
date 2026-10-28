@@ -17,14 +17,28 @@ test('returns the named section', () => {
 	assert.deepEqual(getProjectConfig('default', { default: { themes: ['./a'] } }), { themes: ['./a'] });
 });
 
-test('extend lays the child section over the parent', () => {
+test('extend lays the child section over the parent, and ftp: key by key over the inherited block', () => {
 	const config = {
-		base: { themes: ['./base'], ftp: { host: 'base.test' } },
-		staging: { extend: 'base', ftp: { host: 'staging.test' } },
+		base: { themes: ['./base'], ftp: { host: 'base.test', user: 'u', params: ['--a'] } },
+		staging: { extend: 'base', themes: ['./staging'], ftp: { host: 'staging.test', params: ['--b'] } },
 	};
-	// a shallow spread, so `ftp` is replaced outright rather than merged key by key
 	assert.deepEqual(getProjectConfig('staging', config),
-		{ themes: ['./base'], extend: 'base', ftp: { host: 'staging.test' } });
+		{ themes: ['./staging'], extend: 'base', ftp: { host: 'staging.test', user: 'u', params: ['--b'] } });
+});
+
+// bylinetimes: `production/fnd-dry` extends `production/fnd`, which extends `production`
+test('an extend chain resolves to its root section, so a dry-run variant of a variant keeps the host', () => {
+	const config = {
+		production: { themes: ['./t'], ftp: { host: 'live.test', user: 'u', password: 'p' } },
+		'production/fnd': { extend: 'production', plugins: ['./fnd'] },
+		'production/fnd-dry': { extend: 'production/fnd', ftp: { params: ['--delete', '--dry-run'] } },
+	};
+	assert.deepEqual(getProjectConfig('production/fnd-dry', config), {
+		themes: ['./t'],
+		plugins: ['./fnd'],
+		extend: 'production/fnd',
+		ftp: { host: 'live.test', user: 'u', password: 'p', params: ['--delete', '--dry-run'] },
+	});
 });
 
 // The rest end in `halt`, which calls `process.exit` — they have to run in a child process
@@ -41,6 +55,21 @@ test('extending a section that is not in the file halts', () => {
 		res = runNode(`${requireLib('config')}.getProjectConfig('child')`, { cwd: dir });
 	assert.equal(res.status, 1);
 	assert.match(res.stderr, /extends 'missing' which was not found/);
+});
+
+test('a missing section further up an extend chain halts naming the section that extends it', () => {
+	const dir = makeProject({ config: 'a:\n  extend: b\nb:\n  extend: missing\n' }),
+		res = runNode(`${requireLib('config')}.getProjectConfig('a')`, { cwd: dir });
+	assert.equal(res.status, 1);
+	assert.match(res.stderr, /Project 'b' extends 'missing' which was not found/);
+});
+
+test('sections that extend each other in a loop halt naming the loop', () => {
+	const dir = makeProject({ config: 'a:\n  extend: b\nb:\n  extend: c\nc:\n  extend: b\n' }),
+		res = runNode(`${requireLib('config')}.getProjectConfig('a')`, { cwd: dir });
+	assert.equal(res.status, 1);
+	assert.match(res.stderr, /extend each other in a loop: 'a' extends 'b' extends 'c' extends 'b'/);
+	assert.doesNotMatch(res.stderr, /RangeError/);
 });
 
 test('a malformed config.yml halts', () => {

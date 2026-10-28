@@ -44,7 +44,7 @@ test('a variant that empties a list leaves the base section in charge of it', ()
 	assert.deepEqual(listed(sectionResources(config, 'production')), [['production', 'themes', '../t/theme', 'h']]);
 });
 
-// `extend` replaces `ftp:` whole, so a variant's own `ftp:` is where deploy sends its resources
+// `extend` merges `ftp:` key by key, so a variant that only adds params deploys to the base's server
 test("a variant with its own ftp is compared with its own server, and once more if the base deploys it too", () => {
 	const config = {
 		production: { ftp: FTP, plugins: ['../p/a'] },
@@ -54,7 +54,6 @@ test("a variant with its own ftp is compared with its own server, and once more 
 	assert.deepEqual(listed(sectionResources(config, 'production')), [
 		['production', 'plugins', '../p/a', 'h'],
 		['production/a', 'plugins', '../p/a', 'other'],
-		['production/a-dry', 'plugins', '../p/a', undefined],
 	]);
 });
 

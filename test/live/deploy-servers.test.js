@@ -202,7 +202,7 @@ describe('the ACF preflight against real servers',
 					`    commands: ['set ftp:ssl-allow no', 'set ftp:passive-mode yes', 'set net:max-retries 1', 'set net:timeout 5']`,
 					`    params: ['--delete', '--exclude-glob *.map']`],
 				config = variants => ['production:', '  ftp:', ...ftp(SERVERS.vsftpd.port), '  plugins: [./myplugin]',
-					// can't be deployed (fabrica-dev-kit-hsg), so it is skipped rather than compared
+					// inherits production's server, so it is compared once under production, not skipped as hostless
 					'production/dry:', '  extend: production', '  ftp:', "    params: ['--dry-run']", ...variants].join('\n') + '\n',
 				resources = { myplugin: { files: { 'index.php': '<?php // a', 'app.js.map': '{}' }, git: false } };
 
@@ -210,7 +210,7 @@ describe('the ACF preflight against real servers',
 				res = await runFdk(['drift', 'production'], { cwd: dir });
 			assert.equal(res.status, 0, res.stdout + res.stderr);
 			assert.match(res.stdout, /myplugin: identical/);
-			assert.match(res.stderr, /'production\/dry' has no FTP host/);
+			assert.doesNotMatch(res.stderr, /has no FTP host/);
 			assert.doesNotMatch(res.stdout + res.stderr, /secret/);
 
 			dir = makeProject({ config: config(['production/elsewhere:', '  extend: production', '  plugins: [./myplugin]',

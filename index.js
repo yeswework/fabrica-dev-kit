@@ -72,18 +72,16 @@ const echoInfo = (siteURL, isConfig=false) => {
 
 // Get current site and port for WordPress to check if it matches the current Docker-assigned Web container port (in a singlesite project). Output current project access URLs and ports
 const configURL = async () => {
-	let siteURL = getSiteURL();
-
-	if (siteURL.trim().length <= 0) {
+	if (getSiteURL().trim().length <= 0) {
 		// Docker stopped: restart
 		if (spawn(['docker', 'compose', 'up', '-d']).status !== 0) {
 			halt('Docker containers failed to start.');
 		}
-
-		// try to get site URL again
-		await waitForWebContainer(true);
-		siteURL = getSiteURL();
 	}
+	// Alias only a port nginx has answered on: a just-recreated `web` exits when `wp` doesn't
+	// resolve yet, and its restart takes a new port, leaving an alias read before it to 502
+	await waitForWebContainer(true);
+	const siteURL = getSiteURL();
 
 	// detect if portless is active in config.yml
 	const usePortless = getProjectConfig('default')?.use?.indexOf('portless') >= 0,
@@ -99,6 +97,10 @@ const configURL = async () => {
 		portlessURL = setupPortlessAlias(project.slug, webPort);
 		if (portlessURL) {
 			webURL = portlessURL;
+			// the services' ports move on a recreate too
+			for (const service of getServicesPorts()) {
+				setupPortlessAlias(`${project.slug}-${service.alias}`, service.port);
+			}
 		} else {
 			// alias creation failed; fall back to localhost handling below
 			warn('Portless alias creation failed, falling back to localhost URL.');
